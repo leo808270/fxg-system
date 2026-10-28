@@ -1,0 +1,2386 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>芳喜蓁站手工坊 - 估價單與庫存管理系統</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap');
+
+    body {
+      font-family: 'Noto Sans TC', system-ui, -apple-system, sans-serif;
+    }
+
+    /* Print Specific Styling - Optimized for Exact A4 Single-Page Double-Slip Layout */
+    @media print {
+      @page {
+        size: A4 portrait;
+        margin: 5mm 6mm 5mm 6mm;
+      }
+      html, body {
+        width: 100% !important;
+        height: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background-color: #fff !important;
+        color: #000 !important;
+        font-size: 8.5pt !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      .no-print {
+        display: none !important;
+      }
+      .print-only {
+        display: block !important;
+      }
+      .print-container {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 auto !important;
+        padding: 0 !important;
+        box-shadow: none !important;
+        border: none !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: space-between !important;
+        box-sizing: border-box !important;
+        page-break-inside: avoid !important;
+        page-break-after: avoid !important;
+      }
+      /* Each Half Sheet: Exactly 137mm high, identical proportion */
+      .quote-half-sheet {
+        width: 100% !important;
+        height: 137mm !important;
+        max-height: 137mm !important;
+        min-height: 137mm !important;
+        box-sizing: border-box !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: space-between !important;
+        overflow: hidden !important;
+        page-break-inside: avoid !important;
+        margin: 0 !important;
+        padding: 1mm 0 !important;
+      }
+      /* Tear/Cut line between the two slips */
+      .cut-line {
+        height: 5mm !important;
+        margin: 1mm 0 !important;
+        border-top: 1px dashed #555 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        text-align: center !important;
+        position: relative !important;
+      }
+      .cut-line::after {
+        content: "✂ 沿虛線裁開（第一聯：存根聯 ／ 第二聯：客戶收執聯）" !important;
+        position: relative !important;
+        top: -6px !important;
+        background: #fff !important;
+        padding: 0 10px !important;
+        font-size: 7pt !important;
+        color: #555 !important;
+      }
+      /* Print Table Styling */
+      table.print-table {
+        border-collapse: collapse !important;
+        width: 100% !important;
+        table-layout: fixed !important;
+      }
+      table.print-table th, 
+      table.print-table td {
+        border: 1px solid #000 !important;
+        padding: 1px 2px !important;
+        height: 5.1mm !important;
+        max-height: 5.1mm !important;
+        font-size: 8pt !important;
+        line-height: 1.1 !important;
+        color: #000 !important;
+        background: transparent !important;
+        box-sizing: border-box !important;
+      }
+      table.print-table th {
+        font-size: 7.5pt !important;
+        font-weight: bold !important;
+        height: 5.2mm !important;
+        background-color: #f3f4f6 !important;
+      }
+      /* Transparent borders for inputs during print so they appear as clean text */
+      .quote-half-sheet input {
+        border: none !important;
+        outline: none !important;
+        background: transparent !important;
+        padding: 0 !important;
+        font-size: inherit !important;
+        font-weight: inherit !important;
+        color: #000 !important;
+        box-shadow: none !important;
+      }
+      .quote-half-sheet .header-store-title {
+        font-size: 15pt !important;
+        line-height: 1.2 !important;
+      }
+      .quote-half-sheet .header-doc-title {
+        font-size: 15pt !important;
+        padding: 1px 12px !important;
+        line-height: 1.2 !important;
+      }
+      .quote-half-sheet .header-info-text {
+        font-size: 7.5pt !important;
+        line-height: 1.2 !important;
+      }
+      .quote-half-sheet .customer-date-row {
+        font-size: 8pt !important;
+        padding: 2px 0 1px 0 !important;
+        margin-top: 2px !important;
+      }
+      .quote-half-sheet .footer-summary-row {
+        font-size: 7.5pt !important;
+        margin-top: 1px !important;
+        padding-top: 1px !important;
+      }
+    }
+
+    @media screen {
+      .print-only {
+        display: none !important;
+      }
+    }
+
+    /* Form Table in Screen Mode */
+    .sheet-table th, .sheet-table td {
+      border: 1px solid #94a3b8;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col">
+
+  <!-- Top Notification Toast Bar -->
+  <div id="toast" class="fixed top-5 right-5 z-50 transform transition-all duration-300 translate-y-[-100px] opacity-0 pointer-events-none bg-slate-900 text-white px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3 border border-slate-700">
+    <span id="toastIcon">ℹ️</span>
+    <span id="toastMsg" class="text-sm font-medium">訊息通知</span>
+  </div>
+
+  <!-- Navigation Bar (Screen Only) -->
+  <header class="no-print bg-gradient-to-r from-amber-700 via-amber-800 to-amber-900 text-white shadow-lg sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-amber-500 flex items-center justify-center font-black text-xl text-amber-950 shadow-inner">
+            芳
+          </div>
+          <div>
+            <h1 class="text-lg font-bold tracking-wide flex items-center gap-2">
+              芳喜蓁站手工坊
+              <span class="text-xs bg-amber-600/80 px-2 py-0.5 rounded font-normal text-amber-100">單據製作系統</span>
+            </h1>
+            <p class="text-xs text-amber-200">統編: 40713530 ｜ 專業估價單・庫存統計・價目管理</p>
+          </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <nav class="flex items-center gap-1 sm:gap-2 text-sm">
+          <button id="navQuoteBtn" class="px-3 py-2 rounded-lg font-medium transition flex items-center gap-1.5 bg-amber-600 text-white shadow">
+            <span>📑</span>
+            <span>估價單</span>
+          </button>
+          <button id="navInventoryBtn" class="px-3 py-2 rounded-lg font-medium transition flex items-center gap-1.5 text-amber-200 hover:text-white hover:bg-amber-800/60">
+            <span>📦</span>
+            <span>庫存管理</span>
+          </button>
+          <button id="navPriceBtn" class="px-3 py-2 rounded-lg font-medium transition flex items-center gap-1.5 text-amber-200 hover:text-white hover:bg-amber-800/60">
+            <span>📋</span>
+            <span>價目表庫</span>
+          </button>
+          <button id="navHistoryBtn" class="px-3 py-2 rounded-lg font-medium transition flex items-center gap-1.5 text-amber-200 hover:text-white hover:bg-amber-800/60">
+            <span>📁</span>
+            <span>歷史單據</span>
+          </button>
+          <button id="navSettingsBtn" class="px-3 py-2 rounded-lg font-medium transition flex items-center gap-1.5 text-amber-200 hover:text-white hover:bg-amber-800/60">
+            <span>⚙️</span>
+            <span>店家設定</span>
+          </button>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Container -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+
+    <!-- TAB 1: 估價單 (雙欄 1-30 項目) -->
+    <div id="tabQuote" class="space-y-6">
+      <!-- Toolbar -->
+      <div class="no-print bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-wrap items-center justify-between gap-4">
+        <div class="flex flex-wrap items-center gap-3">
+          <span class="text-sm font-semibold text-slate-700 flex items-center gap-1.5">
+            <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+            列印樣式：
+          </span>
+          <div class="inline-flex rounded-lg border border-slate-300 p-0.5 bg-slate-100 text-xs font-medium">
+            <button id="quoteLayoutDoubleBtn" class="px-3 py-1.5 rounded-md bg-white text-slate-800 shadow-sm transition">
+              A4 上下雙聯（原檔一式兩份）
+            </button>
+            <button id="quoteLayoutSingleBtn" class="px-3 py-1.5 rounded-md text-slate-600 hover:text-slate-900 transition">
+              A4 單聯大版
+            </button>
+          </div>
+          <button id="btnQuoteFillSample" class="text-xs px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg border border-slate-300 transition flex items-center gap-1">
+            <span>✨</span> 填入範例資料
+          </button>
+          <button id="btnQuoteClear" class="text-xs px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-lg border border-rose-200 transition flex items-center gap-1">
+            <span>🗑️</span> 清空表格
+          </button>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <label class="inline-flex items-center gap-1.5 text-xs text-slate-600 bg-slate-50 px-2.5 py-1.5 rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-100 transition mr-1">
+            <input type="checkbox" id="quoteAutoDeductStock" checked class="rounded text-amber-600 focus:ring-amber-500">
+            <span>儲存時同步扣庫存</span>
+          </label>
+          <button id="btnQuoteSave" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-medium shadow-sm hover:shadow transition flex items-center gap-1.5 text-sm">
+            <span>💾</span> 儲存單據
+          </button>
+          <button id="btnQuoteExportExcel" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium shadow-sm hover:shadow transition flex items-center gap-1.5 text-sm">
+            <span>📊</span> 匯出 CSV/Excel
+          </button>
+          <button id="btnQuotePrint" class="px-5 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-bold shadow-md hover:shadow-lg transition flex items-center gap-2 text-sm">
+            <span>🖨️</span> 列印 / 存為 PDF
+          </button>
+        </div>
+      </div>
+
+      <!-- Quick Pick Tag Bar (No print) -->
+      <div class="no-print bg-amber-50 border border-amber-200 p-4 rounded-2xl">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs font-bold text-amber-900 flex items-center gap-1">
+            <span>⚡</span> 常用商品快速點選（點擊直接加入下一個空白列）：
+          </span>
+          <span class="text-xs text-amber-700">自動填入名稱與價目表單價</span>
+        </div>
+        <div id="quoteQuickTags" class="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto custom-scrollbar">
+          <!-- Dynamically populated tags -->
+        </div>
+      </div>
+
+      <!-- Live Interactive Sheet (Screen Editable & Single Page Print Source) -->
+      <div id="quoteSheetWrapper" class="bg-white rounded-2xl shadow-xl border border-slate-300 p-6 sm:p-8 overflow-x-auto print-container">
+        
+        <!-- Printable Quotation Form Block 1 (上半聯：存根聯) -->
+        <div class="quotation-form-block quote-half-sheet max-w-[950px] mx-auto text-black">
+          <!-- Header Area -->
+          <div class="border-b-2 border-black pb-1.5 mb-1">
+            <div class="flex justify-between items-start">
+              <!-- Left info -->
+              <div class="space-y-0.5">
+                <div class="flex items-baseline gap-3">
+                  <h2 class="text-xl sm:text-2xl font-black tracking-wider text-black font-serif store-name-text header-store-title">
+                    芳喜蓁站手工坊
+                  </h2>
+                  <span class="text-xs sm:text-sm font-semibold tracking-wide">
+                    統一編號：<span class="store-tax-text">40713530</span>
+                  </span>
+                  <span class="text-xs border border-black px-1.5 py-0.2 rounded font-bold bg-slate-50">第一聯：存根聯</span>
+                </div>
+                <div class="text-xs font-medium space-y-0.5 header-info-text">
+                  <p>地址：<span class="store-address-text">台南市安平區安平路446巷27弄23號1樓</span></p>
+                  <div class="flex flex-wrap gap-x-5 gap-y-0.5 pt-0.5">
+                    <span>姓名：<span class="store-contact1-name">許芳瑜</span>　電話：<span class="store-contact1-phone">0931-310-660</span></span>
+                    <span>姓名：<span class="store-contact2-name">許銥庭</span>　電話：<span class="store-contact2-phone">0989-730-103</span></span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Right Title -->
+              <div class="text-right">
+                <div class="inline-block border-2 border-black px-5 py-0.5 text-xl sm:text-2xl font-black tracking-widest bg-slate-50 font-serif header-doc-title">
+                  估價單
+                </div>
+              </div>
+            </div>
+
+            <!-- Customer & Date Row -->
+            <div class="mt-1 pt-1 border-t border-black flex justify-between items-center text-xs sm:text-sm font-semibold customer-date-row">
+              <div class="flex items-center gap-2">
+                <span>客戶名稱：</span>
+                <input type="text" id="quoteCustomer" placeholder="請輸入客戶名稱" value="早安美而美（示範）" class="border-b border-black outline-none px-2 py-0.5 w-60 bg-transparent font-bold">
+              </div>
+              <div class="flex items-center gap-2">
+                <span>日期：</span>
+                <input type="date" id="quoteDate" class="border-b border-black outline-none px-2 py-0.5 bg-transparent font-bold">
+              </div>
+            </div>
+          </div>
+
+          <!-- Dual Column Table (Rows 1-15 & 16-30) -->
+          <div class="overflow-x-auto flex-1 flex flex-col justify-center">
+            <table class="w-full text-xs print-table border-collapse border border-black text-center">
+              <thead>
+                <tr class="bg-slate-100 font-bold border-b border-black">
+                  <th style="width: 5.5%;" class="border border-black py-1">項目</th>
+                  <th style="width: 22.5%;" class="border border-black py-1 text-left pl-2">品名</th>
+                  <th style="width: 7%;" class="border border-black py-1">數量</th>
+                  <th style="width: 7.5%;" class="border border-black py-1">單價</th>
+                  <th style="width: 7.5%;" class="border border-black py-1">金額</th>
+                  <th style="width: 5.5%;" class="border border-black py-1 bg-slate-200">項目</th>
+                  <th style="width: 22.5%;" class="border border-black py-1 text-left pl-2 bg-slate-200">品名</th>
+                  <th style="width: 7%;" class="border border-black py-1 bg-slate-200">數量</th>
+                  <th style="width: 7.5%;" class="border border-black py-1 bg-slate-200">單價</th>
+                  <th style="width: 7.5%;" class="border border-black py-1 bg-slate-200">金額</th>
+                </tr>
+              </thead>
+              <tbody id="quoteTableBody">
+                <!-- 15 Rows dynamically generated with 1-15 on left and 16-30 on right -->
+              </tbody>
+              <tfoot>
+                <tr class="border-t-2 border-black font-bold">
+                  <td colspan="6" class="border border-black py-1 px-2 text-left">
+                    <div class="flex items-center gap-2">
+                      <span class="font-bold">備註：</span>
+                      <input type="text" id="quoteRemark" placeholder="如需送貨備註或匯款資訊請在此註明" class="w-full border-b border-dashed border-black/40 outline-none px-1 bg-transparent text-xs">
+                    </div>
+                  </td>
+                  <td colspan="2" class="border border-black py-1 text-center bg-slate-100 font-bold text-xs sm:text-sm">
+                    合計
+                  </td>
+                  <td colspan="2" class="border border-black py-1 px-2 text-right bg-amber-50/50 font-black text-xs sm:text-sm text-rose-700">
+                    NT$ <span id="quoteTotalDisplay">0</span>
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+
+          <!-- Total in words & Signature -->
+          <div class="mt-1 text-xs flex justify-between items-center text-slate-600 print:text-black footer-summary-row">
+            <div>
+              <span>大寫金額：</span>
+              <span id="quoteTotalWords" class="font-semibold text-slate-800 print:text-black underline">零元整</span>
+            </div>
+            <div class="flex gap-6 sm:gap-8">
+              <span>經辦人：_______________</span>
+              <span>客戶簽收：_______________</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Printable Quotation Form Block 2 (下半聯：客戶收執聯，與上半聯比例 100% 相同) -->
+        <div id="quoteDoubleCopy" class="hidden">
+          <div class="cut-line"></div>
+          
+          <!-- Exact Duplicate for Client copy with identical dimensions and classes -->
+          <div class="quotation-form-block quote-half-sheet max-w-[950px] mx-auto text-black">
+            <!-- Header Area -->
+            <div class="border-b-2 border-black pb-1.5 mb-1">
+              <div class="flex justify-between items-start">
+                <div class="space-y-0.5">
+                  <div class="flex items-baseline gap-3">
+                    <h2 class="text-xl sm:text-2xl font-black tracking-wider text-black font-serif store-name-text header-store-title">
+                      芳喜蓁站手工坊
+                    </h2>
+                    <span class="text-xs sm:text-sm font-semibold tracking-wide">
+                      統一編號：<span class="store-tax-text">40713530</span>
+                    </span>
+                    <span class="text-xs border border-black px-1.5 py-0.2 rounded font-bold bg-slate-50">第二聯：客戶收執聯</span>
+                  </div>
+                  <div class="text-xs font-medium space-y-0.5 header-info-text">
+                    <p>地址：<span class="store-address-text">台南市安平區安平路446巷27弄23號1樓</span></p>
+                    <div class="flex flex-wrap gap-x-5 gap-y-0.5 pt-0.5">
+                      <span>姓名：<span class="store-contact1-name">許芳瑜</span>　電話：<span class="store-contact1-phone">0931-310-660</span></span>
+                      <span>姓名：<span class="store-contact2-name">許銥庭</span>　電話：<span class="store-contact2-phone">0989-730-103</span></span>
+                    </div>
+                  </div>
+                </div>
+                <div class="text-right">
+                  <div class="inline-block border-2 border-black px-5 py-0.5 text-xl sm:text-2xl font-black tracking-widest bg-slate-50 font-serif header-doc-title">
+                    估價單
+                  </div>
+                </div>
+              </div>
+
+              <!-- Customer & Date Row -->
+              <div class="mt-1 pt-1 border-t border-black flex justify-between items-center text-xs sm:text-sm font-semibold customer-date-row">
+                <div class="flex items-center gap-2">
+                  <span>客戶名稱：</span>
+                  <span id="quoteCustomerCopy" class="border-b border-black px-2 py-0.5 w-60 inline-block font-bold"></span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span>日期：</span>
+                  <span id="quoteDateCopy" class="border-b border-black px-2 py-0.5 inline-block font-bold"></span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Duplicate table: exact same column widths -->
+            <div class="overflow-x-auto flex-1 flex flex-col justify-center">
+              <table class="w-full text-xs print-table border-collapse border border-black text-center">
+                <thead>
+                  <tr class="bg-slate-100 font-bold border-b border-black">
+                    <th style="width: 5.5%;" class="border border-black py-1">項目</th>
+                    <th style="width: 22.5%;" class="border border-black py-1 text-left pl-2">品名</th>
+                    <th style="width: 7%;" class="border border-black py-1">數量</th>
+                    <th style="width: 7.5%;" class="border border-black py-1">單價</th>
+                    <th style="width: 7.5%;" class="border border-black py-1">金額</th>
+                    <th style="width: 5.5%;" class="border border-black py-1 bg-slate-200">項目</th>
+                    <th style="width: 22.5%;" class="border border-black py-1 text-left pl-2 bg-slate-200">品名</th>
+                    <th style="width: 7%;" class="border border-black py-1 bg-slate-200">數量</th>
+                    <th style="width: 7.5%;" class="border border-black py-1 bg-slate-200">單價</th>
+                    <th style="width: 7.5%;" class="border border-black py-1 bg-slate-200">金額</th>
+                  </tr>
+                </thead>
+                <tbody id="quoteTableCopyBody"></tbody>
+                <tfoot>
+                  <tr class="border-t-2 border-black font-bold">
+                    <td colspan="6" class="border border-black py-1 px-2 text-left">
+                      <span class="font-bold">備註：</span>
+                      <span id="quoteRemarkCopy"></span>
+                    </td>
+                    <td colspan="2" class="border border-black py-1 text-center bg-slate-100 font-bold text-xs sm:text-sm">
+                      合計
+                    </td>
+                    <td colspan="2" class="border border-black py-1 px-2 text-right bg-amber-50 font-black text-xs sm:text-sm text-rose-700">
+                      NT$ <span id="quoteTotalCopyDisplay">0</span>
+                    </td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+
+            <div class="mt-1 text-xs flex justify-between items-center footer-summary-row">
+              <div>
+                <span>大寫金額：</span>
+                <span id="quoteTotalWordsCopy" class="font-semibold underline">零元整</span>
+              </div>
+              <div class="flex gap-6 sm:gap-8">
+                <span>經辦人：_______________</span>
+                <span>客戶簽收：_______________</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+
+    <!-- TAB 2: 庫存管理 (進貨、出貨統計與即時數量) -->
+    <div id="tabInventory" class="space-y-6 hidden">
+      <!-- Top 5 Summary Metric Cards -->
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between">
+          <span class="text-xs font-bold text-slate-500 flex items-center gap-1">
+            <span>📦</span> 品項總數
+          </span>
+          <div class="mt-2 flex items-baseline justify-between">
+            <span id="invStatTotalItems" class="text-2xl font-black text-slate-800">0</span>
+            <span class="text-xs text-slate-400">種原料</span>
+          </div>
+        </div>
+
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between">
+          <span class="text-xs font-bold text-slate-500 flex items-center gap-1">
+            <span>📊</span> 目前在庫總數
+          </span>
+          <div class="mt-2 flex items-baseline justify-between">
+            <span id="invStatTotalStock" class="text-2xl font-black text-amber-700">0</span>
+            <span class="text-xs text-slate-400">件/包/箱</span>
+          </div>
+        </div>
+
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between">
+          <span class="text-xs font-bold text-emerald-600 flex items-center gap-1">
+            <span>📥</span> 累計進貨總量
+          </span>
+          <div class="mt-2 flex items-baseline justify-between">
+            <span id="invStatTotalIn" class="text-2xl font-black text-emerald-700">+0</span>
+            <span class="text-xs text-emerald-500">入庫</span>
+          </div>
+        </div>
+
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between">
+          <span class="text-xs font-bold text-rose-600 flex items-center gap-1">
+            <span>📤</span> 累計出貨總量
+          </span>
+          <div class="mt-2 flex items-baseline justify-between">
+            <span id="invStatTotalOut" class="text-2xl font-black text-rose-700">-0</span>
+            <span class="text-xs text-rose-500">出庫</span>
+          </div>
+        </div>
+
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between col-span-2 sm:col-span-1">
+          <span class="text-xs font-bold text-amber-600 flex items-center gap-1">
+            <span>⚠️</span> 低庫存警戒
+          </span>
+          <div class="mt-2 flex items-baseline justify-between">
+            <span id="invStatLowStock" class="text-2xl font-black text-amber-600">0</span>
+            <button id="btnFilterLowStockQuick" class="text-xs text-amber-700 bg-amber-50 hover:bg-amber-100 px-2 py-0.5 rounded font-medium border border-amber-200 transition">
+              快速查看
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Inventory Main Panel -->
+      <div class="bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-200 space-y-5">
+        <!-- Action Toolbar -->
+        <div class="flex flex-wrap items-center justify-between gap-3 pb-2 border-b border-slate-100">
+          <!-- Left: Sub-view Switcher -->
+          <div class="inline-flex rounded-xl border border-slate-300 p-1 bg-slate-100 text-xs font-bold">
+            <button id="btnInvViewTable" class="px-3.5 py-1.5 rounded-lg bg-white text-slate-800 shadow-sm transition flex items-center gap-1.5">
+              <span>📊</span> 即時庫存統計表
+            </button>
+            <button id="btnInvViewLog" class="px-3.5 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition flex items-center gap-1.5">
+              <span>📜</span> 進出貨明細流水帳
+            </button>
+          </div>
+
+          <!-- Right: Action Buttons -->
+          <div class="flex flex-wrap items-center gap-2">
+            <button id="btnInvAddIn" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow">
+              <span>📥</span> 登記進貨
+            </button>
+            <button id="btnInvAddOut" class="px-3.5 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow">
+              <span>📤</span> 登記出貨
+            </button>
+            <button id="btnInvAdjust" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition border border-slate-300 flex items-center gap-1">
+              <span>⚖️</span> 盤點校正
+            </button>
+            <button id="btnInvExportStockCSV" class="px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-xl text-xs font-semibold transition border border-blue-200 flex items-center gap-1">
+              <span>📊</span> 匯出庫存表
+            </button>
+            <button id="btnInvExportLogCSV" class="px-3 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-xl text-xs font-semibold transition border border-indigo-200 flex items-center gap-1">
+              <span>📜</span> 匯出流水帳
+            </button>
+          </div>
+        </div>
+
+        <!-- Filter & Search Row -->
+        <div class="flex flex-wrap items-center gap-3">
+          <div class="relative flex-1 min-w-[200px]">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">🔍</span>
+            <input type="text" id="invSearchInput" placeholder="搜尋品名、編號或規格..." class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:bg-white focus:border-amber-600 outline-none transition">
+          </div>
+          <div class="flex items-center gap-2">
+            <label class="text-xs font-bold text-slate-500 whitespace-nowrap">庫存狀態：</label>
+            <select id="invStatusFilter" class="px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium focus:bg-white focus:border-amber-600 outline-none">
+              <option value="all">全部商品</option>
+              <option value="low">⚠️ 低庫存警戒 (≤ 5)</option>
+              <option value="out">❌ 已缺貨 (≤ 0)</option>
+              <option value="normal">✅ 正常充足庫存 (> 5)</option>
+            </select>
+          </div>
+          <span id="invCountBadge" class="text-xs bg-slate-100 text-slate-600 px-3 py-2 rounded-xl font-medium border border-slate-200 whitespace-nowrap">
+            共 0 項
+          </span>
+        </div>
+
+        <!-- Sub-View 1: Instant Stock Table -->
+        <div id="invTableWrapper" class="border border-slate-200 rounded-xl overflow-hidden shadow-inner">
+          <div class="max-h-[550px] overflow-y-auto custom-scrollbar">
+            <table class="w-full text-left text-sm">
+              <thead class="bg-slate-100 text-slate-700 font-bold sticky top-0 border-b border-slate-200 text-xs">
+                <tr>
+                  <th class="py-3 px-3 w-16 text-center">編號</th>
+                  <th class="py-3 px-4">品名</th>
+                  <th class="py-3 px-3 w-36">規格說明</th>
+                  <th class="py-3 px-3 w-24 text-right">參考單價</th>
+                  <th class="py-3 px-3 w-24 text-right text-emerald-700">累計進貨</th>
+                  <th class="py-3 px-3 w-24 text-right text-rose-700">累計出貨</th>
+                  <th class="py-3 px-4 w-28 text-right font-black">目前庫存</th>
+                  <th class="py-3 px-3 w-24 text-center">狀態</th>
+                  <th class="py-3 px-3 w-36 text-center">快捷操作</th>
+                </tr>
+              </thead>
+              <tbody id="invStockTableBody" class="divide-y divide-slate-100">
+                <!-- Dynamically rendered -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Sub-View 2: Transaction History Log -->
+        <div id="invLogWrapper" class="hidden border border-slate-200 rounded-xl overflow-hidden shadow-inner">
+          <div class="max-h-[550px] overflow-y-auto custom-scrollbar">
+            <table class="w-full text-left text-sm">
+              <thead class="bg-slate-100 text-slate-700 font-bold sticky top-0 border-b border-slate-200 text-xs">
+                <tr>
+                  <th class="py-3 px-3 w-28">異動類別</th>
+                  <th class="py-3 px-3 w-32">日期時間</th>
+                  <th class="py-3 px-4">品名</th>
+                  <th class="py-3 px-3 w-24 text-right">異動數量</th>
+                  <th class="py-3 px-3 w-28 text-right">異動後庫存</th>
+                  <th class="py-3 px-4 w-40">經手人 / 對象</th>
+                  <th class="py-3 px-4">備註事項</th>
+                  <th class="py-3 px-3 w-20 text-center">操作</th>
+                </tr>
+              </thead>
+              <tbody id="invLogTableBody" class="divide-y divide-slate-100">
+                <!-- Dynamically rendered -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- TAB 4: 價目表管理 (60+ 筆品項) -->
+    <div id="tabPrice" class="space-y-6 hidden">
+      <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+        <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+          <div>
+            <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+              <span>📋</span> 商品價目庫管理
+            </h2>
+            <p class="text-xs text-slate-500 mt-1">內建 1001 估價單價目表資料庫，支援即時搜尋、新增自訂商品、修改價格</p>
+          </div>
+
+          <div class="flex flex-wrap gap-2">
+            <button id="btnPriceAddModal" class="px-3.5 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1 shadow">
+              <span>➕</span> 新增品項
+            </button>
+            <button id="btnPriceReset" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-medium transition border border-slate-300">
+              <span>🔄</span> 重設為原廠預設
+            </button>
+            <button id="btnPriceExport" class="px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-xl text-xs font-medium transition border border-blue-200">
+              <span>📥</span> 匯出價目表 JSON
+            </button>
+          </div>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="mb-4 flex items-center gap-3">
+          <div class="relative flex-1">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">🔍</span>
+            <input type="text" id="priceSearchInput" placeholder="搜尋品名、編號或規格（例如：里肌、奶酥、5808）..." class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:bg-white focus:border-amber-600 outline-none transition">
+          </div>
+          <span id="priceCountBadge" class="text-xs bg-slate-100 text-slate-600 px-3 py-2 rounded-xl font-medium border border-slate-200 whitespace-nowrap">
+            共 0 項商品
+          </span>
+        </div>
+
+        <!-- Product Table -->
+        <div class="border border-slate-200 rounded-xl overflow-hidden shadow-inner">
+          <div class="max-h-[550px] overflow-y-auto custom-scrollbar">
+            <table class="w-full text-left text-sm">
+              <thead class="bg-slate-100 text-slate-700 font-bold sticky top-0 border-b border-slate-200">
+                <tr>
+                  <th class="py-3 px-4 w-20">編號</th>
+                  <th class="py-3 px-4">品名</th>
+                  <th class="py-3 px-4 w-28 text-right">單價 (NT$)</th>
+                  <th class="py-3 px-4">規格 / 包裝</th>
+                  <th class="py-3 px-4 w-28 text-center">操作</th>
+                </tr>
+              </thead>
+              <tbody id="priceListTableBody" class="divide-y divide-slate-100">
+                <!-- Dynamically rendered -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- TAB 4: 歷史單據記錄 -->
+    <div id="tabHistory" class="space-y-6 hidden">
+      <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+        <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+          <div>
+            <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+              <span>📁</span> 歷史單據記錄
+            </h2>
+            <p class="text-xs text-slate-500 mt-1">您儲存的所有估價單與收款單均保存在瀏覽器，可隨時調閱與重複列印</p>
+          </div>
+          <button id="btnClearAllHistory" class="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-lg text-xs font-medium border border-rose-200 transition">
+            清空所有歷史紀錄
+          </button>
+        </div>
+
+        <div id="historyEmptyState" class="text-center py-12 text-slate-400">
+          <div class="text-4xl mb-2">📄</div>
+          <p class="text-sm font-medium">目前尚無已儲存的單據</p>
+          <p class="text-xs mt-1">請在估價單或收款單頁面點擊「儲存單據」按鈕即可在此存檔</p>
+        </div>
+
+        <div id="historyTableContainer" class="hidden border border-slate-200 rounded-xl overflow-hidden">
+          <table class="w-full text-left text-sm">
+            <thead class="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
+              <tr>
+                <th class="py-3 px-4 w-28">單據種類</th>
+                <th class="py-3 px-4 w-32">開單日期</th>
+                <th class="py-3 px-4">客戶名稱</th>
+                <th class="py-3 px-4 w-28 text-center">品項數</th>
+                <th class="py-3 px-4 w-32 text-right">總金額</th>
+                <th class="py-3 px-4 w-36 text-center">操作</th>
+              </tr>
+            </thead>
+            <tbody id="historyListTableBody" class="divide-y divide-slate-100">
+              <!-- Dynamically rendered -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- TAB 5: 店家資料設定 -->
+    <div id="tabSettings" class="space-y-6 hidden">
+      <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 max-w-2xl mx-auto">
+        <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2 mb-2">
+          <span>⚙️</span> 店家基本資料與聯絡資訊
+        </h2>
+        <p class="text-xs text-slate-500 mb-6">修改後將會同步更新於所有估價單與收款單抬頭與列印輸出</p>
+
+        <form id="settingsForm" class="space-y-4">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">商店 / 工坊名稱</label>
+            <input type="text" id="setStoreName" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:border-amber-600 outline-none">
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">統一編號</label>
+              <input type="text" id="setStoreTax" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:border-amber-600 outline-none">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">營業地址</label>
+              <input type="text" id="setStoreAddress" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:border-amber-600 outline-none">
+            </div>
+          </div>
+
+          <div class="border-t border-slate-200 pt-4 mt-2">
+            <h3 class="text-sm font-bold text-amber-900 mb-2">估價單聯絡人設定</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs text-slate-600 mb-1">聯絡人 1 姓名</label>
+                <input type="text" id="setContact1Name" class="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-sm">
+              </div>
+              <div>
+                <label class="block text-xs text-slate-600 mb-1">聯絡人 1 電話</label>
+                <input type="text" id="setContact1Phone" class="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-sm">
+              </div>
+              <div>
+                <label class="block text-xs text-slate-600 mb-1">聯絡人 2 姓名</label>
+                <input type="text" id="setContact2Name" class="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-sm">
+              </div>
+              <div>
+                <label class="block text-xs text-slate-600 mb-1">聯絡人 2 電話</label>
+                <input type="text" id="setContact2Phone" class="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-sm">
+              </div>
+            </div>
+          </div>
+
+          
+          </div>
+
+          <div class="pt-4 flex justify-end gap-3">
+            <button type="button" id="btnSettingsReset" class="px-4 py-2 border border-slate-300 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100">
+              回復原始預設
+            </button>
+            <button type="submit" class="px-6 py-2 bg-amber-700 hover:bg-amber-800 text-white rounded-xl text-xs font-bold shadow">
+              儲存店家資料
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Modal for Adding/Editing Price Item -->
+  <div id="priceModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200">
+      <h3 id="priceModalTitle" class="text-lg font-bold text-slate-800 mb-4">新增商品品項</h3>
+      <form id="priceItemForm" class="space-y-4">
+        <input type="hidden" id="editPriceIndex" value="-1">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">品名 *</label>
+          <input type="text" id="modalItemName" required placeholder="例如：里肌肉排" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:border-amber-600 outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">單價 (NT$) *</label>
+          <input type="number" id="modalItemPrice" required min="0" placeholder="例如：200" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:border-amber-600 outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">商品編號 / 代碼</label>
+          <input type="text" id="modalItemCode" placeholder="例如：999" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:border-amber-600 outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">規格 / 重量說明</label>
+          <input type="text" id="modalItemSpec" placeholder="例如：1300克、一箱(26片)" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:border-amber-600 outline-none">
+        </div>
+        <div class="flex justify-end gap-3 pt-3">
+          <button type="button" id="btnPriceModalClose" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl border border-slate-300">
+            取消
+          </button>
+          <button type="submit" class="px-5 py-2 text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 rounded-xl shadow">
+            確認儲存
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Shared Autocomplete Datalist -->
+  <datalist id="productListDatalist">
+    <!-- Populated by JS -->
+  </datalist>
+
+  <!-- Modal: 登記進貨 -->
+  <div id="modalInvIn" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-bold text-emerald-800 flex items-center gap-2">
+          <span>📥</span> 登記進貨入庫
+        </h3>
+        <button type="button" id="btnModalInvInClose" class="text-slate-400 hover:text-slate-600 text-lg">✕</button>
+      </div>
+      <form id="formInvIn" class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">進貨商品品名 *</label>
+          <input type="text" list="productListDatalist" id="invInName" required placeholder="請選擇或輸入品名" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:border-emerald-600 outline-none">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">進貨數量 *</label>
+            <input type="number" id="invInQty" required min="1" step="any" placeholder="例如：20" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:border-emerald-600 outline-none font-bold">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">進貨日期 *</label>
+            <input type="date" id="invInDate" required class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:border-emerald-600 outline-none">
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">供應商 / 進貨來源</label>
+          <input type="text" id="invInSupplier" placeholder="例如：大昌食品、肉品批發" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:border-emerald-600 outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">備註說明</label>
+          <input type="text" id="invInRemark" placeholder="如批號、效期或備註" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:border-emerald-600 outline-none">
+        </div>
+        <div class="flex justify-end gap-3 pt-3">
+          <button type="button" id="btnModalInvInCancel" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl border border-slate-300">
+            取消
+          </button>
+          <button type="submit" class="px-5 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow">
+            確認入庫
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: 登記出貨 -->
+  <div id="modalInvOut" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-bold text-rose-800 flex items-center gap-2">
+          <span>📤</span> 登記出貨出庫
+        </h3>
+        <button type="button" id="btnModalInvOutClose" class="text-slate-400 hover:text-slate-600 text-lg">✕</button>
+      </div>
+      <form id="formInvOut" class="space-y-4">
+        <div>
+          <div class="flex justify-between items-center mb-1">
+            <label class="text-xs font-bold text-slate-700">出貨商品品名 *</label>
+            <span id="invOutCurStockLabel" class="text-xs text-slate-500 font-medium">現有庫存：-</span>
+          </div>
+          <input type="text" list="productListDatalist" id="invOutName" required placeholder="請選擇或輸入品名" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:border-rose-600 outline-none">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">出貨數量 *</label>
+            <input type="number" id="invOutQty" required min="1" step="any" placeholder="例如：5" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:border-rose-600 outline-none font-bold">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">出貨日期 *</label>
+            <input type="date" id="invOutDate" required class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:border-rose-600 outline-none">
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">客戶名稱 / 出貨對象</label>
+          <input type="text" id="invOutCustomer" placeholder="例如：早安美而美、門市零售" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:border-rose-600 outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">出貨備註</label>
+          <input type="text" id="invOutRemark" placeholder="如單據編號或配送備註" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:border-rose-600 outline-none">
+        </div>
+        <div class="flex justify-end gap-3 pt-3">
+          <button type="button" id="btnModalInvOutCancel" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl border border-slate-300">
+            取消
+          </button>
+          <button type="submit" class="px-5 py-2 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-xl shadow">
+            確認出庫
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: 盤點校正 -->
+  <div id="modalInvAdjust" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+          <span>⚖️</span> 庫存盤點與校正
+        </h3>
+        <button type="button" id="btnModalInvAdjustClose" class="text-slate-400 hover:text-slate-600 text-lg">✕</button>
+      </div>
+      <form id="formInvAdjust" class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">盤點品項 *</label>
+          <input type="text" list="productListDatalist" id="invAdjName" required placeholder="請選擇或輸入品名" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:border-slate-800 outline-none">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs text-slate-500 mb-1">帳面現有庫存</label>
+            <input type="text" id="invAdjOldStock" readonly value="-" class="w-full px-3 py-2 bg-slate-100 border border-slate-200 rounded-xl text-sm font-semibold text-slate-600 outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">實際盤點數量 *</label>
+            <input type="number" id="invAdjNewStock" required min="0" step="any" placeholder="輸入實盤數" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:border-slate-800 outline-none font-bold">
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">校正原因 / 說明</label>
+          <input type="text" id="invAdjRemark" placeholder="例如：月末例行實體盤點、報損校正" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:border-slate-800 outline-none">
+        </div>
+        <div class="flex justify-end gap-3 pt-3">
+          <button type="button" id="btnModalInvAdjustCancel" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl border border-slate-300">
+            取消
+          </button>
+          <button type="submit" class="px-5 py-2 text-xs font-bold text-white bg-slate-800 hover:bg-slate-900 rounded-xl shadow">
+            確認校正
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <footer class="no-print bg-white border-t border-slate-200 py-4 text-center text-xs text-slate-500">
+    <p>芳喜蓁站手工坊 估價單與庫存管理系統 ｜ 統一編號：40713530 ｜ 台南市安平區安平路446巷27弄23號1樓</p>
+  </footer>
+
+  <script>
+    // --- Initial Master Price Data from 1001新估價單.xlsx ---
+    const DEFAULT_PRICE_LIST = [
+      { name: "里肌肉", price: 300, code: "999", spec: "1300克" },
+      { name: "里肌肉(23片)", price: 300, code: "998", spec: "1300克" },
+      { name: "里肌肉(一公斤)", price: 220, code: "997", spec: "1000公克" },
+      { name: "豬柳(袋裝)", price: 190, code: "996", spec: "1公斤(袋裝)" },
+      { name: "細豬柳(袋裝)", price: 190, code: "995", spec: "1公斤(袋裝)" },
+      { name: "豬柳(盒裝)", price: 95, code: "994", spec: "420克(盒裝)" },
+      { name: "炸豬排", price: 200, code: "993", spec: "12片" },
+      { name: "炸豬排(14片)", price: 200, code: "992", spec: "14片" },
+      { name: "蛋餅皮", price: 65, code: "991", spec: "30片" },
+      { name: "漢堡肉", price: 200, code: "990", spec: "35片" },
+      { name: "花枝蝦排", price: 170, code: "989", spec: "15片" },
+      { name: "月亮蝦餅", price: 220, code: "988", spec: "10片" },
+      { name: "咖啡粉", price: 200, code: "987", spec: "930克" },
+      { name: "巧克力粉", price: 200, code: "986", spec: "910克" },
+      { name: "紐奧良辣雞堡", price: 150, code: "985", spec: "15片" },
+      { name: "紐奧良辣雞腿排", price: 180, code: "984", spec: "10片" },
+      { name: "麥香紅茶", price: 620, code: "983", spec: "一箱（70包）" },
+      { name: "錫蘭紅茶", price: 950, code: "982", spec: "一箱（150包）" },
+      { name: "奶精粉", price: 90, code: "981", spec: "600克(1又2/3罐奶精)" },
+      { name: "山葵醬", price: 55, code: "980", spec: "500克" },
+      { name: "特調番茄醬", price: 55, code: "979", spec: "550克" },
+      { name: "沙拉", price: 220, code: "978", spec: "3公斤" },
+      { name: "蘿蔔糕", price: 55, code: "977", spec: "10片" },
+      { name: "薯泥粉", price: 100, code: "976", spec: "500克" },
+      { name: "烏醋醬", price: 40, code: "975", spec: "500克" },
+      { name: "柴魚高湯粉", price: 250, code: "974", spec: "1公斤" },
+      { name: "5808", price: 410, code: "973", spec: "1公斤" },
+      { name: "小鬆餅", price: 330, code: "972", spec: "一箱(30個)" },
+      { name: "奶酥", price: 110, code: "971", spec: "525克" },
+      { name: "香蒜", price: 100, code: "970", spec: "600克" },
+      { name: "海鮮配料", price: 95, code: "969", spec: "500克" },
+      { name: "藍莓乳酪", price: 160, code: "968", spec: "500克" },
+      { name: "千島醬", price: 55, code: "967", spec: "500克" },
+      { name: "日式燒肉", price: 180, code: "966", spec: "700克" },
+      { name: "陽光沙拉", price: 55, code: "965", spec: "300克" },
+      { name: "丼飯醬", price: 75, code: "964", spec: "600克" },
+      { name: "椒麻醬", price: 140, code: "963", spec: "500公克" },
+      { name: "金匠椰香奶酥", price: 380, code: "962", spec: "1.8公斤" },
+      { name: "鱈魚", price: 520, code: "961", spec: "一箱(26片/65克)" },
+      { name: "牛堡醬", price: 55, code: "960", spec: "500克" },
+      { name: "美式牛肉堡", price: 180, code: "959", spec: "一包(10片/80克)" },
+      { name: "三杯醬", price: 150, code: "958", spec: "一包(20包*80克)" },
+      { name: "熱狗", price: 135, code: "957", spec: "50支" },
+      { name: "牛角(已含5％稅金)", price: 113, code: "956", spec: "6個" },
+      { name: "核桃", price: 750, code: "955", spec: "" },
+      { name: "烘烤蜜核桃", price: 430, code: "954", spec: "1200克" },
+      { name: "原味卡拉", price: 200, code: "953", spec: "1公斤" },
+      { name: "紅龍辣卡", price: 200, code: "952", spec: "1公斤" },
+      { name: "富統培根", price: 240, code: "951", spec: "1公斤" },
+      { name: "貝果(已含5％稅金)", price: 67, code: "950", spec: "4個" },
+      { name: "丹麥(已含5％稅金)", price: 74, code: "949", spec: "" },
+      { name: "佛卡夏(已含5％稅金)", price: 101, code: "948", spec: "8個" },
+      { name: "法國麵包(已含5％稅金)", price: 76, code: "947", spec: "6個" },
+      { name: "特級大火腿", price: 410, code: "946", spec: "3公斤" },
+      { name: "金匠花生醬", price: 420, code: "945", spec: "3公斤" },
+      { name: "鮪魚", price: 910, code: "944", spec: "一箱" },
+      { name: "白蛋餅皮", price: 65, code: "943", spec: "30片" },
+      { name: "風味瑪琪琳(奶油)", price: 480, code: "942", spec: "2.6公斤" },
+      { name: "安美培根", price: 220, code: "941", spec: "1公斤" },
+      { name: "特調番茄醬", price: 320, code: "940", spec: "" }
+    ];
+
+    const QUICK_TAG_NAMES = [
+      "里肌肉", "炸豬排", "豬柳", "漢堡肉", "蛋餅皮", "花枝蝦排", "月亮蝦餅", 
+      "紐奧良辣雞堡", "蘿蔔糕", "日式燒肉", "特調番茄醬", "千島醬", "沙拉", 
+      "奶酥", "香蒜", "錫蘭紅茶", "麥香紅茶", "咖啡粉", "小鬆餅", "5808", "柴魚高湯粉"
+    ];
+
+    const DEFAULT_STORE_CONFIG = {
+      storeName: "芳喜蓁站手工坊",
+      taxId: "40713530",
+      address: "台南市安平區安平路446巷27弄23號1樓",
+      contact1Name: "許芳瑜",
+      contact1Phone: "0931-310-660",
+      contact2Name: "許銥庭",
+      contact2Phone: "0989-730-103",
+    };
+
+    // State Variables
+    let currentPriceList = [];
+    let storeConfig = {};
+    let savedDocuments = [];
+    let quoteIsDoubleLayout = true;
+
+    // Toast Notification Utility
+    function showToast(message, isSuccess = true) {
+      const toast = document.getElementById("toast");
+      const msg = document.getElementById("toastMsg");
+      const icon = document.getElementById("toastIcon");
+      msg.textContent = message;
+      icon.textContent = isSuccess ? "✅" : "⚠️";
+      toast.classList.remove("translate-y-[-100px]", "opacity-0", "pointer-events-none");
+      toast.classList.add("translate-y-0", "opacity-100");
+      setTimeout(() => {
+        toast.classList.remove("translate-y-0", "opacity-100");
+        toast.classList.add("translate-y-[-100px]", "opacity-0", "pointer-events-none");
+      }, 2500);
+    }
+
+    // Number to Traditional Chinese Capital Currency
+    function numberToChineseWords(n) {
+      if (isNaN(n) || n === 0) return "零元整";
+      const fraction = ['角', '分'];
+      const digit = ['零', '壹', '貳', '參', '肆', '伍', '陸', '柒', '捌', '玖'];
+      const unit = [
+        ['元', '萬', '億'],
+        ['', '拾', '佰', '仟']
+      ];
+      let num = Math.abs(n);
+      let s = '';
+      for (let i = 0; i < unit[0].length && num > 0; i++) {
+        let p = '';
+        for (let j = 0; j < unit[1].length && num > 0; j++) {
+          p = digit[num % 10] + unit[1][j] + p;
+          num = Math.floor(num / 10);
+        }
+        s = p.replace(/(零.)*零$/, '').replace(/^$/, '零') + unit[0][i] + s;
+      }
+      return s.replace(/(零.)*零元/, '元')
+              .replace(/(零.)+/g, '零')
+              .replace(/^整$/, '零元整') + "整";
+    }
+
+
+    // --- INVENTORY MANAGEMENT DATA & LOGIC ---
+    let inventoryTransactions = [];
+    let currentInvView = 'table'; // 'table' or 'log'
+
+    function initInventoryData() {
+      try {
+        const savedTx = localStorage.getItem("fxg_inventory_tx");
+        if (savedTx) {
+          inventoryTransactions = JSON.parse(savedTx);
+        } else {
+          // Seed realistic initial stock for all products in DEFAULT_PRICE_LIST
+          const today = new Date().toISOString().split('T')[0];
+          inventoryTransactions = [];
+          
+          DEFAULT_PRICE_LIST.forEach((item, index) => {
+            // High demand items get 30-50, others get 15-25
+            let initialIn = 25;
+            let initialOut = 5;
+            if (["里肌肉", "炸豬排", "蛋餅皮", "漢堡肉", "花枝蝦排", "錫蘭紅茶", "沙拉"].includes(item.name)) {
+              initialIn = 50;
+              initialOut = 12;
+            } else if (["小鬆餅", "5808", "奶酥", "香蒜", "特調番茄醬"].includes(item.name)) {
+              initialIn = 30;
+              initialOut = 8;
+            } else if (index % 7 === 0) {
+              initialIn = 8;
+              initialOut = 5; // Low stock sample
+            }
+
+            // Inward record
+            inventoryTransactions.push({
+              id: "TX_INIT_IN_" + (index + 1),
+              type: "in",
+              itemName: item.name,
+              qty: initialIn,
+              delta: initialIn,
+              target: "原廠初始建庫 / 供應商",
+              remark: "系統初始盤點入庫",
+              date: today,
+              createdAt: new Date(Date.now() - 86400000 * 2).toISOString()
+            });
+
+            // Outward record
+            if (initialOut > 0) {
+              inventoryTransactions.push({
+                id: "TX_INIT_OUT_" + (index + 1),
+                type: "out",
+                itemName: item.name,
+                qty: initialOut,
+                delta: -initialOut,
+                target: "早安美而美 / 門市出貨",
+                remark: "本期日常訂單出貨",
+                date: today,
+                createdAt: new Date(Date.now() - 86400000).toISOString()
+              });
+            }
+          });
+          saveInventoryTransactions();
+        }
+      } catch (e) {
+        inventoryTransactions = [];
+      }
+    }
+
+    function saveInventoryTransactions() {
+      try {
+        localStorage.setItem("fxg_inventory_tx", JSON.stringify(inventoryTransactions));
+      } catch (e) {
+        console.error("Failed to save inventory transactions:", e);
+      }
+    }
+
+    function getItemStockStats(itemName) {
+      let inQty = 0;
+      let outQty = 0;
+      let stock = 0;
+
+      inventoryTransactions.forEach(tx => {
+        if (tx.itemName === itemName) {
+          if (tx.type === 'in') inQty += tx.qty;
+          else if (tx.type === 'out') outQty += tx.qty;
+          else if (tx.type === 'adjust') {
+            if (tx.delta >= 0) inQty += tx.delta;
+            else outQty += Math.abs(tx.delta);
+          }
+          stock += tx.delta;
+        }
+      });
+
+      return { inQty, outQty, stock };
+    }
+
+    function addStockTransaction(type, itemName, qty, target = "", remark = "", date = "") {
+      const numQty = parseFloat(qty);
+      if (isNaN(numQty) || numQty <= 0) return false;
+
+      const txDate = date || new Date().toISOString().split('T')[0];
+      let delta = 0;
+
+      if (type === 'in') delta = numQty;
+      else if (type === 'out') delta = -numQty;
+
+      const currentStats = getItemStockStats(itemName);
+      const afterStock = currentStats.stock + delta;
+
+      const tx = {
+        id: "TX_" + Date.now() + "_" + Math.floor(Math.random() * 1000),
+        type: type,
+        itemName: itemName,
+        qty: numQty,
+        delta: delta,
+        afterStock: afterStock,
+        target: target || (type === 'in' ? '供應商進貨' : '客戶出貨'),
+        remark: remark || '',
+        date: txDate,
+        createdAt: new Date().toISOString()
+      };
+
+      inventoryTransactions.unshift(tx);
+      saveInventoryTransactions();
+      renderInventoryDashboard();
+      return true;
+    }
+
+    function addStockAdjustment(itemName, newStock, remark = "") {
+      const targetStock = parseFloat(newStock);
+      if (isNaN(targetStock)) return false;
+
+      const currentStats = getItemStockStats(itemName);
+      const delta = targetStock - currentStats.stock;
+      const today = new Date().toISOString().split('T')[0];
+
+      const tx = {
+        id: "TX_ADJ_" + Date.now(),
+        type: "adjust",
+        itemName: itemName,
+        qty: Math.abs(delta),
+        delta: delta,
+        afterStock: targetStock,
+        target: "實體庫存盤點",
+        remark: remark || "月末例行盤點校正",
+        date: today,
+        createdAt: new Date().toISOString()
+      };
+
+      inventoryTransactions.unshift(tx);
+      saveInventoryTransactions();
+      renderInventoryDashboard();
+      return true;
+    }
+
+    function deleteStockTransaction(txId) {
+      const idx = inventoryTransactions.findIndex(t => t.id === txId);
+      if (idx !== -1) {
+        const item = inventoryTransactions[idx];
+        inventoryTransactions.splice(idx, 1);
+        saveInventoryTransactions();
+        renderInventoryDashboard();
+        showToast(`已撤銷 ${item.itemName} 的 ${item.type === 'in' ? '進貨' : '出貨'} 記錄`);
+      }
+    }
+
+    function renderInventoryDashboard() {
+      // 1. Calculate Top 5 Stat Metrics
+      let totalStock = 0;
+      let totalIn = 0;
+      let totalOut = 0;
+      let lowStockCount = 0;
+
+      currentPriceList.forEach(item => {
+        const stats = getItemStockStats(item.name);
+        totalStock += stats.stock;
+        totalIn += stats.inQty;
+        totalOut += stats.outQty;
+        if (stats.stock <= 5) lowStockCount++;
+      });
+
+      document.getElementById("invStatTotalItems").textContent = currentPriceList.length;
+      document.getElementById("invStatTotalStock").textContent = totalStock.toLocaleString();
+      document.getElementById("invStatTotalIn").textContent = "+" + totalIn.toLocaleString();
+      document.getElementById("invStatTotalOut").textContent = "-" + totalOut.toLocaleString();
+      document.getElementById("invStatLowStock").textContent = lowStockCount;
+
+      // 2. Render Active View
+      const searchVal = document.getElementById("invSearchInput").value;
+      const statusFilter = document.getElementById("invStatusFilter").value;
+      renderInventoryTable(searchVal, statusFilter);
+      renderInventoryLog(searchVal);
+    }
+
+    function renderInventoryTable(filterText = "", statusFilter = "all") {
+      const tbody = document.getElementById("invStockTableBody");
+      tbody.innerHTML = "";
+
+      const normalizedFilter = filterText.toLowerCase().trim();
+      const filtered = currentPriceList.filter(item => {
+        const stats = getItemStockStats(item.name);
+        
+        // Match Search query
+        const matchSearch = !normalizedFilter || 
+          (item.name && item.name.toLowerCase().includes(normalizedFilter)) ||
+          (item.code && item.code.toLowerCase().includes(normalizedFilter)) ||
+          (item.spec && item.spec.toLowerCase().includes(normalizedFilter));
+
+        if (!matchSearch) return false;
+
+        // Match Status query
+        if (statusFilter === 'low') return stats.stock > 0 && stats.stock <= 5;
+        if (statusFilter === 'out') return stats.stock <= 0;
+        if (statusFilter === 'normal') return stats.stock > 5;
+        return true;
+      });
+
+      document.getElementById("invCountBadge").textContent = `顯示 ${filtered.length} / 共 ${currentPriceList.length} 項`;
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="9" class="py-8 text-center text-slate-400">查無符合條件的庫存商品</td></tr>`;
+        return;
+      }
+
+      filtered.forEach(item => {
+        const stats = getItemStockStats(item.name);
+        const tr = document.createElement("tr");
+        tr.className = "hover:bg-slate-50 transition";
+
+        let statusBadge = "";
+        let stockColorClass = "text-emerald-700 font-black";
+
+        if (stats.stock <= 0) {
+          statusBadge = `<span class="px-2 py-0.5 rounded text-xs font-bold bg-rose-100 text-rose-700">缺貨中</span>`;
+          stockColorClass = "text-rose-600 font-black";
+        } else if (stats.stock <= 5) {
+          statusBadge = `<span class="px-2 py-0.5 rounded text-xs font-bold bg-amber-100 text-amber-800">⚠️ 偏低</span>`;
+          stockColorClass = "text-amber-600 font-black";
+        } else {
+          statusBadge = `<span class="px-2 py-0.5 rounded text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">充足以</span>`;
+        }
+
+        tr.innerHTML = `
+          <td class="py-2.5 px-3 text-center font-mono text-xs text-slate-400 font-bold">${item.code || '-'}</td>
+          <td class="py-2.5 px-4 font-bold text-slate-800">${item.name}</td>
+          <td class="py-2.5 px-3 text-xs text-slate-500">${item.spec || '-'}</td>
+          <td class="py-2.5 px-3 text-right text-xs text-slate-600">NT$ ${item.price.toLocaleString()}</td>
+          <td class="py-2.5 px-3 text-right font-medium text-emerald-600">+${stats.inQty.toLocaleString()}</td>
+          <td class="py-2.5 px-3 text-right font-medium text-rose-600">-${stats.outQty.toLocaleString()}</td>
+          <td class="py-2.5 px-4 text-right text-base ${stockColorClass}">${stats.stock.toLocaleString()}</td>
+          <td class="py-2.5 px-3 text-center">${statusBadge}</td>
+          <td class="py-2.5 px-3 text-center space-x-1">
+            <button class="btn-inv-row-in text-xs bg-emerald-50 hover:bg-emerald-100 text-emerald-700 px-2 py-1 rounded font-bold border border-emerald-200 transition" data-name="${item.name}">+進貨</button>
+            <button class="btn-inv-row-out text-xs bg-rose-50 hover:bg-rose-100 text-rose-700 px-2 py-1 rounded font-bold border border-rose-200 transition" data-name="${item.name}">-出貨</button>
+            <button class="btn-inv-row-adj text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-1.5 py-1 rounded font-semibold border border-slate-300 transition" data-name="${item.name}">盤點</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      // Bind row action buttons
+      tbody.querySelectorAll(".btn-inv-row-in").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const name = btn.getAttribute("data-name");
+          openInvInModal(name);
+        });
+      });
+      tbody.querySelectorAll(".btn-inv-row-out").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const name = btn.getAttribute("data-name");
+          openInvOutModal(name);
+        });
+      });
+      tbody.querySelectorAll(".btn-inv-row-adj").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const name = btn.getAttribute("data-name");
+          openInvAdjustModal(name);
+        });
+      });
+    }
+
+    function renderInventoryLog(filterText = "") {
+      const tbody = document.getElementById("invLogTableBody");
+      tbody.innerHTML = "";
+
+      const normalizedFilter = filterText.toLowerCase().trim();
+      const filtered = inventoryTransactions.filter(tx => {
+        if (!normalizedFilter) return true;
+        return (tx.itemName && tx.itemName.toLowerCase().includes(normalizedFilter)) ||
+               (tx.target && tx.target.toLowerCase().includes(normalizedFilter)) ||
+               (tx.remark && tx.remark.toLowerCase().includes(normalizedFilter));
+      });
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" class="py-8 text-center text-slate-400">目前尚無異動流水紀錄</td></tr>`;
+        return;
+      }
+
+      filtered.forEach(tx => {
+        const tr = document.createElement("tr");
+        tr.className = "hover:bg-slate-50 transition text-xs";
+
+        let typeBadge = "";
+        let qtyDisplay = "";
+
+        if (tx.type === 'in') {
+          typeBadge = `<span class="px-2 py-0.5 rounded font-bold bg-emerald-100 text-emerald-800">📥 進貨入庫</span>`;
+          qtyDisplay = `<span class="font-bold text-emerald-700 text-sm">+${tx.qty}</span>`;
+        } else if (tx.type === 'out') {
+          typeBadge = `<span class="px-2 py-0.5 rounded font-bold bg-rose-100 text-rose-800">📤 銷售出庫</span>`;
+          qtyDisplay = `<span class="font-bold text-rose-700 text-sm">-${tx.qty}</span>`;
+        } else {
+          typeBadge = `<span class="px-2 py-0.5 rounded font-bold bg-indigo-100 text-indigo-800">⚖️ 盤點校正</span>`;
+          qtyDisplay = `<span class="font-bold text-indigo-700 text-sm">${tx.delta >= 0 ? '+' : ''}${tx.delta}</span>`;
+        }
+
+        tr.innerHTML = `
+          <td class="py-2.5 px-3">${typeBadge}</td>
+          <td class="py-2.5 px-3 font-mono text-slate-500">${tx.date}</td>
+          <td class="py-2.5 px-4 font-bold text-slate-800 text-sm">${tx.itemName}</td>
+          <td class="py-2.5 px-3 text-right">${qtyDisplay}</td>
+          <td class="py-2.5 px-3 text-right font-mono font-bold text-slate-700">${tx.afterStock !== undefined ? tx.afterStock : '-'}</td>
+          <td class="py-2.5 px-4 text-slate-700 font-medium">${tx.target || '-'}</td>
+          <td class="py-2.5 px-4 text-slate-500">${tx.remark || '-'}</td>
+          <td class="py-2.5 px-3 text-center">
+            <button class="btn-inv-tx-del text-xs text-rose-600 hover:text-rose-800 font-semibold" data-id="${tx.id}">撤銷</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      tbody.querySelectorAll(".btn-inv-tx-del").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const txId = btn.getAttribute("data-id");
+          deleteStockTransaction(txId);
+        });
+      });
+    }
+
+    function openInvInModal(presetName = "") {
+      const modal = document.getElementById("modalInvIn");
+      document.getElementById("formInvIn").reset();
+      document.getElementById("invInDate").value = new Date().toISOString().split('T')[0];
+      if (presetName) document.getElementById("invInName").value = presetName;
+      modal.classList.remove("hidden");
+    }
+
+    function openInvOutModal(presetName = "") {
+      const modal = document.getElementById("modalInvOut");
+      document.getElementById("formInvOut").reset();
+      document.getElementById("invOutDate").value = new Date().toISOString().split('T')[0];
+      if (presetName) {
+        document.getElementById("invOutName").value = presetName;
+        const stats = getItemStockStats(presetName);
+        document.getElementById("invOutCurStockLabel").textContent = `現有庫存：${stats.stock}`;
+      } else {
+        document.getElementById("invOutCurStockLabel").textContent = `現有庫存：-`;
+      }
+      modal.classList.remove("hidden");
+    }
+
+    function openInvAdjustModal(presetName = "") {
+      const modal = document.getElementById("modalInvAdjust");
+      document.getElementById("formInvAdjust").reset();
+      if (presetName) {
+        document.getElementById("invAdjName").value = presetName;
+        const stats = getItemStockStats(presetName);
+        document.getElementById("invAdjOldStock").value = stats.stock;
+        document.getElementById("invAdjNewStock").value = stats.stock;
+      }
+      modal.classList.remove("hidden");
+    }
+
+    function exportInventoryStockCSV() {
+      let csv = "\uFEFF";
+      csv += `${storeConfig.storeName || "芳喜蓁站手工坊"},即時庫存統計報表,製表日期:,${new Date().toISOString().split('T')[0]}\n\n`;
+      csv += `商品代號,商品品名,規格包裝,參考單價,累計進貨總量,累計出貨總量,目前在庫庫存,庫存狀態\n`;
+
+      currentPriceList.forEach(item => {
+        const stats = getItemStockStats(item.name);
+        const status = stats.stock <= 0 ? "缺貨中" : (stats.stock <= 5 ? "庫存偏低" : "正常庫存");
+        csv += `"${item.code || ''}","${item.name}","${item.spec || ''}",${item.price},${stats.inQty},${stats.outQty},${stats.stock},"${status}"\n`;
+      });
+
+      downloadBlob(csv, `芳喜蓁站手工坊_庫存統計表_${new Date().toISOString().split('T')[0]}.csv`, "text/csv;charset=utf-8;");
+      showToast("庫存統計報表 CSV 匯出完成！");
+    }
+
+    function exportInventoryLogCSV() {
+      let csv = "\uFEFF";
+      csv += `${storeConfig.storeName || "芳喜蓁站手工坊"},進出貨明細流水帳,匯出日期:,${new Date().toISOString().split('T')[0]}\n\n`;
+      csv += `流水編號,異動日期,類別,品名,異動數量,異動後庫存,經手對象,備註事項\n`;
+
+      inventoryTransactions.forEach(tx => {
+        const typeStr = tx.type === 'in' ? '進貨' : (tx.type === 'out' ? '出貨' : '盤點校正');
+        csv += `"${tx.id}","${tx.date}","${typeStr}","${tx.itemName}",${tx.delta},${tx.afterStock || ''},"${tx.target || ''}","${tx.remark || ''}"\n`;
+      });
+
+      downloadBlob(csv, `芳喜蓁站手工坊_進出貨流水帳_${new Date().toISOString().split('T')[0]}.csv`, "text/csv;charset=utf-8;");
+      showToast("進出貨流水帳 CSV 匯出完成！");
+    }
+
+    // Initialize LocalStorage Data
+    function initData() {
+      try {
+        const savedPrices = localStorage.getItem("fxg_price_list");
+        currentPriceList = savedPrices ? JSON.parse(savedPrices) : [...DEFAULT_PRICE_LIST];
+      } catch (e) {
+        currentPriceList = [...DEFAULT_PRICE_LIST];
+      }
+
+      try {
+        const savedStore = localStorage.getItem("fxg_store_config");
+        storeConfig = savedStore ? JSON.parse(savedStore) : { ...DEFAULT_STORE_CONFIG };
+      } catch (e) {
+        storeConfig = { ...DEFAULT_STORE_CONFIG };
+      }
+
+      try {
+        const savedDocs = localStorage.getItem("fxg_documents");
+        savedDocuments = savedDocs ? JSON.parse(savedDocs) : [];
+      } catch (e) {
+        savedDocuments = [];
+      }
+
+      // Populate Today's date by default
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById("quoteDate").value = today;
+      
+      applyStoreConfigToUI();
+      renderPriceDatalist();
+      renderPriceTable();
+      renderQuickTags();
+      renderHistoryTable();
+      initInventoryData();
+      renderInventoryDashboard();
+    }
+
+    function applyStoreConfigToUI() {
+      document.querySelectorAll(".store-name-text").forEach(el => el.textContent = storeConfig.storeName || DEFAULT_STORE_CONFIG.storeName);
+      document.querySelectorAll(".store-tax-text").forEach(el => el.textContent = storeConfig.taxId || DEFAULT_STORE_CONFIG.taxId);
+      document.querySelectorAll(".store-address-text").forEach(el => el.textContent = storeConfig.address || DEFAULT_STORE_CONFIG.address);
+
+      document.querySelectorAll(".store-contact1-name").forEach(el => el.textContent = storeConfig.contact1Name || DEFAULT_STORE_CONFIG.contact1Name);
+      document.querySelectorAll(".store-contact1-phone").forEach(el => el.textContent = storeConfig.contact1Phone || DEFAULT_STORE_CONFIG.contact1Phone);
+      document.querySelectorAll(".store-contact2-name").forEach(el => el.textContent = storeConfig.contact2Name || DEFAULT_STORE_CONFIG.contact2Name);
+      document.querySelectorAll(".store-contact2-phone").forEach(el => el.textContent = storeConfig.contact2Phone || DEFAULT_STORE_CONFIG.contact2Phone);
+
+                        
+      // Populate settings form inputs
+      document.getElementById("setStoreName").value = storeConfig.storeName || "";
+      document.getElementById("setStoreTax").value = storeConfig.taxId || "";
+      document.getElementById("setStoreAddress").value = storeConfig.address || "";
+      document.getElementById("setContact1Name").value = storeConfig.contact1Name || "";
+      document.getElementById("setContact1Phone").value = storeConfig.contact1Phone || "";
+      document.getElementById("setContact2Name").value = storeConfig.contact2Name || "";
+      document.getElementById("setContact2Phone").value = storeConfig.contact2Phone || "";
+                            }
+
+    function renderPriceDatalist() {
+      const dl = document.getElementById("productListDatalist");
+      dl.innerHTML = "";
+      currentPriceList.forEach(item => {
+        const opt = document.createElement("option");
+        opt.value = item.name;
+        opt.label = `NT$${item.price} (${item.spec || ''})`;
+        dl.appendChild(opt);
+      });
+    }
+
+    function renderQuickTags() {
+      const qContainer = document.getElementById("quoteQuickTags");
+      qContainer.innerHTML = "";
+
+      QUICK_TAG_NAMES.forEach(name => {
+        const item = currentPriceList.find(p => p.name === name) || { name, price: 0 };
+        
+        // Button for Quote
+        const btnQ = document.createElement("button");
+        btnQ.type = "button";
+        btnQ.className = "text-xs bg-white hover:bg-amber-600 hover:text-white text-slate-700 px-2.5 py-1 rounded-lg border border-amber-300 font-medium transition shadow-2xs whitespace-nowrap";
+        btnQ.textContent = `${name} ($${item.price})`;
+        btnQ.addEventListener("click", () => addQuickItemToQuote(name, item.price));
+        qContainer.appendChild(btnQ);
+      });
+    }
+
+    // --- TAB 1: 估價單 表格構建 (雙欄 1-30 項目) ---
+    function buildQuoteTable() {
+      const tbody = document.getElementById("quoteTableBody");
+      tbody.innerHTML = "";
+
+      for (let i = 1; i <= 15; i++) {
+        const leftIdx = i;
+        const rightIdx = i + 15;
+
+        const tr = document.createElement("tr");
+        tr.className = "hover:bg-amber-50/20";
+        tr.innerHTML = `
+          <!-- Left Column (1-15) -->
+          <td class="border border-black font-bold bg-slate-50 text-slate-700">${leftIdx}</td>
+          <td class="border border-black p-0 text-left">
+            <input type="text" list="productListDatalist" id="q_name_${leftIdx}" data-index="${leftIdx}" placeholder="" class="w-full h-full px-2 py-1 outline-none font-medium bg-transparent quote-item-name">
+          </td>
+          <td class="border border-black p-0">
+            <input type="number" id="q_qty_${leftIdx}" data-index="${leftIdx}" min="0" step="any" placeholder="" class="w-full h-full px-1 py-1 text-center outline-none bg-transparent quote-item-qty">
+          </td>
+          <td class="border border-black p-0">
+            <input type="number" id="q_price_${leftIdx}" data-index="${leftIdx}" min="0" step="any" placeholder="" class="w-full h-full px-1 py-1 text-right outline-none bg-transparent quote-item-price">
+          </td>
+          <td class="border border-black px-1.5 py-1 text-right font-semibold text-slate-800 bg-slate-50/50" id="q_subtotal_${leftIdx}">
+            -
+          </td>
+
+          <!-- Right Column (16-30) -->
+          <td class="border border-black font-bold bg-slate-100 text-slate-700">${rightIdx}</td>
+          <td class="border border-black p-0 text-left">
+            <input type="text" list="productListDatalist" id="q_name_${rightIdx}" data-index="${rightIdx}" placeholder="" class="w-full h-full px-2 py-1 outline-none font-medium bg-transparent quote-item-name">
+          </td>
+          <td class="border border-black p-0">
+            <input type="number" id="q_qty_${rightIdx}" data-index="${rightIdx}" min="0" step="any" placeholder="" class="w-full h-full px-1 py-1 text-center outline-none bg-transparent quote-item-qty">
+          </td>
+          <td class="border border-black p-0">
+            <input type="number" id="q_price_${rightIdx}" data-index="${rightIdx}" min="0" step="any" placeholder="" class="w-full h-full px-1 py-1 text-right outline-none bg-transparent quote-item-price">
+          </td>
+          <td class="border border-black px-1.5 py-1 text-right font-semibold text-slate-800 bg-slate-50/50" id="q_subtotal_${rightIdx}">
+            -
+          </td>
+        `;
+        tbody.appendChild(tr);
+      }
+
+      // Attach event listeners for real-time recalculation & auto price fill
+      document.querySelectorAll(".quote-item-name").forEach(input => {
+        input.addEventListener("input", onQuoteNameChange);
+      });
+      document.querySelectorAll(".quote-item-qty").forEach(input => {
+        input.addEventListener("input", onQuoteQtyOrPriceChange);
+      });
+      document.querySelectorAll(".quote-item-price").forEach(input => {
+        input.addEventListener("input", onQuoteQtyOrPriceChange);
+      });
+
+      // Synchronize copy block for double layout
+      buildQuoteCopyTable();
+    }
+
+    function buildQuoteCopyTable() {
+      const tbody = document.getElementById("quoteTableCopyBody");
+      tbody.innerHTML = "";
+      for (let i = 1; i <= 15; i++) {
+        const leftIdx = i;
+        const rightIdx = i + 15;
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td class="border border-black py-0.5">${leftIdx}</td>
+          <td class="border border-black py-0.5 text-left pl-2" id="copy_q_name_${leftIdx}"></td>
+          <td class="border border-black py-0.5 text-center" id="copy_q_qty_${leftIdx}"></td>
+          <td class="border border-black py-0.5 text-right pr-1" id="copy_q_price_${leftIdx}"></td>
+          <td class="border border-black py-0.5 text-right pr-1 font-semibold" id="copy_q_subtotal_${leftIdx}"></td>
+          
+          <td class="border border-black py-0.5 bg-slate-50">${rightIdx}</td>
+          <td class="border border-black py-0.5 text-left pl-2" id="copy_q_name_${rightIdx}"></td>
+          <td class="border border-black py-0.5 text-center" id="copy_q_qty_${rightIdx}"></td>
+          <td class="border border-black py-0.5 text-right pr-1" id="copy_q_price_${rightIdx}"></td>
+          <td class="border border-black py-0.5 text-right pr-1 font-semibold" id="copy_q_subtotal_${rightIdx}"></td>
+        `;
+        tbody.appendChild(tr);
+      }
+    }
+
+    function onQuoteNameChange(e) {
+      const idx = e.target.getAttribute("data-index");
+      const val = e.target.value.trim();
+      const match = currentPriceList.find(p => p.name === val);
+      if (match) {
+        const priceInput = document.getElementById(`q_price_${idx}`);
+        priceInput.value = match.price;
+        const qtyInput = document.getElementById(`q_qty_${idx}`);
+        if (!qtyInput.value) qtyInput.value = "1";
+      }
+      calcQuoteTotals();
+    }
+
+    function onQuoteQtyOrPriceChange(e) {
+      calcQuoteTotals();
+    }
+
+    function calcQuoteTotals() {
+      let grandTotal = 0;
+      for (let i = 1; i <= 30; i++) {
+        const nameVal = document.getElementById(`q_name_${i}`).value.trim();
+        const qtyVal = parseFloat(document.getElementById(`q_qty_${i}`).value);
+        const priceVal = parseFloat(document.getElementById(`q_price_${i}`).value);
+        const subtotalEl = document.getElementById(`q_subtotal_${i}`);
+
+        if (nameVal && !isNaN(qtyVal) && !isNaN(priceVal)) {
+          const subtotal = Math.round(qtyVal * priceVal);
+          grandTotal += subtotal;
+          subtotalEl.textContent = subtotal.toLocaleString();
+        } else {
+          subtotalEl.textContent = "-";
+        }
+      }
+
+      document.getElementById("quoteTotalDisplay").textContent = grandTotal.toLocaleString();
+      document.getElementById("quoteTotalWords").textContent = numberToChineseWords(grandTotal);
+
+      // Update Copy Elements for printing
+      syncQuoteToCopy(grandTotal);
+    }
+
+    function syncQuoteToCopy(grandTotal) {
+      document.getElementById("quoteCustomerCopy").textContent = document.getElementById("quoteCustomer").value;
+      document.getElementById("quoteDateCopy").textContent = document.getElementById("quoteDate").value;
+      document.getElementById("quoteRemarkCopy").textContent = document.getElementById("quoteRemark").value;
+      document.getElementById("quoteTotalCopyDisplay").textContent = grandTotal.toLocaleString();
+      document.getElementById("quoteTotalWordsCopy").textContent = numberToChineseWords(grandTotal);
+
+      for (let i = 1; i <= 30; i++) {
+        const name = document.getElementById(`q_name_${i}`).value;
+        const qty = document.getElementById(`q_qty_${i}`).value;
+        const price = document.getElementById(`q_price_${i}`).value;
+        const sub = document.getElementById(`q_subtotal_${i}`).textContent;
+
+        const copyName = document.getElementById(`copy_q_name_${i}`);
+        const copyQty = document.getElementById(`copy_q_qty_${i}`);
+        const copyPrice = document.getElementById(`copy_q_price_${i}`);
+        const copySub = document.getElementById(`copy_q_subtotal_${i}`);
+
+        if (copyName) copyName.textContent = name;
+        if (copyQty) copyQty.textContent = qty;
+        if (copyPrice) copyPrice.textContent = price ? Number(price).toLocaleString() : '';
+        if (copySub) copySub.textContent = sub === '-' ? '' : sub;
+      }
+    }
+
+    function addQuickItemToQuote(name, price) {
+      // Find first empty row in 1..30
+      let targetIdx = -1;
+      for (let i = 1; i <= 30; i++) {
+        const curName = document.getElementById(`q_name_${i}`).value.trim();
+        if (!curName) {
+          targetIdx = i;
+          break;
+        }
+      }
+      if (targetIdx === -1) {
+        showToast("估價單 30 格已滿，請手動調整品項！", false);
+        return;
+      }
+
+      document.getElementById(`q_name_${targetIdx}`).value = name;
+      document.getElementById(`q_price_${targetIdx}`).value = price;
+      document.getElementById(`q_qty_${targetIdx}`).value = "1";
+      calcQuoteTotals();
+      showToast(`已加入「${name}」至第 ${targetIdx} 項`);
+    }
+
+
+
+
+
+    // --- TAB 3: 價目表管理 ---
+    function renderPriceTable(filterText = "") {
+      const tbody = document.getElementById("priceListTableBody");
+      tbody.innerHTML = "";
+
+      const normalizedFilter = filterText.toLowerCase().trim();
+      const filtered = currentPriceList.filter(item => {
+        if (!normalizedFilter) return true;
+        return (item.name && item.name.toLowerCase().includes(normalizedFilter)) ||
+               (item.code && item.code.toLowerCase().includes(normalizedFilter)) ||
+               (item.spec && item.spec.toLowerCase().includes(normalizedFilter));
+      });
+
+      document.getElementById("priceCountBadge").textContent = `顯示 ${filtered.length} / 共 ${currentPriceList.length} 項`;
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="py-8 text-center text-slate-400">無符合條件的商品</td></tr>`;
+        return;
+      }
+
+      filtered.forEach((item, index) => {
+        // Find real index in master array
+        const realIndex = currentPriceList.indexOf(item);
+        const tr = document.createElement("tr");
+        tr.className = "hover:bg-slate-50 transition";
+        tr.innerHTML = `
+          <td class="py-2.5 px-4 font-mono text-xs text-slate-500 font-bold">${item.code || '-'}</td>
+          <td class="py-2.5 px-4 font-bold text-slate-800">${item.name}</td>
+          <td class="py-2.5 px-4 text-right font-black text-amber-900">NT$ ${item.price.toLocaleString()}</td>
+          <td class="py-2.5 px-4 text-xs text-slate-600">${item.spec || '-'}</td>
+          <td class="py-2.5 px-4 text-center">
+            <button class="btn-price-edit text-xs text-blue-600 hover:text-blue-800 font-semibold mr-2" data-index="${realIndex}">編輯</button>
+            <button class="btn-price-del text-xs text-rose-600 hover:text-rose-800 font-semibold" data-index="${realIndex}">刪除</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      // Bind edit and delete handlers
+      tbody.querySelectorAll(".btn-price-edit").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const idx = parseInt(btn.getAttribute("data-index"), 10);
+          openEditPriceModal(idx);
+        });
+      });
+      tbody.querySelectorAll(".btn-price-del").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const idx = parseInt(btn.getAttribute("data-index"), 10);
+          deletePriceItem(idx);
+        });
+      });
+    }
+
+    function openEditPriceModal(index = -1) {
+      const modal = document.getElementById("priceModal");
+      const title = document.getElementById("priceModalTitle");
+      const idxInput = document.getElementById("editPriceIndex");
+
+      if (index >= 0 && currentPriceList[index]) {
+        const item = currentPriceList[index];
+        title.textContent = "編輯商品資訊";
+        idxInput.value = index;
+        document.getElementById("modalItemName").value = item.name;
+        document.getElementById("modalItemPrice").value = item.price;
+        document.getElementById("modalItemCode").value = item.code || "";
+        document.getElementById("modalItemSpec").value = item.spec || "";
+      } else {
+        title.textContent = "新增商品品項";
+        idxInput.value = -1;
+        document.getElementById("priceItemForm").reset();
+      }
+
+      modal.classList.remove("hidden");
+    }
+
+    function deletePriceItem(index) {
+      if (index >= 0 && index < currentPriceList.length) {
+        const item = currentPriceList[index];
+        currentPriceList.splice(index, 1);
+        savePriceList();
+        renderPriceTable(document.getElementById("priceSearchInput").value);
+        renderPriceDatalist();
+        renderQuickTags();
+        showToast(`已刪除商品「${item.name}」`);
+      }
+    }
+
+    function savePriceList() {
+      try {
+        localStorage.setItem("fxg_price_list", JSON.stringify(currentPriceList));
+      } catch (e) {
+        console.error("Storage error:", e);
+      }
+    }
+
+
+    // --- TAB 4: 歷史單據記錄 ---
+    function renderHistoryTable() {
+      const tbody = document.getElementById("historyListTableBody");
+      const container = document.getElementById("historyTableContainer");
+      const emptyState = document.getElementById("historyEmptyState");
+
+      if (savedDocuments.length === 0) {
+        container.classList.add("hidden");
+        emptyState.classList.remove("hidden");
+        return;
+      }
+
+      emptyState.classList.add("hidden");
+      container.classList.remove("hidden");
+      tbody.innerHTML = "";
+
+      savedDocuments.forEach((doc, idx) => {
+        const tr = document.createElement("tr");
+        tr.className = "hover:bg-slate-50";
+        const typeBadge = doc.type === 'quote' 
+          ? `<span class="px-2 py-0.5 rounded text-xs font-bold bg-amber-100 text-amber-800">估價單</span>`
+          : `<span class="px-2 py-0.5 rounded text-xs font-bold bg-emerald-100 text-emerald-800">收款單</span>`;
+
+        tr.innerHTML = `
+          <td class="py-3 px-4">${typeBadge}</td>
+          <td class="py-3 px-4 font-mono text-xs text-slate-600">${doc.date || '-'}</td>
+          <td class="py-3 px-4 font-bold text-slate-800">${doc.customer || '未具名'}</td>
+          <td class="py-3 px-4 text-center text-xs text-slate-600">${doc.itemCount} 項</td>
+          <td class="py-3 px-4 text-right font-black text-rose-700">NT$ ${doc.total.toLocaleString()}</td>
+          <td class="py-3 px-4 text-center space-x-2">
+            <button class="btn-hist-load text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 py-1 rounded font-semibold border" data-index="${idx}">
+              載入編輯
+            </button>
+            <button class="btn-hist-del text-xs text-rose-600 hover:text-rose-800 font-semibold" data-index="${idx}">
+              刪除
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      tbody.querySelectorAll(".btn-hist-load").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const idx = parseInt(btn.getAttribute("data-index"), 10);
+          loadDocumentFromHistory(idx);
+        });
+      });
+      tbody.querySelectorAll(".btn-hist-del").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const idx = parseInt(btn.getAttribute("data-index"), 10);
+          deleteHistoryItem(idx);
+        });
+      });
+    }
+
+    function loadDocumentFromHistory(idx) {
+      const doc = savedDocuments[idx];
+      if (!doc) return;
+
+      switchTab('quote');
+      document.getElementById("quoteCustomer").value = doc.customer || "";
+      document.getElementById("quoteDate").value = doc.date || "";
+      document.getElementById("quoteRemark").value = doc.remark || "";
+      
+      // Reset all rows
+      for (let i = 1; i <= 30; i++) {
+        document.getElementById(`q_name_${i}`).value = "";
+        document.getElementById(`q_qty_${i}`).value = "";
+        document.getElementById(`q_price_${i}`).value = "";
+      }
+      
+      // Fill items
+      if (doc.items && Array.isArray(doc.items)) {
+        doc.items.forEach((it, i) => {
+          const rowIdx = i + 1;
+          if (rowIdx <= 30) {
+            document.getElementById(`q_name_${rowIdx}`).value = it.name || "";
+            document.getElementById(`q_qty_${rowIdx}`).value = it.qty || "";
+            document.getElementById(`q_price_${rowIdx}`).value = it.price || "";
+          }
+        });
+      }
+      calcQuoteTotals();
+      showToast(`已載入「${doc.customer}」的估價單`);
+    }
+
+    function deleteHistoryItem(idx) {
+      savedDocuments.splice(idx, 1);
+      try {
+        localStorage.setItem("fxg_documents", JSON.stringify(savedDocuments));
+      } catch (e) {}
+      renderHistoryTable();
+      showToast("單據已自歷史記錄刪除");
+    }
+
+
+    // --- Actions: Save Current Form to History ---
+    function saveCurrentQuote() {
+      const items = [];
+      let total = 0;
+      for (let i = 1; i <= 30; i++) {
+        const name = document.getElementById(`q_name_${i}`).value.trim();
+        const qty = parseFloat(document.getElementById(`q_qty_${i}`).value);
+        const price = parseFloat(document.getElementById(`q_price_${i}`).value);
+        if (name) {
+          const sub = (!isNaN(qty) && !isNaN(price)) ? Math.round(qty * price) : 0;
+          total += sub;
+          items.push({ name, qty: isNaN(qty) ? 0 : qty, price: isNaN(price) ? 0 : price, subtotal: sub });
+        }
+      }
+
+      const docRecord = {
+        id: "Q" + Date.now(),
+        type: 'quote',
+        customer: document.getElementById("quoteCustomer").value || "未具名",
+        date: document.getElementById("quoteDate").value || "",
+        remark: document.getElementById("quoteRemark").value || "",
+        items: items,
+        itemCount: items.length,
+        total: total,
+        createdAt: new Date().toISOString()
+      };
+
+      savedDocuments.unshift(docRecord);
+      try {
+        localStorage.setItem("fxg_documents", JSON.stringify(savedDocuments));
+      } catch (e) {}
+      renderHistoryTable();
+
+      // Auto deduct inventory if checked
+      const autoDeduct = document.getElementById("quoteAutoDeductStock").checked;
+      if (autoDeduct && items.length > 0) {
+        items.forEach(it => {
+          if (it.qty > 0) {
+            addStockTransaction('out', it.name, it.qty, docRecord.customer, `估價單自動扣減庫存 (單號: ${docRecord.id})`, docRecord.date);
+          }
+        });
+        showToast(`估價單儲存成功！已同步扣減 ${items.length} 項商品庫存`);
+      } else {
+        showToast(`估價單儲存成功！(合計 NT$ ${total.toLocaleString()})`);
+      }
+    }
+
+    // --- CSV / Excel Export Functionality ---
+    function exportQuoteToCSV() {
+      const customer = document.getElementById("quoteCustomer").value || "估價單";
+      const date = document.getElementById("quoteDate").value || "";
+      let csvContent = "\uFEFF"; // UTF-8 BOM for Taiwan Excel
+      csvContent += `${storeConfig.storeName},統一編號:${storeConfig.taxId},估價單\n`;
+      csvContent += `客戶名稱:,${customer},日期:,${date}\n`;
+      csvContent += `地址:,${storeConfig.address}\n\n`;
+      csvContent += `項目,品名,數量,單價,金額\n`;
+
+      let total = 0;
+      for (let i = 1; i <= 30; i++) {
+        const name = document.getElementById(`q_name_${i}`).value.trim();
+        const qty = document.getElementById(`q_qty_${i}`).value;
+        const price = document.getElementById(`q_price_${i}`).value;
+        const sub = document.getElementById(`q_subtotal_${i}`).textContent.replace(/,/g, '');
+        if (name) {
+          csvContent += `${i},"${name}",${qty},${price},${sub === '-' ? 0 : sub}\n`;
+          if (sub !== '-') total += parseFloat(sub);
+        }
+      }
+      csvContent += `備註:,"${document.getElementById("quoteRemark").value}",,,合計:,${total}\n`;
+
+      downloadBlob(csvContent, `芳喜蓁站估價單_${customer}_${date}.csv`, "text/csv;charset=utf-8;");
+      showToast("估價單 CSV 匯出完成！");
+    }
+
+
+
+    function downloadBlob(content, filename, mimeType) {
+      const blob = new Blob([content], { type: mimeType });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+
+    // --- Sample Fillers ---
+    function fillQuoteSample() {
+      document.getElementById("quoteCustomer").value = "早安美而美 (示範早餐店)";
+      document.getElementById("quoteRemark").value = "週五早上八點前送達，款項匯入指定安平分行帳戶";
+      
+      const sampleItems = [
+        { name: "里肌肉", qty: 3, price: 300 },
+        { name: "蛋餅皮", qty: 10, price: 65 },
+        { name: "漢堡肉", qty: 5, price: 200 },
+        { name: "特調番茄醬", qty: 4, price: 55 },
+        { name: "錫蘭紅茶", qty: 2, price: 950 },
+        { name: "奶精粉", qty: 5, price: 90 },
+        { name: "沙拉", qty: 2, price: 220 },
+        { name: "蘿蔔糕", qty: 6, price: 55 },
+        { name: "炸豬排", qty: 3, price: 200 },
+        { name: "香蒜", qty: 2, price: 100 },
+        { name: "小鬆餅", qty: 1, price: 330 },
+        { name: "5808", qty: 1, price: 410 }
+      ];
+
+      for (let i = 1; i <= 30; i++) {
+        const it = sampleItems[i - 1];
+        if (it) {
+          document.getElementById(`q_name_${i}`).value = it.name;
+          document.getElementById(`q_qty_${i}`).value = it.qty;
+          document.getElementById(`q_price_${i}`).value = it.price;
+        } else {
+          document.getElementById(`q_name_${i}`).value = "";
+          document.getElementById(`q_qty_${i}`).value = "";
+          document.getElementById(`q_price_${i}`).value = "";
+        }
+      }
+      calcQuoteTotals();
+      showToast("已成功填入示範估價單資料！");
+    }
+
+    function clearQuote() {
+      document.getElementById("quoteCustomer").value = "";
+      document.getElementById("quoteRemark").value = "";
+      for (let i = 1; i <= 30; i++) {
+        document.getElementById(`q_name_${i}`).value = "";
+        document.getElementById(`q_qty_${i}`).value = "";
+        document.getElementById(`q_price_${i}`).value = "";
+      }
+      calcQuoteTotals();
+      showToast("估價單表格已清空");
+    }
+
+
+
+
+    // --- Tab Switching Logic ---
+    function switchTab(tabId) {
+      const tabs = ['tabQuote', 'tabInventory', 'tabPrice', 'tabHistory', 'tabSettings'];
+      tabs.forEach(t => {
+        const el = document.getElementById(t);
+        if (el) el.classList.add('hidden');
+      });
+
+      const navBtns = [
+        { id: 'navQuoteBtn', tab: 'tabQuote' },
+        { id: 'navInventoryBtn', tab: 'tabInventory' },
+        { id: 'navPriceBtn', tab: 'tabPrice' },
+        { id: 'navHistoryBtn', tab: 'tabHistory' },
+        { id: 'navSettingsBtn', tab: 'tabSettings' }
+      ];
+
+      if (tabId === 'inventory') {
+        renderInventoryDashboard();
+      }
+
+      navBtns.forEach(b => {
+        const btn = document.getElementById(b.id);
+        if (b.tab === `tab${tabId.charAt(0).toUpperCase() + tabId.slice(1)}`) {
+          btn.className = "px-3 py-2 rounded-lg font-medium transition flex items-center gap-1.5 bg-amber-600 text-white shadow";
+        } else {
+          btn.className = "px-3 py-2 rounded-lg font-medium transition flex items-center gap-1.5 text-amber-200 hover:text-white hover:bg-amber-800/60";
+        }
+      });
+
+      const target = document.getElementById(`tab${tabId.charAt(0).toUpperCase() + tabId.slice(1)}`);
+      if (target) target.classList.remove('hidden');
+    }
+
+
+    // --- Setup Listeners ---
+    document.addEventListener("DOMContentLoaded", () => {
+      initData();
+      buildQuoteTable();
+      
+      // Navigation
+      document.getElementById("navQuoteBtn").addEventListener("click", () => switchTab('quote'));
+            document.getElementById("navInventoryBtn").addEventListener("click", () => switchTab('inventory'));
+
+      // Inventory Sub-view Switcher
+      document.getElementById("btnInvViewTable").addEventListener("click", () => {
+        currentInvView = 'table';
+        document.getElementById("invTableWrapper").classList.remove("hidden");
+        document.getElementById("invLogWrapper").classList.add("hidden");
+        document.getElementById("btnInvViewTable").className = "px-3.5 py-1.5 rounded-lg bg-white text-slate-800 shadow-sm transition flex items-center gap-1.5";
+        document.getElementById("btnInvViewLog").className = "px-3.5 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition flex items-center gap-1.5";
+      });
+
+      document.getElementById("btnInvViewLog").addEventListener("click", () => {
+        currentInvView = 'log';
+        document.getElementById("invTableWrapper").classList.add("hidden");
+        document.getElementById("invLogWrapper").classList.remove("hidden");
+        document.getElementById("btnInvViewLog").className = "px-3.5 py-1.5 rounded-lg bg-white text-slate-800 shadow-sm transition flex items-center gap-1.5";
+        document.getElementById("btnInvViewTable").className = "px-3.5 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition flex items-center gap-1.5";
+      });
+
+      // Inventory Modals Open/Close
+      document.getElementById("btnInvAddIn").addEventListener("click", () => openInvInModal());
+      document.getElementById("btnModalInvInClose").addEventListener("click", () => document.getElementById("modalInvIn").classList.add("hidden"));
+      document.getElementById("btnModalInvInCancel").addEventListener("click", () => document.getElementById("modalInvIn").classList.add("hidden"));
+
+      document.getElementById("btnInvAddOut").addEventListener("click", () => openInvOutModal());
+      document.getElementById("btnModalInvOutClose").addEventListener("click", () => document.getElementById("modalInvOut").classList.add("hidden"));
+      document.getElementById("btnModalInvOutCancel").addEventListener("click", () => document.getElementById("modalInvOut").classList.add("hidden"));
+
+      document.getElementById("btnInvAdjust").addEventListener("click", () => openInvAdjustModal());
+      document.getElementById("btnModalInvAdjustClose").addEventListener("click", () => document.getElementById("modalInvAdjust").classList.add("hidden"));
+      document.getElementById("btnModalInvAdjustCancel").addEventListener("click", () => document.getElementById("modalInvAdjust").classList.add("hidden"));
+
+      // Forms Submission
+      document.getElementById("formInvIn").addEventListener("submit", (e) => {
+        e.preventDefault();
+        const name = document.getElementById("invInName").value.trim();
+        const qty = document.getElementById("invInQty").value;
+        const supplier = document.getElementById("invInSupplier").value.trim();
+        const remark = document.getElementById("invInRemark").value.trim();
+        const date = document.getElementById("invInDate").value;
+
+        if (addStockTransaction('in', name, qty, supplier, remark, date)) {
+          showToast(`已登記「${name}」進貨入庫 +${qty}`);
+          document.getElementById("modalInvIn").classList.add("hidden");
+        }
+      });
+
+      document.getElementById("formInvOut").addEventListener("submit", (e) => {
+        e.preventDefault();
+        const name = document.getElementById("invOutName").value.trim();
+        const qty = document.getElementById("invOutQty").value;
+        const customer = document.getElementById("invOutCustomer").value.trim();
+        const remark = document.getElementById("invOutRemark").value.trim();
+        const date = document.getElementById("invOutDate").value;
+
+        if (addStockTransaction('out', name, qty, customer, remark, date)) {
+          showToast(`已登記「${name}」出貨出庫 -${qty}`);
+          document.getElementById("modalInvOut").classList.add("hidden");
+        }
+      });
+
+      document.getElementById("invOutName").addEventListener("input", (e) => {
+        const val = e.target.value.trim();
+        if (val) {
+          const stats = getItemStockStats(val);
+          document.getElementById("invOutCurStockLabel").textContent = `現有庫存：${stats.stock}`;
+        }
+      });
+
+      document.getElementById("invAdjName").addEventListener("input", (e) => {
+        const val = e.target.value.trim();
+        if (val) {
+          const stats = getItemStockStats(val);
+          document.getElementById("invAdjOldStock").value = stats.stock;
+        }
+      });
+
+      document.getElementById("formInvAdjust").addEventListener("submit", (e) => {
+        e.preventDefault();
+        const name = document.getElementById("invAdjName").value.trim();
+        const newStock = document.getElementById("invAdjNewStock").value;
+        const remark = document.getElementById("invAdjRemark").value.trim();
+
+        if (addStockAdjustment(name, newStock, remark)) {
+          showToast(`已完成「${name}」盤點校正，最新庫存為 ${newStock}`);
+          document.getElementById("modalInvAdjust").classList.add("hidden");
+        }
+      });
+
+      // Quick filter low stock
+      document.getElementById("btnFilterLowStockQuick").addEventListener("click", () => {
+        document.getElementById("invStatusFilter").value = 'low';
+        renderInventoryTable(document.getElementById("invSearchInput").value, 'low');
+        showToast("已篩選顯示「低庫存 (≤5)」警戒商品");
+      });
+
+      // Search & Filters
+      document.getElementById("invSearchInput").addEventListener("input", (e) => {
+        renderInventoryTable(e.target.value, document.getElementById("invStatusFilter").value);
+        renderInventoryLog(e.target.value);
+      });
+
+      document.getElementById("invStatusFilter").addEventListener("change", (e) => {
+        renderInventoryTable(document.getElementById("invSearchInput").value, e.target.value);
+      });
+
+      // Export CSV
+      document.getElementById("btnInvExportStockCSV").addEventListener("click", exportInventoryStockCSV);
+      document.getElementById("btnInvExportLogCSV").addEventListener("click", exportInventoryLogCSV);
+
+      document.getElementById("navPriceBtn").addEventListener("click", () => switchTab('price'));
+      document.getElementById("navHistoryBtn").addEventListener("click", () => switchTab('history'));
+      document.getElementById("navSettingsBtn").addEventListener("click", () => switchTab('settings'));
+
+      // Quote Controls
+      document.getElementById("btnQuoteFillSample").addEventListener("click", fillQuoteSample);
+      document.getElementById("btnQuoteClear").addEventListener("click", clearQuote);
+      document.getElementById("btnQuoteSave").addEventListener("click", saveCurrentQuote);
+      document.getElementById("btnQuoteExportExcel").addEventListener("click", exportQuoteToCSV);
+      document.getElementById("btnQuotePrint").addEventListener("click", () => {
+        syncQuoteToCopy(parseFloat(document.getElementById("quoteTotalDisplay").textContent.replace(/,/g, '')) || 0);
+        window.print();
+      });
+
+      // Quote Layout Toggle (Double copy vs Single copy)
+      document.getElementById("quoteLayoutDoubleBtn").addEventListener("click", () => {
+        quoteIsDoubleLayout = true;
+        document.getElementById("quoteDoubleCopy").classList.remove("hidden");
+        document.getElementById("quoteLayoutDoubleBtn").className = "px-3 py-1.5 rounded-md bg-white text-slate-800 shadow-sm transition";
+        document.getElementById("quoteLayoutSingleBtn").className = "px-3 py-1.5 rounded-md text-slate-600 hover:text-slate-900 transition";
+        syncQuoteToCopy(parseFloat(document.getElementById("quoteTotalDisplay").textContent.replace(/,/g, '')) || 0);
+        showToast("已切換為：A4 上下雙聯模式（原檔一式兩份）");
+      });
+
+      document.getElementById("quoteLayoutSingleBtn").addEventListener("click", () => {
+        quoteIsDoubleLayout = false;
+        document.getElementById("quoteDoubleCopy").classList.add("hidden");
+        document.getElementById("quoteLayoutSingleBtn").className = "px-3 py-1.5 rounded-md bg-white text-slate-800 shadow-sm transition";
+        document.getElementById("quoteLayoutDoubleBtn").className = "px-3 py-1.5 rounded-md text-slate-600 hover:text-slate-900 transition";
+        showToast("已切換為：A4 單聯大版模式");
+      });
+
+
+
+      // Price Search
+      document.getElementById("priceSearchInput").addEventListener("input", (e) => {
+        renderPriceTable(e.target.value);
+      });
+
+      // Price Modals & Actions
+      document.getElementById("btnPriceAddModal").addEventListener("click", () => openEditPriceModal(-1));
+      document.getElementById("btnPriceModalClose").addEventListener("click", () => {
+        document.getElementById("priceModal").classList.add("hidden");
+      });
+
+      document.getElementById("priceItemForm").addEventListener("submit", (e) => {
+        e.preventDefault();
+        const editIdx = parseInt(document.getElementById("editPriceIndex").value, 10);
+        const name = document.getElementById("modalItemName").value.trim();
+        const price = parseFloat(document.getElementById("modalItemPrice").value) || 0;
+        const code = document.getElementById("modalItemCode").value.trim();
+        const spec = document.getElementById("modalItemSpec").value.trim();
+
+        if (editIdx >= 0) {
+          currentPriceList[editIdx] = { name, price, code, spec };
+          showToast(`已更新「${name}」品項資訊`);
+        } else {
+          currentPriceList.unshift({ name, price, code, spec });
+          showToast(`成功新增品項「${name}」`);
+        }
+
+        savePriceList();
+        renderPriceTable(document.getElementById("priceSearchInput").value);
+        renderPriceDatalist();
+        renderQuickTags();
+        document.getElementById("priceModal").classList.add("hidden");
+      });
+
+      document.getElementById("btnPriceReset").addEventListener("click", () => {
+        currentPriceList = [...DEFAULT_PRICE_LIST];
+        savePriceList();
+        renderPriceTable();
+        renderPriceDatalist();
+        renderQuickTags();
+        showToast("價目表已重設為原檔預設清單 (共 60 項)");
+      });
+
+      document.getElementById("btnPriceExport").addEventListener("click", () => {
+        const jsonStr = JSON.stringify(currentPriceList, null, 2);
+        downloadBlob(jsonStr, "芳喜蓁站手工坊_價目表.json", "application/json");
+        showToast("價目表 JSON 匯出完成！");
+      });
+
+      // History Clear
+      document.getElementById("btnClearAllHistory").addEventListener("click", () => {
+        savedDocuments = [];
+        try {
+          localStorage.removeItem("fxg_documents");
+        } catch (e) {}
+        renderHistoryTable();
+        showToast("已清空所有歷史單據");
+      });
+
+      // Settings Form
+      document.getElementById("settingsForm").addEventListener("submit", (e) => {
+        e.preventDefault();
+        storeConfig = {
+          storeName: document.getElementById("setStoreName").value.trim() || DEFAULT_STORE_CONFIG.storeName,
+          taxId: document.getElementById("setStoreTax").value.trim() || DEFAULT_STORE_CONFIG.taxId,
+          address: document.getElementById("setStoreAddress").value.trim() || DEFAULT_STORE_CONFIG.address,
+          contact1Name: document.getElementById("setContact1Name").value.trim() || DEFAULT_STORE_CONFIG.contact1Name,
+          contact1Phone: document.getElementById("setContact1Phone").value.trim() || DEFAULT_STORE_CONFIG.contact1Phone,
+          contact2Name: document.getElementById("setContact2Name").value.trim() || DEFAULT_STORE_CONFIG.contact2Name,
+          contact2Phone: document.getElementById("setContact2Phone").value.trim() || DEFAULT_STORE_CONFIG.contact2Phone
+        };
+        try {
+          localStorage.setItem("fxg_store_config", JSON.stringify(storeConfig));
+        } catch (err) {}
+        applyStoreConfigToUI();
+        showToast("店家基本資訊儲存成功！");
+      });
+
+      document.getElementById("btnSettingsReset").addEventListener("click", () => {
+        storeConfig = { ...DEFAULT_STORE_CONFIG };
+        try {
+          localStorage.setItem("fxg_store_config", JSON.stringify(storeConfig));
+        } catch (err) {}
+        applyStoreConfigToUI();
+        showToast("店家資訊已恢復為原檔預設");
+      });
+
+      // Auto update double layout on customer / date / remark inputs
+      document.getElementById("quoteCustomer").addEventListener("input", () => {
+        document.getElementById("quoteCustomerCopy").textContent = document.getElementById("quoteCustomer").value;
+      });
+      document.getElementById("quoteDate").addEventListener("input", () => {
+        document.getElementById("quoteDateCopy").textContent = document.getElementById("quoteDate").value;
+      });
+      document.getElementById("quoteRemark").addEventListener("input", () => {
+        document.getElementById("quoteRemarkCopy").textContent = document.getElementById("quoteRemark").value;
+      });
+
+      // Enable Double layout by default matching the original Excel structure
+      document.getElementById("quoteDoubleCopy").classList.remove("hidden");
+      fillQuoteSample();
+    });
+  </script>
+</body>
+</html>
