@@ -906,7 +906,21 @@ const firebaseConfig = {
           </div>
         </div>
 
-        <!-- Tutorial Accordion / Guide -->
+                <!-- Mobile Share URL Box (Shown when clicked) -->
+        <div id="mobileShareUrlWrapper" class="hidden p-3 bg-emerald-50 border border-emerald-300 rounded-xl space-y-1.5 text-xs">
+          <div class="flex items-center justify-between font-bold text-emerald-900">
+            <span class="flex items-center gap-1.5">
+              <span>📱</span> 手機專屬同步網址已產生：
+            </span>
+            <button type="button" id="btnCloseShareBox" class="text-slate-400 hover:text-slate-600 font-bold px-1.5">✕ 關閉</button>
+          </div>
+          <input type="text" id="mobileShareUrlDisplay" readonly class="w-full px-3 py-2 bg-white border border-emerald-300 rounded-lg text-xs font-mono text-slate-800 select-all font-semibold outline-none focus:ring-2 focus:ring-emerald-500">
+          <p class="text-[11px] text-emerald-700">
+            已自動複製至剪貼簿！請將此網址透過 LINE 傳給自己手機打開，手機即可自動完成連線與即時雙向同步！
+          </p>
+        </div>
+
+<!-- Tutorial Accordion / Guide -->
         <div class="border border-slate-200 rounded-xl overflow-hidden bg-slate-50/60 text-xs">
           <div class="p-3 bg-slate-100/80 font-bold text-slate-700 flex items-center justify-between">
             <span class="flex items-center gap-1.5">
@@ -2285,6 +2299,374 @@ const firebaseConfig = {
     }
 
 
+
+    // =========================================================
+    // =========================================================
+    // --- CLOUD SYNC ENGINE (GOOGLE FIREBASE REALTIME DB) ---
+    // =========================================================
+    let firebaseAppInstance = null;
+    let firebaseDbInstance = null;
+    let isRemoteSyncUpdate = false;
+    let syncDebounceTimer = null;
+    let localDeviceId = null;
+
+    function getLocalDeviceId() {
+      if (!localDeviceId) {
+        localDeviceId = localStorage.getItem("fxg_device_id");
+        if (!localDeviceId) {
+          localDeviceId = "dev_" + Math.random().toString(36).substring(2, 9) + "_" + Date.now();
+          localStorage.setItem("fxg_device_id", localDeviceId);
+        }
+      }
+      return localDeviceId;
+    }
+
+    function extractDatabaseUrlFromText(text) {
+      if (!text) return null;
+      const m = text.match(/https:\/\/[a-zA-Z0-9\.\-]+(?:firebaseio\.com|firebasedatabase\.app)/i);
+      return m ? m[0] : null;
+    }
+
+    function parseFirebaseConfig(raw) {
+      if (!raw || !raw.trim()) return null;
+      const text = raw.trim();
+
+      // Try direct JSON
+      try {
+        const obj = JSON.parse(text);
+        if (obj && typeof obj === 'object') {
+          return normalizeFirebaseConfig(obj, text);
+        }
+      } catch (e) {}
+
+      // Regex extraction from snippet
+      const config = {};
+      const fields = ["apiKey", "authDomain", "databaseURL", "projectId", "storageBucket", "messagingSenderId", "appId"];
+      fields.forEach(f => {
+        const regex = new RegExp('["\']?' + f + '["\']?\\s*[:=]\\s*["\']([^"\']+)["\']', 'i');
+        const m = text.match(regex);
+        if (m) config[f] = m[1].trim();
+      });
+
+      // Also try to find databaseURL directly from URL pattern
+      if (!config.databaseURL) {
+        const urlMatch = extractDatabaseUrlFromText(text);
+        if (urlMatch) config.databaseURL = urlMatch;
+      }
+
+      if (config.apiKey || config.projectId || config.databaseURL) {
+        return normalizeFirebaseConfig(config, text);
+      }
+      return null;
+    }
+
+    function normalizeFirebaseConfig(config, rawText = "") {
+      // If databaseURL is missing, look in raw text or fallback to projectId
+      if (!config.databaseURL) {
+        const found = extractDatabaseUrlFromText(rawText);
+        if (found) {
+          config.databaseURL = found;
+        } else if (config.projectId) {
+          config.databaseURL = `https://${config.projectId}-default-rtdb.firebaseio.com`;
+        }
+      }
+      return config;
+    }
+
+    function updateCloudUI(status, message) {
+      const dotNav = document.getElementById("cloudStatusDotNav");
+      const textNav = document.getElementById("cloudStatusTextNav");
+      const dotCard = document.getElementById("cardStatusDot");
+      const textCard = document.getElementById("cardStatusText");
+      const detailState = document.getElementById("syncDetailState");
+      const badgeCard = document.getElementById("cloudStatusBadge");
+
+      if (!dotNav || !textNav || !dotCard || !textCard) return;
+
+      if (status === "connected") {
+        dotNav.className = "w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse";
+        textNav.textContent = "雲端同步中";
+        dotCard.className = "w-2.5 h-2.5 rounded-full bg-emerald-500";
+        textCard.textContent = "🟢 雲端同步已連線";
+        if (badgeCard) badgeCard.className = "shrink-0 px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-2 bg-emerald-50 text-emerald-700 border border-emerald-200";
+        if (detailState) detailState.textContent = "🟢 已連線即時資料庫 (跨裝置即時同步中)";
+      } else if (status === "syncing") {
+        dotNav.className = "w-2.5 h-2.5 rounded-full bg-amber-400 animate-spin";
+        textNav.textContent = "同步傳輸中...";
+        dotCard.className = "w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse";
+        textCard.textContent = "🟡 資料同步中";
+        if (badgeCard) badgeCard.className = "shrink-0 px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-2 bg-amber-50 text-amber-700 border border-amber-200";
+        if (detailState) detailState.textContent = message || "🟡 正在與雲端傳輸資料...";
+      } else if (status === "error") {
+        dotNav.className = "w-2.5 h-2.5 rounded-full bg-rose-400";
+        textNav.textContent = "同步異常";
+        dotCard.className = "w-2.5 h-2.5 rounded-full bg-rose-500";
+        textCard.textContent = "🔴 連線失敗";
+        if (badgeCard) badgeCard.className = "shrink-0 px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-2 bg-rose-50 text-rose-700 border border-rose-200";
+        if (detailState) detailState.textContent = message || "🔴 連線失敗，請檢查權限設定";
+      } else {
+        dotNav.className = "w-2.5 h-2.5 rounded-full bg-slate-400";
+        textNav.textContent = "本機模式";
+        dotCard.className = "w-2.5 h-2.5 rounded-full bg-slate-400";
+        textCard.textContent = "⚪ 本機離線模式";
+        if (badgeCard) badgeCard.className = "shrink-0 px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-2 bg-slate-100 text-slate-600 border border-slate-200";
+        if (detailState) detailState.textContent = "⚪ 尚未設定 Firebase (目前僅儲存於本機)";
+      }
+    }
+
+    function initFirebaseSync() {
+      const savedConfigStr = localStorage.getItem("fxg_firebase_config");
+      if (!savedConfigStr) {
+        updateCloudUI("offline", "尚未設定 Firebase");
+        return;
+      }
+
+      let config = null;
+      try {
+        config = JSON.parse(savedConfigStr);
+      } catch (e) {
+        updateCloudUI("offline", "設定解析失敗");
+        return;
+      }
+
+      if (!config || (!config.apiKey && !config.databaseURL)) {
+        updateCloudUI("offline", "設定無效");
+        return;
+      }
+
+      // Populate inputs in settings UI
+      const configInput = document.getElementById("firebaseConfigInput");
+      if (configInput && !configInput.value) {
+        configInput.value = JSON.stringify(config, null, 2);
+      }
+      if (document.getElementById("manualDatabaseUrl")) {
+        document.getElementById("manualDatabaseUrl").value = config.databaseURL || "";
+        document.getElementById("manualApiKey").value = config.apiKey || "";
+        document.getElementById("manualProjectId").value = config.projectId || "";
+      }
+
+      // Initialize Firebase App
+      try {
+        if (typeof firebase === "undefined") {
+          console.warn("Firebase SDK not loaded");
+          updateCloudUI("error", "Firebase 函式庫未載入，請確認裝置連上網路");
+          showToast("❌ Firebase SDK 尚未載入，請確認網路連線正常", false);
+          return;
+        }
+
+        // Clean previous apps if re-initializing
+        if (firebase.apps && firebase.apps.length > 0) {
+          firebase.apps.forEach(app => {
+            try { app.delete(); } catch(e){}
+          });
+        }
+
+        firebaseAppInstance = firebase.initializeApp(config);
+        firebaseDbInstance = firebase.database();
+        updateCloudUI("syncing", "正在連線 Firebase 即時資料庫...");
+
+        // Connection state listener
+        const connectedRef = firebaseDbInstance.ref(".info/connected");
+        connectedRef.on("value", (snap) => {
+          if (snap.val() === true) {
+            updateCloudUI("connected", "已連線即時資料庫 (同步中)");
+          }
+        });
+
+        // Test read and setup realtime listener
+        const dataRef = firebaseDbInstance.ref("fxg_system_data");
+        dataRef.on("value", (snapshot) => {
+          const cloudData = snapshot.val();
+          if (!cloudData) {
+            console.log("Cloud database is empty, auto-uploading local state...");
+            pushLocalDataToCloud(false);
+            showToast("🎉 連線成功！已將本機商品與庫存備份至雲端");
+            updateCloudUI("connected", "已連線即時資料庫 (同步中)");
+            return;
+          }
+
+          // If update came from this device very recently, skip UI re-rendering
+          if (cloudData.deviceId === getLocalDeviceId() && (Date.now() - (cloudData.updatedAt || 0) < 3000)) {
+            const timeStr = cloudData.updatedAtStr || new Date().toLocaleTimeString("zh-TW");
+            const lastTimeEl = document.getElementById("syncLastTime");
+            if (lastTimeEl) lastTimeEl.textContent = "最後同步：" + timeStr;
+            updateCloudUI("connected", "已同步最新狀態");
+            return;
+          }
+
+          // Apply cloud updates to local state
+          isRemoteSyncUpdate = true;
+          try {
+            if (Array.isArray(cloudData.inventoryTransactions)) {
+              inventoryTransactions = cloudData.inventoryTransactions;
+              localStorage.setItem("fxg_inventory_tx", JSON.stringify(inventoryTransactions));
+            }
+            if (Array.isArray(cloudData.currentPriceList)) {
+              currentPriceList = cloudData.currentPriceList;
+              localStorage.setItem("fxg_price_list", JSON.stringify(currentPriceList));
+            }
+            if (Array.isArray(cloudData.savedDocuments)) {
+              savedDocuments = cloudData.savedDocuments;
+              localStorage.setItem("fxg_documents", JSON.stringify(savedDocuments));
+            }
+            if (cloudData.storeConfig && typeof cloudData.storeConfig === "object") {
+              storeConfig = cloudData.storeConfig;
+              localStorage.setItem("fxg_store_config", JSON.stringify(storeConfig));
+            }
+
+            // Re-render UI
+            applyStoreConfigToUI();
+            renderPriceDatalist();
+            renderPriceTable(document.getElementById("priceSearchInput") ? document.getElementById("priceSearchInput").value : "");
+            renderQuickTags();
+            renderHistoryTable();
+            renderInventoryDashboard();
+
+            const timeStr = cloudData.updatedAtStr || new Date().toLocaleTimeString("zh-TW");
+            const lastTimeEl = document.getElementById("syncLastTime");
+            if (lastTimeEl) lastTimeEl.textContent = "最後同步：" + timeStr;
+            updateCloudUI("connected", "已同步最新狀態 (" + timeStr + ")");
+            showToast("🔄 已自動同步來自手機/其他電腦的最新資料！");
+          } catch (err) {
+            console.error("Error applying cloud data:", err);
+          } finally {
+            isRemoteSyncUpdate = false;
+          }
+        }, (error) => {
+          console.error("Firebase read error:", error);
+          if (error.message && error.message.toLowerCase().includes("permission_denied")) {
+            updateCloudUI("error", "存取被拒：請將資料庫規則設為可讀寫 (Test mode)");
+            showToast("⚠️ 連線成功但存取被拒！請至 Firebase ➔ Realtime Database ➔ 規則，將 read 與 write 改為 true", false);
+          } else {
+            updateCloudUI("error", "連線異常：" + error.message);
+            showToast("⚠️ Firebase 連線異常：" + error.message, false);
+          }
+        });
+
+      } catch (err) {
+        console.error("Firebase init failed:", err);
+        updateCloudUI("error", "Firebase 連線初始化失敗：" + err.message);
+        showToast("❌ 連線失敗：" + err.message, false);
+      }
+    }
+
+    function queueCloudSync() {
+      if (isRemoteSyncUpdate || !firebaseDbInstance) return;
+      clearTimeout(syncDebounceTimer);
+      syncDebounceTimer = setTimeout(() => {
+        pushLocalDataToCloud(false);
+      }, 500);
+    }
+
+    function pushLocalDataToCloud(showNotification = true) {
+      if (!firebaseDbInstance) {
+        if (showNotification) showToast("尚未連線 Firebase，資料已妥善儲存於本機");
+        return;
+      }
+
+      const payload = {
+        version: 1,
+        updatedAt: Date.now(),
+        updatedAtStr: new Date().toLocaleString("zh-TW"),
+        deviceId: getLocalDeviceId(),
+        inventoryTransactions: inventoryTransactions || [],
+        currentPriceList: currentPriceList || [],
+        savedDocuments: savedDocuments || [],
+        storeConfig: storeConfig || {}
+      };
+
+      updateCloudUI("syncing", "正在上傳同步至雲端...");
+
+      firebaseDbInstance.ref("fxg_system_data").set(payload)
+        .then(() => {
+          const timeStr = new Date().toLocaleTimeString("zh-TW");
+          const lastTimeEl = document.getElementById("syncLastTime");
+          if (lastTimeEl) lastTimeEl.textContent = "最後同步：" + timeStr;
+          updateCloudUI("connected", "已同步最新狀態 (" + timeStr + ")");
+          if (showNotification) showToast("✅ 本地資料已成功同步上傳至 Firebase 雲端！");
+        })
+        .catch((err) => {
+          console.error("Firebase sync error:", err);
+          updateCloudUI("error", "上傳失敗：" + (err.message || "權限不足"));
+          showToast("❌ 雲端同步失敗：請確認 Realtime Database 規則設為開放讀寫", false);
+        });
+    }
+
+    function pullCloudDataToLocal() {
+      if (!firebaseDbInstance) {
+        showToast("尚未連線 Firebase，無法拉取雲端資料", false);
+        return;
+      }
+
+      updateCloudUI("syncing", "正在從雲端載入資料...");
+      firebaseDbInstance.ref("fxg_system_data").once("value")
+        .then((snapshot) => {
+          const cloudData = snapshot.val();
+          if (!cloudData) {
+            showToast("雲端資料庫目前為空，請點擊「手動上傳本機資料至雲端」", false);
+            updateCloudUI("connected", "雲端資料庫目前為空");
+            return;
+          }
+
+          isRemoteSyncUpdate = true;
+          try {
+            if (Array.isArray(cloudData.inventoryTransactions)) {
+              inventoryTransactions = cloudData.inventoryTransactions;
+              localStorage.setItem("fxg_inventory_tx", JSON.stringify(inventoryTransactions));
+            }
+            if (Array.isArray(cloudData.currentPriceList)) {
+              currentPriceList = cloudData.currentPriceList;
+              localStorage.setItem("fxg_price_list", JSON.stringify(currentPriceList));
+            }
+            if (Array.isArray(cloudData.savedDocuments)) {
+              savedDocuments = cloudData.savedDocuments;
+              localStorage.setItem("fxg_documents", JSON.stringify(savedDocuments));
+            }
+            if (cloudData.storeConfig && typeof cloudData.storeConfig === "object") {
+              storeConfig = cloudData.storeConfig;
+              localStorage.setItem("fxg_store_config", JSON.stringify(storeConfig));
+            }
+
+            applyStoreConfigToUI();
+            renderPriceDatalist();
+            renderPriceTable(document.getElementById("priceSearchInput") ? document.getElementById("priceSearchInput").value : "");
+            renderQuickTags();
+            renderHistoryTable();
+            renderInventoryDashboard();
+
+            const timeStr = cloudData.updatedAtStr || new Date().toLocaleTimeString("zh-TW");
+            const lastTimeEl = document.getElementById("syncLastTime");
+            if (lastTimeEl) lastTimeEl.textContent = "最後同步：" + timeStr;
+            updateCloudUI("connected", "已同步最新狀態 (" + timeStr + ")");
+            showToast("✅ 已成功從雲端同步最新資料至本機！");
+          } finally {
+            isRemoteSyncUpdate = false;
+          }
+        })
+        .catch((err) => {
+          console.error("Pull failed:", err);
+          updateCloudUI("error", "下載失敗：" + err.message);
+          showToast("❌ 無法讀取雲端資料：" + err.message, false);
+        });
+    }
+
+    function checkUrlSyncParams() {
+      if (window.location.hash.startsWith("#sync=")) {
+        try {
+          const raw = decodeURIComponent(window.location.hash.substring(6));
+          const cfg = JSON.parse(raw);
+          if (cfg && (cfg.databaseURL || cfg.projectId || cfg.apiKey)) {
+            localStorage.setItem("fxg_firebase_config", JSON.stringify(cfg));
+            history.replaceState(null, "", window.location.pathname + window.location.search);
+            showToast("📱 成功由手機專屬連結匯入雲端設定！正在連線同步...");
+            initFirebaseSync();
+          }
+        } catch (err) {
+          console.error("Failed to parse sync url hash", err);
+        }
+      }
+    }
+
     // --- Setup Listeners ---
     document.addEventListener("DOMContentLoaded", () => {
       initData();
@@ -2539,6 +2921,137 @@ const firebaseConfig = {
 
       // Enable Double layout by default matching the original Excel structure
       document.getElementById("quoteDoubleCopy").classList.remove("hidden");
+
+      // --- Firebase Cloud Sync Event Listeners ---
+      const btnCloudSyncNav = document.getElementById("btnCloudSyncNav");
+      if (btnCloudSyncNav) {
+        btnCloudSyncNav.addEventListener("click", () => {
+          switchTab("settings");
+          const section = document.getElementById("firebaseConfigSection");
+          if (section) section.scrollIntoView({ behavior: "smooth" });
+        });
+      }
+
+      const btnToggleManual = document.getElementById("btnToggleManualFields");
+      if (btnToggleManual) {
+        btnToggleManual.addEventListener("click", () => {
+          const manualArea = document.getElementById("configManualArea");
+          const pasteArea = document.getElementById("configPasteArea");
+          if (manualArea.classList.contains("hidden")) {
+            manualArea.classList.remove("hidden");
+            pasteArea.classList.add("hidden");
+            btnToggleManual.textContent = "切換回快速貼上模式";
+          } else {
+            manualArea.classList.add("hidden");
+            pasteArea.classList.remove("hidden");
+            btnToggleManual.textContent = "切換手動個別欄位輸入";
+          }
+        });
+      }
+
+      const btnSaveFirebase = document.getElementById("btnSaveFirebase");
+      if (btnSaveFirebase) {
+        btnSaveFirebase.addEventListener("click", () => {
+          let config = null;
+          const pasteVal = document.getElementById("firebaseConfigInput").value;
+          const manualArea = document.getElementById("configManualArea");
+
+          if (!manualArea.classList.contains("hidden")) {
+            config = {
+              databaseURL: document.getElementById("manualDatabaseUrl").value.trim(),
+              apiKey: document.getElementById("manualApiKey").value.trim(),
+              projectId: document.getElementById("manualProjectId").value.trim()
+            };
+          } else {
+            config = parseFirebaseConfig(pasteVal);
+          }
+
+          if (!config || (!config.apiKey && !config.databaseURL)) {
+            showToast("❌ 請填寫有效的 Firebase 設定 (包含 apiKey 或 databaseURL)", false);
+            updateCloudUI("error", "未填寫有效設定");
+            return;
+          }
+
+          localStorage.setItem("fxg_firebase_config", JSON.stringify(config));
+          showToast("⚡ Firebase 設定已儲存，正在啟動雲端連線...");
+          initFirebaseSync();
+        });
+      }
+
+      const btnPushToCloud = document.getElementById("btnPushToCloud");
+      if (btnPushToCloud) {
+        btnPushToCloud.addEventListener("click", () => {
+          pushLocalDataToCloud(true);
+        });
+      }
+
+      const btnPullFromCloud = document.getElementById("btnPullFromCloud");
+      if (btnPullFromCloud) {
+        btnPullFromCloud.addEventListener("click", () => {
+          pullCloudDataToLocal();
+        });
+      }
+
+      const btnShareMobileLink = document.getElementById("btnShareMobileLink");
+      if (btnShareMobileLink) {
+        btnShareMobileLink.addEventListener("click", () => {
+          const savedConfig = localStorage.getItem("fxg_firebase_config");
+          if (!savedConfig) {
+            showToast("請先在此儲存並連線 Firebase 後，再複製手機同步連結！", false);
+            return;
+          }
+          const syncUrl = window.location.origin + window.location.pathname + "#sync=" + encodeURIComponent(savedConfig);
+          const shareBox = document.getElementById("mobileShareUrlDisplay");
+          const shareWrapper = document.getElementById("mobileShareUrlWrapper");
+          if (shareBox && shareWrapper) {
+            shareBox.value = syncUrl;
+            shareWrapper.classList.remove("hidden");
+            shareBox.select();
+          }
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(syncUrl).then(() => {
+              showToast("📱 已複製手機同步專屬網址！用 LINE 傳給手機打開即可連線！");
+            }).catch(() => {
+              showToast("📱 手機專屬同步網址已產生，請看下方文字框！");
+            });
+          } else {
+            showToast("📱 手機專屬同步網址已產生，請看下方文字框！");
+          }
+        });
+      }
+
+      const btnCloseShareBox = document.getElementById("btnCloseShareBox");
+      if (btnCloseShareBox) {
+        btnCloseShareBox.addEventListener("click", () => {
+          const shareWrapper = document.getElementById("mobileShareUrlWrapper");
+          if (shareWrapper) shareWrapper.classList.add("hidden");
+        });
+      }
+
+      const btnDisconnect = document.getElementById("btnDisconnectFirebase");
+      if (btnDisconnect) {
+        btnDisconnect.addEventListener("click", () => {
+          localStorage.removeItem("fxg_firebase_config");
+          if (firebaseAppInstance) {
+            try {
+              firebaseAppInstance.delete();
+            } catch (e) {}
+            firebaseAppInstance = null;
+            firebaseDbInstance = null;
+          }
+          document.getElementById("firebaseConfigInput").value = "";
+          document.getElementById("manualDatabaseUrl").value = "";
+          document.getElementById("manualApiKey").value = "";
+          document.getElementById("manualProjectId").value = "";
+          updateCloudUI("offline", "尚未設定 Firebase");
+          showToast("已清除 Firebase 雲端設定，切回本機模式");
+        });
+      }
+
+      // Check URL Sync params & initialize Firebase on load
+      checkUrlSyncParams();
+      initFirebaseSync();
+
       fillQuoteSample();
     });
   </script>
