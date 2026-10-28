@@ -815,7 +815,7 @@
               <span>☁️</span> Google Firebase 跨裝置雲端同步
             </h2>
             <p class="text-xs text-slate-500 mt-1">
-              設定一次即可讓電腦與手機隨時保持即時同步！出貨、入庫、新增單據或修改價目表，所有裝置零時差更新。
+              系統已為您內建專屬雲端資料庫（fxg-system-58147）！電腦與手機免手動設定，開啟網頁自動即時連線同步。
             </p>
           </div>
           <div id="cloudStatusBadge" class="shrink-0 px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-2 bg-slate-100 text-slate-600 border border-slate-200">
@@ -2414,24 +2414,28 @@ const firebaseConfig = {
       }
     }
 
+    // 芳喜蓁站專屬 Google Firebase 雲端資料庫內建設定
+    const BUILTIN_FIREBASE_CONFIG = {
+      apiKey: "AIzaSyCOZnsWI3dFnPVOZ21U3snhAAMEohCO4No",
+      authDomain: "fxg-system-58147.firebaseapp.com",
+      databaseURL: "https://fxg-system-58147-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "fxg-system-58147",
+      storageBucket: "fxg-system-58147.firebasestorage.app",
+      messagingSenderId: "281708586563",
+      appId: "1:281708586563:web:c5c5712bfd7a213db656f6"
+    };
+
     function initFirebaseSync() {
+      // 優先使用內建的專屬 Firebase 設定，亦允許由 localStorage 覆蓋
+      let config = { ...BUILTIN_FIREBASE_CONFIG };
       const savedConfigStr = localStorage.getItem("fxg_firebase_config");
-      if (!savedConfigStr) {
-        updateCloudUI("offline", "尚未設定 Firebase");
-        return;
-      }
-
-      let config = null;
-      try {
-        config = JSON.parse(savedConfigStr);
-      } catch (e) {
-        updateCloudUI("offline", "設定解析失敗");
-        return;
-      }
-
-      if (!config || (!config.apiKey && !config.databaseURL)) {
-        updateCloudUI("offline", "設定無效");
-        return;
+      if (savedConfigStr) {
+        try {
+          const parsed = JSON.parse(savedConfigStr);
+          if (parsed && (parsed.databaseURL || parsed.apiKey)) {
+            config = parsed;
+          }
+        } catch (e) {}
       }
 
       // Populate inputs in settings UI
