@@ -21,13 +21,17 @@
       html, body {
         width: 100% !important;
         height: 100% !important;
+        max-height: 297mm !important;
         margin: 0 !important;
         padding: 0 !important;
         background-color: #fff !important;
         color: #000 !important;
-        font-size: 8.5pt !important;
+        font-size: 8pt !important;
+        overflow: hidden !important;
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
+        page-break-inside: avoid !important;
+        page-break-after: avoid !important;
       }
       .no-print, #toast {
         display: none !important;
@@ -41,53 +45,59 @@
       .print-container {
         width: 100% !important;
         max-width: 100% !important;
+        height: 100% !important;
+        max-height: 297mm !important;
         margin: 0 auto !important;
-        padding: 5mm 6mm 5mm 6mm !important;
+        padding: 3mm 5mm 3mm 5mm !important;
         box-shadow: none !important;
         border: none !important;
         display: flex !important;
         flex-direction: column !important;
         justify-content: space-between !important;
         box-sizing: border-box !important;
+        overflow: hidden !important;
         page-break-inside: avoid !important;
         page-break-after: avoid !important;
+        page-break-before: avoid !important;
       }
-      /* Each Half Sheet: Exactly 137mm high, identical proportion */
+      /* Each Half Sheet: Exactly 133mm high to guarantee 100% single page fit with 20mm safe margin */
       .quote-half-sheet {
         width: 100% !important;
-        height: 137mm !important;
-        max-height: 137mm !important;
-        min-height: 137mm !important;
+        height: 133mm !important;
+        max-height: 133mm !important;
+        min-height: 133mm !important;
         box-sizing: border-box !important;
         display: flex !important;
         flex-direction: column !important;
         justify-content: space-between !important;
         overflow: hidden !important;
         page-break-inside: avoid !important;
+        page-break-after: avoid !important;
         margin: 0 !important;
-        padding: 1mm 0 !important;
+        padding: 0.5mm 0 !important;
       }
       /* Tear/Cut line between the two slips */
       .cut-line {
-        height: 5mm !important;
-        margin: 1mm 0 !important;
+        height: 4mm !important;
+        margin: 0.5mm 0 !important;
         border-top: 1px dashed #555 !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
         text-align: center !important;
         position: relative !important;
+        page-break-inside: avoid !important;
       }
       .cut-line::after {
         content: "✂ 沿虛線裁開（第一聯：存根聯 ／ 第二聯：客戶收執聯）" !important;
         position: relative !important;
-        top: -6px !important;
+        top: -5px !important;
         background: #fff !important;
-        padding: 0 10px !important;
-        font-size: 7pt !important;
+        padding: 0 8px !important;
+        font-size: 6.5pt !important;
         color: #555 !important;
       }
-      /* Print Table Styling */
+      /* Print Table Styling - Compact rows for guaranteed 1-page fit */
       table.print-table {
         border-collapse: collapse !important;
         width: 100% !important;
@@ -96,19 +106,19 @@
       table.print-table th, 
       table.print-table td {
         border: 1px solid #000 !important;
-        padding: 1px 2px !important;
-        height: 5.1mm !important;
-        max-height: 5.1mm !important;
-        font-size: 8pt !important;
+        padding: 0.5px 2px !important;
+        height: 4.8mm !important;
+        max-height: 4.8mm !important;
+        font-size: 7.8pt !important;
         line-height: 1.1 !important;
         color: #000 !important;
         background: transparent !important;
         box-sizing: border-box !important;
       }
       table.print-table th {
-        font-size: 7.5pt !important;
+        font-size: 7.2pt !important;
         font-weight: bold !important;
-        height: 5.2mm !important;
+        height: 4.9mm !important;
         background-color: #f3f4f6 !important;
       }
       /* Transparent borders for inputs during print so they appear as clean text */
@@ -182,11 +192,34 @@
       box-shadow: none !important;
       border: none !important;
       border-radius: 0 !important;
-      padding: 4mm 6mm !important;
+      padding: 3mm 5mm !important;
       width: 100% !important;
-      max-width: 950px !important;
+      max-width: 200mm !important;
+      height: 272mm !important;
+      max-height: 275mm !important;
+      overflow: hidden !important;
       margin: 0 auto !important;
       background: #ffffff !important;
+      box-sizing: border-box !important;
+    }
+    .pdf-export-mode .quote-half-sheet {
+      height: 133mm !important;
+      max-height: 133mm !important;
+      min-height: 133mm !important;
+      overflow: hidden !important;
+      box-sizing: border-box !important;
+      padding: 0.5mm 0 !important;
+    }
+    .pdf-export-mode .cut-line {
+      height: 4mm !important;
+      margin: 0.5mm 0 !important;
+    }
+    .pdf-export-mode table.print-table th,
+    .pdf-export-mode table.print-table td {
+      height: 4.8mm !important;
+      max-height: 4.8mm !important;
+      padding: 0.5px 2px !important;
+      font-size: 7.8pt !important;
     }
     .pdf-export-mode input {
       border: none !important;
@@ -4015,11 +4048,19 @@ const firebaseConfig = {
       document.body.classList.add("pdf-export-mode");
 
       const opt = {
-        margin: [4, 6, 4, 6],
+        margin: [0, 0, 0, 0], // Strict 0 margin in jsPDF so it fits 100% onto 1 single A4 page
         filename: pdfFilename,
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', logging: false },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        html2canvas: {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: '#ffffff',
+          logging: false,
+          scrollY: 0,
+          scrollX: 0
+        },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
       };
 
       try {
