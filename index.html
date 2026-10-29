@@ -2996,6 +2996,22 @@ const firebaseConfig = {
       return localDeviceId;
     }
 
+    function toSafeArray(val) {
+      if (!val) return [];
+      if (Array.isArray(val)) return val;
+      if (typeof val === 'object') {
+        const keys = Object.keys(val);
+        const hasNumericKeys = keys.length > 0 && keys.every(k => !isNaN(parseInt(k, 10)));
+        if (hasNumericKeys) {
+          return keys.sort((a, b) => parseInt(a, 10) - parseInt(b, 10)).map(k => val[k]);
+        }
+        return Object.values(val);
+      }
+      return [];
+    }
+
+
+
     function extractDatabaseUrlFromText(text) {
       if (!text) return null;
       const m = text.match(/https:\/\/[a-zA-Z0-9\.\-]+(?:firebaseio\.com|firebasedatabase\.app)/i);
@@ -3173,27 +3189,27 @@ const firebaseConfig = {
             return;
           }
 
-          // Apply cloud updates to local state
+          // Apply cloud updates to local state (using toSafeArray to handle Firebase object-converted arrays)
           isRemoteSyncUpdate = true;
           try {
-            if (Array.isArray(cloudData.favoriteProducts)) {
-              quickTagNames = cloudData.favoriteProducts;
+            if (cloudData.favoriteProducts !== undefined) {
+              quickTagNames = toSafeArray(cloudData.favoriteProducts);
               localStorage.setItem("fxg_favorite_products", JSON.stringify(quickTagNames));
             }
-            if (Array.isArray(cloudData.customerList)) {
-              currentCustomerList = cloudData.customerList;
+            if (cloudData.customerList !== undefined) {
+              currentCustomerList = toSafeArray(cloudData.customerList);
               localStorage.setItem("fxg_customer_list", JSON.stringify(currentCustomerList));
             }
-            if (Array.isArray(cloudData.inventoryTransactions)) {
-              inventoryTransactions = cloudData.inventoryTransactions;
+            if (cloudData.inventoryTransactions !== undefined) {
+              inventoryTransactions = toSafeArray(cloudData.inventoryTransactions);
               localStorage.setItem("fxg_inventory_tx", JSON.stringify(inventoryTransactions));
             }
-            if (Array.isArray(cloudData.currentPriceList)) {
-              currentPriceList = cloudData.currentPriceList;
+            if (cloudData.currentPriceList !== undefined) {
+              currentPriceList = toSafeArray(cloudData.currentPriceList);
               localStorage.setItem("fxg_price_list", JSON.stringify(currentPriceList));
             }
-            if (Array.isArray(cloudData.savedDocuments)) {
-              savedDocuments = cloudData.savedDocuments;
+            if (cloudData.savedDocuments !== undefined) {
+              savedDocuments = toSafeArray(cloudData.savedDocuments);
               localStorage.setItem("fxg_documents", JSON.stringify(savedDocuments));
             }
             if (cloudData.storeConfig && typeof cloudData.storeConfig === "object") {
@@ -3259,11 +3275,11 @@ const firebaseConfig = {
         updatedAt: Date.now(),
         updatedAtStr: new Date().toLocaleString("zh-TW"),
         deviceId: getLocalDeviceId(),
-        favoriteProducts: quickTagNames || [],
-        customerList: currentCustomerList || [],
-        inventoryTransactions: inventoryTransactions || [],
-        currentPriceList: currentPriceList || [],
-        savedDocuments: savedDocuments || [],
+        favoriteProducts: toSafeArray(quickTagNames),
+        customerList: toSafeArray(currentCustomerList),
+        inventoryTransactions: toSafeArray(inventoryTransactions),
+        currentPriceList: toSafeArray(currentPriceList),
+        savedDocuments: toSafeArray(savedDocuments),
         storeConfig: storeConfig || {}
       };
 
@@ -3302,24 +3318,24 @@ const firebaseConfig = {
 
           isRemoteSyncUpdate = true;
           try {
-            if (Array.isArray(cloudData.favoriteProducts)) {
-              quickTagNames = cloudData.favoriteProducts;
+            if (cloudData.favoriteProducts !== undefined) {
+              quickTagNames = toSafeArray(cloudData.favoriteProducts);
               localStorage.setItem("fxg_favorite_products", JSON.stringify(quickTagNames));
             }
-            if (Array.isArray(cloudData.customerList)) {
-              currentCustomerList = cloudData.customerList;
+            if (cloudData.customerList !== undefined) {
+              currentCustomerList = toSafeArray(cloudData.customerList);
               localStorage.setItem("fxg_customer_list", JSON.stringify(currentCustomerList));
             }
-            if (Array.isArray(cloudData.inventoryTransactions)) {
-              inventoryTransactions = cloudData.inventoryTransactions;
+            if (cloudData.inventoryTransactions !== undefined) {
+              inventoryTransactions = toSafeArray(cloudData.inventoryTransactions);
               localStorage.setItem("fxg_inventory_tx", JSON.stringify(inventoryTransactions));
             }
-            if (Array.isArray(cloudData.currentPriceList)) {
-              currentPriceList = cloudData.currentPriceList;
+            if (cloudData.currentPriceList !== undefined) {
+              currentPriceList = toSafeArray(cloudData.currentPriceList);
               localStorage.setItem("fxg_price_list", JSON.stringify(currentPriceList));
             }
-            if (Array.isArray(cloudData.savedDocuments)) {
-              savedDocuments = cloudData.savedDocuments;
+            if (cloudData.savedDocuments !== undefined) {
+              savedDocuments = toSafeArray(cloudData.savedDocuments);
               localStorage.setItem("fxg_documents", JSON.stringify(savedDocuments));
             }
             if (cloudData.storeConfig && typeof cloudData.storeConfig === "object") {
