@@ -283,15 +283,30 @@
       </div>
 
       <!-- Quick Pick Tag Bar (No print) -->
-      <div class="no-print bg-amber-50 border border-amber-200 p-4 rounded-2xl">
-        <div class="flex items-center justify-between mb-2">
-          <span class="text-xs font-bold text-amber-900 flex items-center gap-1">
-            <span>⚡</span> 常用商品快速點選（點擊直接加入下一個空白列）：
-          </span>
-          <span class="text-xs text-amber-700">自動填入名稱與價目表單價</span>
+      <div class="no-print bg-amber-50/80 border border-amber-200 p-4 rounded-2xl space-y-2">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-bold text-amber-950 flex items-center gap-1">
+              <span>⚡</span> 常用商品快速點選（點擊直接加入下一個空白列）：
+            </span>
+            <span id="quickTagCountBadge" class="text-[11px] bg-amber-200/80 text-amber-900 px-2 py-0.5 rounded-full font-bold">
+              共 21 項
+            </span>
+          </div>
+
+          <div class="flex items-center gap-1.5">
+            <button type="button" id="btnToggleTagEditMode" class="text-xs px-2.5 py-1 bg-white hover:bg-slate-100 text-slate-700 rounded-lg border border-slate-300 font-semibold transition flex items-center gap-1 shadow-2xs">
+              <span id="tagEditIcon">✏️</span>
+              <span id="tagEditText">移除/管理標籤</span>
+            </button>
+            <button type="button" id="btnOpenAddTagModal" class="text-xs px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-bold transition flex items-center gap-1 shadow-2xs">
+              <span>➕</span> 新增常用商品
+            </button>
+          </div>
         </div>
-        <div id="quoteQuickTags" class="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto custom-scrollbar">
-          <!-- Dynamically populated tags -->
+
+        <div id="quoteQuickTags" class="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto custom-scrollbar pt-0.5">
+          <!-- Dynamically populated tags with optional remove buttons -->
         </div>
       </div>
 
@@ -1141,6 +1156,59 @@ const firebaseConfig = {
     </div>
   </div>
 
+  <!-- Modal for Managing Quick Pick Favorite Tags -->
+  <div id="quickTagModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-5">
+      <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+        <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+          <span>⚡</span> 常用商品快速點選管理
+        </h3>
+        <button type="button" id="btnQuickTagModalCloseTop" class="text-slate-400 hover:text-slate-600 text-lg">✕</button>
+      </div>
+
+      <!-- Add New Quick Tag Section -->
+      <div class="bg-amber-50/70 border border-amber-200 p-3.5 rounded-xl space-y-2">
+        <label class="block text-xs font-bold text-amber-950">
+          ➕ 從商品價目庫加入常用標籤：
+        </label>
+        <div class="flex items-center gap-2">
+          <select id="quickTagAddSelect" class="flex-1 px-3 py-2 bg-white border border-amber-300 rounded-xl text-xs font-medium outline-none focus:border-amber-600">
+            <!-- Dynamically populated with items not yet in quick tags -->
+          </select>
+          <button type="button" id="btnConfirmAddQuickTag" class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold shadow transition shrink-0">
+            加入常用
+          </button>
+        </div>
+        <p class="text-[11px] text-amber-800/80">加入後將立即顯示於估價單常用區，點擊即可一秒填入品名與單價。</p>
+      </div>
+
+      <!-- Current Quick Tags Chips Section -->
+      <div class="space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold text-slate-700">
+            目前常用標籤清單（點擊標籤旁的 ✕ 即可移除）：
+          </span>
+          <span id="modalQuickTagCount" class="text-xs text-slate-500 font-semibold">
+            共 0 項
+          </span>
+        </div>
+        <div id="modalQuickTagsContainer" class="p-3 bg-slate-50 rounded-xl border border-slate-200 max-h-52 overflow-y-auto custom-scrollbar flex flex-wrap gap-1.5">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <!-- Footer Actions -->
+      <div class="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-100">
+        <button type="button" id="btnResetQuickTags" class="px-3.5 py-1.5 text-xs text-slate-600 hover:text-slate-900 border border-slate-300 rounded-xl font-medium transition hover:bg-slate-100">
+          🔄 回復預設標籤 (21項)
+        </button>
+        <button type="button" id="btnQuickTagModalClose" class="px-5 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-bold shadow transition">
+          完成關閉
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Modal for Adding/Editing Price Item -->
   <div id="priceModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200">
@@ -1380,11 +1448,14 @@ const firebaseConfig = {
       { name: "特調番茄醬", price: 320, code: "940", spec: "" }
     ];
 
-    const QUICK_TAG_NAMES = [
+    const DEFAULT_QUICK_TAG_NAMES = [
       "里肌肉", "炸豬排", "豬柳", "漢堡肉", "蛋餅皮", "花枝蝦排", "月亮蝦餅", 
       "紐奧良辣雞堡", "蘿蔔糕", "日式燒肉", "特調番茄醬", "千島醬", "沙拉", 
       "奶酥", "香蒜", "錫蘭紅茶", "麥香紅茶", "咖啡粉", "小鬆餅", "5808", "柴魚高湯粉"
     ];
+
+    let quickTagNames = [];
+    let isTagEditMode = false;
 
     const DEFAULT_CUSTOMER_LIST = [
       { name: "早安美而美（安平店）", taxId: "88812345", contact: "林志豪", phone: "0912-345-678", address: "台南市安平區華平路123號", remark: "每週二、五早上 07:30 前送達", createdAt: "2026-10-01" },
@@ -1880,6 +1951,13 @@ const firebaseConfig = {
         currentCustomerList = [...DEFAULT_CUSTOMER_LIST];
       }
 
+      try {
+        const savedTags = localStorage.getItem("fxg_favorite_products");
+        quickTagNames = savedTags ? JSON.parse(savedTags) : [...DEFAULT_QUICK_TAG_NAMES];
+      } catch (e) {
+        quickTagNames = [...DEFAULT_QUICK_TAG_NAMES];
+      }
+
       // Populate Today's date by default
       const today = new Date().toISOString().split('T')[0];
       document.getElementById("quoteDate").value = today;
@@ -1927,21 +2005,131 @@ const firebaseConfig = {
       });
     }
 
+    function saveQuickTags() {
+      try {
+        localStorage.setItem("fxg_favorite_products", JSON.stringify(quickTagNames));
+        queueCloudSync();
+      } catch (e) {
+        console.error("Storage error:", e);
+      }
+    }
+
+    function addQuickTag(itemName) {
+      if (!itemName) return false;
+      if (quickTagNames.includes(itemName)) {
+        showToast(`「${itemName}」已在常用商品清單中`, false);
+        return false;
+      }
+      quickTagNames.push(itemName);
+      saveQuickTags();
+      renderQuickTags();
+      renderQuickTagModalContent();
+      renderPriceTable(document.getElementById("priceSearchInput") ? document.getElementById("priceSearchInput").value : "");
+      showToast(`已新增常用商品「${itemName}」`);
+      return true;
+    }
+
+    function removeQuickTag(itemName) {
+      const idx = quickTagNames.indexOf(itemName);
+      if (idx !== -1) {
+        quickTagNames.splice(idx, 1);
+        saveQuickTags();
+        renderQuickTags();
+        renderQuickTagModalContent();
+        renderPriceTable(document.getElementById("priceSearchInput") ? document.getElementById("priceSearchInput").value : "");
+        showToast(`已自常用標籤移除「${itemName}」`);
+        return true;
+      }
+      return false;
+    }
+
     function renderQuickTags() {
       const qContainer = document.getElementById("quoteQuickTags");
+      if (!qContainer) return;
       qContainer.innerHTML = "";
 
-      QUICK_TAG_NAMES.forEach(name => {
+      const countBadge = document.getElementById("quickTagCountBadge");
+      if (countBadge) countBadge.textContent = `共 ${quickTagNames.length} 項`;
+
+      if (quickTagNames.length === 0) {
+        qContainer.innerHTML = `<span class="text-xs text-slate-400 py-1">目前無常用商品標籤，請點擊上方「➕ 新增常用商品」加入</span>`;
+        return;
+      }
+
+      quickTagNames.forEach(name => {
         const item = currentPriceList.find(p => p.name === name) || { name, price: 0 };
-        
-        // Button for Quote
-        const btnQ = document.createElement("button");
-        btnQ.type = "button";
-        btnQ.className = "text-xs bg-white hover:bg-amber-600 hover:text-white text-slate-700 px-2.5 py-1 rounded-lg border border-amber-300 font-medium transition shadow-2xs whitespace-nowrap";
-        btnQ.textContent = `${name} ($${item.price})`;
-        btnQ.addEventListener("click", () => addQuickItemToQuote(name, item.price));
-        qContainer.appendChild(btnQ);
+        const wrapper = document.createElement("div");
+        wrapper.className = "inline-flex items-center rounded-lg shadow-2xs transition";
+
+        if (isTagEditMode) {
+          wrapper.innerHTML = `
+            <button type="button" class="btn-tag-main text-xs bg-rose-50 border border-rose-300 text-rose-800 font-medium px-2 py-1 rounded-l-lg hover:bg-rose-100 flex items-center gap-1">
+              <span>${name}</span>
+              <span class="text-[10px] text-rose-600 font-semibold">($${item.price})</span>
+            </button>
+            <button type="button" title="自常用標籤移除" class="btn-tag-del text-xs bg-rose-600 hover:bg-rose-700 text-white font-bold px-2 py-1 rounded-r-lg border border-l-0 border-rose-600 transition">
+              ✕
+            </button>
+          `;
+          wrapper.querySelector(".btn-tag-del").addEventListener("click", () => removeQuickTag(name));
+          wrapper.querySelector(".btn-tag-main").addEventListener("click", () => removeQuickTag(name));
+        } else {
+          const btnQ = document.createElement("button");
+          btnQ.type = "button";
+          btnQ.className = "text-xs bg-white hover:bg-amber-600 hover:text-white text-slate-700 px-2.5 py-1 rounded-lg border border-amber-300 font-medium transition shadow-2xs whitespace-nowrap flex items-center gap-1";
+          btnQ.innerHTML = `<span>${name}</span> <span class="text-[10px] opacity-75 font-semibold">($${item.price})</span>`;
+          btnQ.addEventListener("click", () => addQuickItemToQuote(name, item.price));
+          wrapper.appendChild(btnQ);
+        }
+
+        qContainer.appendChild(wrapper);
       });
+    }
+
+    function renderQuickTagModalContent() {
+      const selectEl = document.getElementById("quickTagAddSelect");
+      const containerEl = document.getElementById("modalQuickTagsContainer");
+      const countEl = document.getElementById("modalQuickTagCount");
+
+      if (countEl) countEl.textContent = `共 ${quickTagNames.length} 項`;
+
+      // 1. Populate dropdown with items not in quickTagNames
+      if (selectEl) {
+        selectEl.innerHTML = "";
+        const available = currentPriceList.filter(p => !quickTagNames.includes(p.name));
+        if (available.length === 0) {
+          selectEl.innerHTML = `<option value="">所有商品皆已在常用清單中</option>`;
+        } else {
+          available.forEach(p => {
+            const opt = document.createElement("option");
+            opt.value = p.name;
+            opt.textContent = `${p.name} (NT$ ${p.price}${p.spec ? ' - ' + p.spec : ''})`;
+            selectEl.appendChild(opt);
+          });
+        }
+      }
+
+      // 2. Populate current tags chips in modal
+      if (containerEl) {
+        containerEl.innerHTML = "";
+        if (quickTagNames.length === 0) {
+          containerEl.innerHTML = `<span class="text-xs text-slate-400 py-2">目前尚無常用標籤，請從上方選單加入</span>`;
+          return;
+        }
+
+        quickTagNames.forEach(name => {
+          const item = currentPriceList.find(p => p.name === name) || { name, price: 0 };
+          const chip = document.createElement("div");
+          chip.className = "inline-flex items-center gap-1.5 px-2.5 py-1 bg-white border border-amber-300 rounded-lg text-xs font-medium text-slate-700 shadow-2xs";
+          chip.innerHTML = `
+            <span>${name}</span>
+            <span class="text-[10px] text-amber-800 font-semibold">($${item.price})</span>
+            <button type="button" title="自常用標籤移除" class="btn-chip-del text-rose-500 hover:text-rose-700 font-bold ml-0.5 text-xs">✕</button>
+          `;
+          chip.querySelector(".btn-chip-del").addEventListener("click", () => removeQuickTag(name));
+          containerEl.appendChild(chip);
+        });
+      }
     }
 
     // --- TAB 1: 估價單 表格構建 (雙欄 1-30 項目) ---
@@ -2411,15 +2599,29 @@ const firebaseConfig = {
           <td class="py-2.5 px-4 font-bold text-slate-800">${item.name}</td>
           <td class="py-2.5 px-4 text-right font-black text-amber-900">NT$ ${item.price.toLocaleString()}</td>
           <td class="py-2.5 px-4 text-xs text-slate-600">${item.spec || '-'}</td>
-          <td class="py-2.5 px-4 text-center">
-            <button class="btn-price-edit text-xs text-blue-600 hover:text-blue-800 font-semibold mr-2" data-index="${realIndex}">編輯</button>
+          <td class="py-2.5 px-4 text-center whitespace-nowrap">
+            <button class="btn-price-fav text-xs px-2 py-0.5 rounded font-bold border transition mr-1.5 ${quickTagNames.includes(item.name) ? 'bg-amber-100 text-amber-900 border-amber-300 hover:bg-amber-200' : 'bg-slate-50 text-slate-400 border-slate-200 hover:text-amber-700 hover:border-amber-300'}" data-name="${item.name}">
+              ${quickTagNames.includes(item.name) ? '★ 常用' : '☆ 加常用'}
+            </button>
+            <button class="btn-price-edit text-xs text-blue-600 hover:text-blue-800 font-semibold mr-1.5" data-index="${realIndex}">編輯</button>
             <button class="btn-price-del text-xs text-rose-600 hover:text-rose-800 font-semibold" data-index="${realIndex}">刪除</button>
           </td>
         `;
         tbody.appendChild(tr);
       });
 
-      // Bind edit and delete handlers
+      // Bind fav, edit and delete handlers
+      tbody.querySelectorAll(".btn-price-fav").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const name = btn.getAttribute("data-name");
+          if (quickTagNames.includes(name)) {
+            removeQuickTag(name);
+          } else {
+            addQuickTag(name);
+          }
+        });
+      });
+
       tbody.querySelectorAll(".btn-price-edit").forEach(btn => {
         btn.addEventListener("click", () => {
           const idx = parseInt(btn.getAttribute("data-index"), 10);
@@ -2955,6 +3157,10 @@ const firebaseConfig = {
           // Apply cloud updates to local state
           isRemoteSyncUpdate = true;
           try {
+            if (Array.isArray(cloudData.favoriteProducts)) {
+              quickTagNames = cloudData.favoriteProducts;
+              localStorage.setItem("fxg_favorite_products", JSON.stringify(quickTagNames));
+            }
             if (Array.isArray(cloudData.customerList)) {
               currentCustomerList = cloudData.customerList;
               localStorage.setItem("fxg_customer_list", JSON.stringify(currentCustomerList));
@@ -2978,6 +3184,7 @@ const firebaseConfig = {
 
             // Re-render UI
             applyStoreConfigToUI();
+            renderQuickTags();
             renderCustomerDropdown();
             renderCustomerTable(document.getElementById("customerSearchInput") ? document.getElementById("customerSearchInput").value : "");
             renderPriceDatalist();
@@ -3033,6 +3240,7 @@ const firebaseConfig = {
         updatedAt: Date.now(),
         updatedAtStr: new Date().toLocaleString("zh-TW"),
         deviceId: getLocalDeviceId(),
+        favoriteProducts: quickTagNames || [],
         customerList: currentCustomerList || [],
         inventoryTransactions: inventoryTransactions || [],
         currentPriceList: currentPriceList || [],
@@ -3075,6 +3283,10 @@ const firebaseConfig = {
 
           isRemoteSyncUpdate = true;
           try {
+            if (Array.isArray(cloudData.favoriteProducts)) {
+              quickTagNames = cloudData.favoriteProducts;
+              localStorage.setItem("fxg_favorite_products", JSON.stringify(quickTagNames));
+            }
             if (Array.isArray(cloudData.customerList)) {
               currentCustomerList = cloudData.customerList;
               localStorage.setItem("fxg_customer_list", JSON.stringify(currentCustomerList));
@@ -3097,6 +3309,7 @@ const firebaseConfig = {
             }
 
             applyStoreConfigToUI();
+            renderQuickTags();
             renderCustomerDropdown();
             renderCustomerTable(document.getElementById("customerSearchInput") ? document.getElementById("customerSearchInput").value : "");
             renderPriceDatalist();
@@ -3255,6 +3468,75 @@ const firebaseConfig = {
       document.getElementById("btnInvExportStockCSV").addEventListener("click", exportInventoryStockCSV);
       document.getElementById("btnInvExportLogCSV").addEventListener("click", exportInventoryLogCSV);
 
+
+
+      // Quick Tags Management Listeners
+      const btnToggleEdit = document.getElementById("btnToggleTagEditMode");
+      if (btnToggleEdit) {
+        btnToggleEdit.addEventListener("click", () => {
+          isTagEditMode = !isTagEditMode;
+          const editIcon = document.getElementById("tagEditIcon");
+          const editText = document.getElementById("tagEditText");
+          if (isTagEditMode) {
+            btnToggleEdit.className = "text-xs px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold transition flex items-center gap-1 shadow-2xs";
+            if (editIcon) editIcon.textContent = "✓";
+            if (editText) editText.textContent = "完成編輯";
+            showToast("已進入標籤編輯模式：點擊標籤上的 ✕ 即可直接移除");
+          } else {
+            btnToggleEdit.className = "text-xs px-2.5 py-1 bg-white hover:bg-slate-100 text-slate-700 rounded-lg border border-slate-300 font-semibold transition flex items-center gap-1 shadow-2xs";
+            if (editIcon) editIcon.textContent = "✏️";
+            if (editText) editText.textContent = "移除/管理標籤";
+            showToast("已結束編輯模式");
+          }
+          renderQuickTags();
+        });
+      }
+
+      const btnOpenTagModal = document.getElementById("btnOpenAddTagModal");
+      if (btnOpenTagModal) {
+        btnOpenTagModal.addEventListener("click", () => {
+          renderQuickTagModalContent();
+          document.getElementById("quickTagModal").classList.remove("hidden");
+        });
+      }
+
+      const btnCloseTagModalTop = document.getElementById("btnQuickTagModalCloseTop");
+      if (btnCloseTagModalTop) {
+        btnCloseTagModalTop.addEventListener("click", () => {
+          document.getElementById("quickTagModal").classList.add("hidden");
+        });
+      }
+
+      const btnCloseTagModal = document.getElementById("btnQuickTagModalClose");
+      if (btnCloseTagModal) {
+        btnCloseTagModal.addEventListener("click", () => {
+          document.getElementById("quickTagModal").classList.add("hidden");
+        });
+      }
+
+      const btnConfirmAddTag = document.getElementById("btnConfirmAddQuickTag");
+      if (btnConfirmAddTag) {
+        btnConfirmAddTag.addEventListener("click", () => {
+          const selectEl = document.getElementById("quickTagAddSelect");
+          if (selectEl && selectEl.value) {
+            addQuickTag(selectEl.value);
+          } else {
+            showToast("請選擇欲加入的商品！", false);
+          }
+        });
+      }
+
+      const btnResetTags = document.getElementById("btnResetQuickTags");
+      if (btnResetTags) {
+        btnResetTags.addEventListener("click", () => {
+          quickTagNames = [...DEFAULT_QUICK_TAG_NAMES];
+          saveQuickTags();
+          renderQuickTags();
+          renderQuickTagModalContent();
+          renderPriceTable(document.getElementById("priceSearchInput") ? document.getElementById("priceSearchInput").value : "");
+          showToast("已回復為原廠預設常用標籤 (共 21 項)");
+        });
+      }
 
       // Customer Navigation & Controls
       const navCustBtn = document.getElementById("navCustomerBtn");
