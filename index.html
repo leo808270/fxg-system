@@ -1525,6 +1525,11 @@ const firebaseConfig = {
       }, 2500);
     }
 
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
     // Number to Traditional Chinese Capital Currency
     function numberToChineseWords(n) {
       if (isNaN(n) || n === 0) return "零元整";
@@ -2160,10 +2165,93 @@ const firebaseConfig = {
       }
     }
 
-    // --- TAB 1: 估價單 表格構建 (雙欄 1-30 項目) ---
+    // --- TAB 1: 估價單 表格構建 (雙欄 1-30 項目，品名全面採用下拉選單防注音彈窗) ---
+    function generateProductOptionsHtml(selectedVal = "") {
+      let html = `<option value="">-- 請選擇商品 --</option>`;
+      currentPriceList.forEach(item => {
+        const isSel = (item.name === selectedVal) ? 'selected' : '';
+        html += `<option value="${escapeHtml(item.name)}" data-price="${item.price}" ${isSel}>${escapeHtml(item.name)} (NT$ ${item.price.toLocaleString()})</option>`;
+      });
+      const isCustom = (selectedVal && !currentPriceList.some(p => p.name === selectedVal)) ? 'selected' : '';
+      html += `<option value="__custom__" ${isCustom}>✏️ 自訂其他品名...</option>`;
+      return html;
+    }
+
+    function renderAllQuoteRowOptions() {
+      const optionsHtml = generateProductOptionsHtml();
+      for (let i = 1; i <= 30; i++) {
+        const sel = document.getElementById(`q_name_${i}`);
+        if (sel) {
+          const curVal = sel.value;
+          sel.innerHTML = optionsHtml;
+          if (curVal) sel.value = curVal;
+        }
+      }
+    }
+
+    function getQuoteRowName(i) {
+      const selectEl = document.getElementById(`q_name_${i}`);
+      const customEl = document.getElementById(`q_custom_name_${i}`);
+      if (!selectEl) return "";
+      if (selectEl.value === "__custom__") {
+        return (customEl && customEl.value.trim()) || "自訂商品";
+      }
+      return selectEl.value;
+    }
+
+    function setQuoteRowItem(i, name, qty = null, price = null) {
+      const selectEl = document.getElementById(`q_name_${i}`);
+      const customEl = document.getElementById(`q_custom_name_${i}`);
+      const printEl = document.getElementById(`q_print_name_${i}`);
+      const copyEl = document.getElementById(`copy_q_name_${i}`);
+      const qtyEl = document.getElementById(`q_qty_${i}`);
+      const priceEl = document.getElementById(`q_price_${i}`);
+
+      if (!selectEl) return;
+
+      if (!name) {
+        selectEl.value = "";
+        if (customEl) {
+          customEl.value = "";
+          customEl.classList.add("hidden");
+        }
+        if (printEl) printEl.textContent = "";
+        if (copyEl) copyEl.textContent = "";
+        if (qtyEl && qty !== null) qtyEl.value = "";
+        if (priceEl && price !== null) priceEl.value = "";
+        calcQuoteTotals();
+        return;
+      }
+
+      // Check if product exists in currentPriceList
+      const match = currentPriceList.find(p => p.name === name);
+      if (match) {
+        selectEl.value = match.name;
+        if (customEl) customEl.classList.add("hidden");
+        if (printEl) printEl.textContent = match.name;
+        if (copyEl) copyEl.textContent = match.name;
+        if (priceEl && (price === null || price === "")) priceEl.value = match.price;
+        if (qtyEl && (qty === null || qty === "") && !qtyEl.value) qtyEl.value = "1";
+      } else {
+        selectEl.value = "__custom__";
+        if (customEl) {
+          customEl.value = name;
+          customEl.classList.remove("hidden");
+        }
+        if (printEl) printEl.textContent = name;
+        if (copyEl) copyEl.textContent = name;
+      }
+
+      if (qty !== null && qtyEl) qtyEl.value = qty;
+      if (price !== null && priceEl) priceEl.value = price;
+
+      calcQuoteTotals();
+    }
+
     function buildQuoteTable() {
       const tbody = document.getElementById("quoteTableBody");
       tbody.innerHTML = "";
+      const optionsHtml = generateProductOptionsHtml();
 
       for (let i = 1; i <= 15; i++) {
         const leftIdx = i;
@@ -2174,11 +2262,15 @@ const firebaseConfig = {
         tr.innerHTML = `
           <!-- Left Column (1-15) -->
           <td class="border border-black font-bold bg-slate-50 text-slate-700">${leftIdx}</td>
-          <td class="border border-black p-0 text-left">
-            <input type="text" list="productListDatalist" id="q_name_${leftIdx}" data-index="${leftIdx}" placeholder="" class="w-full h-full px-2 py-1 outline-none font-medium bg-transparent quote-item-name">
+          <td class="border border-black p-0 text-left relative overflow-hidden">
+            <select id="q_name_${leftIdx}" data-index="${leftIdx}" class="w-full h-full px-1 py-1 outline-none font-medium bg-transparent quote-item-select cursor-pointer text-xs no-print text-ellipsis">
+              ${optionsHtml}
+            </select>
+            <input type="text" id="q_custom_name_${leftIdx}" data-index="${leftIdx}" placeholder="輸入自訂品名" class="hidden w-full h-full px-1.5 py-1 outline-none font-medium bg-white text-xs quote-item-custom-name no-print">
+            <span id="q_print_name_${leftIdx}" class="hidden print-only-inline pl-1 font-medium text-xs"></span>
           </td>
           <td class="border border-black p-0">
-            <input type="number" id="q_qty_${leftIdx}" data-index="${leftIdx}" min="0" step="any" placeholder="" class="w-full h-full px-1 py-1 text-center outline-none bg-transparent quote-item-qty">
+            <input type="number" id="q_qty_${leftIdx}" data-index="${leftIdx}" min="0" step="any" placeholder="" class="w-full h-full px-1 py-1 text-center outline-none bg-transparent quote-item-qty font-bold">
           </td>
           <td class="border border-black p-0">
             <input type="number" id="q_price_${leftIdx}" data-index="${leftIdx}" min="0" step="any" placeholder="" class="w-full h-full px-1 py-1 text-right outline-none bg-transparent quote-item-price">
@@ -2189,11 +2281,15 @@ const firebaseConfig = {
 
           <!-- Right Column (16-30) -->
           <td class="border border-black font-bold bg-slate-100 text-slate-700">${rightIdx}</td>
-          <td class="border border-black p-0 text-left">
-            <input type="text" list="productListDatalist" id="q_name_${rightIdx}" data-index="${rightIdx}" placeholder="" class="w-full h-full px-2 py-1 outline-none font-medium bg-transparent quote-item-name">
+          <td class="border border-black p-0 text-left relative overflow-hidden">
+            <select id="q_name_${rightIdx}" data-index="${rightIdx}" class="w-full h-full px-1 py-1 outline-none font-medium bg-transparent quote-item-select cursor-pointer text-xs no-print text-ellipsis">
+              ${optionsHtml}
+            </select>
+            <input type="text" id="q_custom_name_${rightIdx}" data-index="${rightIdx}" placeholder="輸入自訂品名" class="hidden w-full h-full px-1.5 py-1 outline-none font-medium bg-white text-xs quote-item-custom-name no-print">
+            <span id="q_print_name_${rightIdx}" class="hidden print-only-inline pl-1 font-medium text-xs"></span>
           </td>
           <td class="border border-black p-0">
-            <input type="number" id="q_qty_${rightIdx}" data-index="${rightIdx}" min="0" step="any" placeholder="" class="w-full h-full px-1 py-1 text-center outline-none bg-transparent quote-item-qty">
+            <input type="number" id="q_qty_${rightIdx}" data-index="${rightIdx}" min="0" step="any" placeholder="" class="w-full h-full px-1 py-1 text-center outline-none bg-transparent quote-item-qty font-bold">
           </td>
           <td class="border border-black p-0">
             <input type="number" id="q_price_${rightIdx}" data-index="${rightIdx}" min="0" step="any" placeholder="" class="w-full h-full px-1 py-1 text-right outline-none bg-transparent quote-item-price">
@@ -2206,8 +2302,11 @@ const firebaseConfig = {
       }
 
       // Attach event listeners for real-time recalculation & auto price fill
-      document.querySelectorAll(".quote-item-name").forEach(input => {
-        input.addEventListener("input", onQuoteNameChange);
+      document.querySelectorAll(".quote-item-select").forEach(sel => {
+        sel.addEventListener("change", onQuoteSelectChange);
+      });
+      document.querySelectorAll(".quote-item-custom-name").forEach(input => {
+        input.addEventListener("input", onQuoteCustomNameInput);
       });
       document.querySelectorAll(".quote-item-qty").forEach(input => {
         input.addEventListener("input", onQuoteQtyOrPriceChange);
@@ -2244,16 +2343,46 @@ const firebaseConfig = {
       }
     }
 
-    function onQuoteNameChange(e) {
+    function onQuoteSelectChange(e) {
+      const idx = e.target.getAttribute("data-index");
+      const val = e.target.value;
+      const customInput = document.getElementById(`q_custom_name_${idx}`);
+      const priceInput = document.getElementById(`q_price_${idx}`);
+      const qtyInput = document.getElementById(`q_qty_${idx}`);
+      const printEl = document.getElementById(`q_print_name_${idx}`);
+      const copyEl = document.getElementById(`copy_q_name_${idx}`);
+
+      if (val === "__custom__") {
+        if (customInput) {
+          customInput.classList.remove("hidden");
+          customInput.focus();
+        }
+        if (printEl) printEl.textContent = (customInput && customInput.value) || "";
+        if (copyEl) copyEl.textContent = (customInput && customInput.value) || "";
+      } else {
+        if (customInput) customInput.classList.add("hidden");
+        if (printEl) printEl.textContent = val;
+        if (copyEl) copyEl.textContent = val;
+
+        const match = currentPriceList.find(p => p.name === val);
+        if (match) {
+          if (priceInput) priceInput.value = match.price;
+          if (qtyInput && !qtyInput.value) qtyInput.value = "1";
+        } else if (!val) {
+          if (priceInput) priceInput.value = "";
+          if (qtyInput) qtyInput.value = "";
+        }
+      }
+      calcQuoteTotals();
+    }
+
+    function onQuoteCustomNameInput(e) {
       const idx = e.target.getAttribute("data-index");
       const val = e.target.value.trim();
-      const match = currentPriceList.find(p => p.name === val);
-      if (match) {
-        const priceInput = document.getElementById(`q_price_${idx}`);
-        priceInput.value = match.price;
-        const qtyInput = document.getElementById(`q_qty_${idx}`);
-        if (!qtyInput.value) qtyInput.value = "1";
-      }
+      const printEl = document.getElementById(`q_print_name_${idx}`);
+      const copyEl = document.getElementById(`copy_q_name_${idx}`);
+      if (printEl) printEl.textContent = val;
+      if (copyEl) copyEl.textContent = val;
       calcQuoteTotals();
     }
 
@@ -2264,7 +2393,7 @@ const firebaseConfig = {
     function calcQuoteTotals() {
       let grandTotal = 0;
       for (let i = 1; i <= 30; i++) {
-        const nameVal = document.getElementById(`q_name_${i}`).value.trim();
+        const nameVal = getQuoteRowName(i);
         const qtyVal = parseFloat(document.getElementById(`q_qty_${i}`).value);
         const priceVal = parseFloat(document.getElementById(`q_price_${i}`).value);
         const subtotalEl = document.getElementById(`q_subtotal_${i}`);
@@ -2297,17 +2426,19 @@ const firebaseConfig = {
       document.getElementById("quoteTotalWordsCopy").textContent = numberToChineseWords(grandTotal);
 
       for (let i = 1; i <= 30; i++) {
-        const name = document.getElementById(`q_name_${i}`).value;
+        const name = getQuoteRowName(i);
         const qty = document.getElementById(`q_qty_${i}`).value;
         const price = document.getElementById(`q_price_${i}`).value;
         const sub = document.getElementById(`q_subtotal_${i}`).textContent;
 
         const copyName = document.getElementById(`copy_q_name_${i}`);
+        const printName = document.getElementById(`q_print_name_${i}`);
         const copyQty = document.getElementById(`copy_q_qty_${i}`);
         const copyPrice = document.getElementById(`copy_q_price_${i}`);
         const copySub = document.getElementById(`copy_q_subtotal_${i}`);
 
         if (copyName) copyName.textContent = name;
+        if (printName) printName.textContent = name;
         if (copyQty) copyQty.textContent = qty;
         if (copyPrice) copyPrice.textContent = price ? Number(price).toLocaleString() : '';
         if (copySub) copySub.textContent = sub === '-' ? '' : sub;
@@ -2318,7 +2449,7 @@ const firebaseConfig = {
       // Find first empty row in 1..30
       let targetIdx = -1;
       for (let i = 1; i <= 30; i++) {
-        const curName = document.getElementById(`q_name_${i}`).value.trim();
+        const curName = getQuoteRowName(i);
         if (!curName) {
           targetIdx = i;
           break;
@@ -2329,10 +2460,7 @@ const firebaseConfig = {
         return;
       }
 
-      document.getElementById(`q_name_${targetIdx}`).value = name;
-      document.getElementById(`q_price_${targetIdx}`).value = price;
-      document.getElementById(`q_qty_${targetIdx}`).value = "1";
-      calcQuoteTotals();
+      setQuoteRowItem(targetIdx, name, 1, price);
       showToast(`已加入「${name}」至第 ${targetIdx} 項`);
     }
 
@@ -2798,9 +2926,7 @@ const firebaseConfig = {
         doc.items.forEach((it, i) => {
           const rowIdx = i + 1;
           if (rowIdx <= 30) {
-            document.getElementById(`q_name_${rowIdx}`).value = it.name || "";
-            document.getElementById(`q_qty_${rowIdx}`).value = it.qty || "";
-            document.getElementById(`q_price_${rowIdx}`).value = it.price || "";
+            setQuoteRowItem(rowIdx, it.name || "", it.qty || "", it.price || "");
           }
         });
       }
@@ -2833,7 +2959,7 @@ const firebaseConfig = {
       const items = [];
       let total = 0;
       for (let i = 1; i <= 30; i++) {
-        const name = document.getElementById(`q_name_${i}`).value.trim();
+        const name = getQuoteRowName(i);
         const qty = parseFloat(document.getElementById(`q_qty_${i}`).value);
         const price = parseFloat(document.getElementById(`q_price_${i}`).value);
         if (name) {
@@ -2888,7 +3014,7 @@ const firebaseConfig = {
 
       let total = 0;
       for (let i = 1; i <= 30; i++) {
-        const name = document.getElementById(`q_name_${i}`).value.trim();
+        const name = getQuoteRowName(i);
         const qty = document.getElementById(`q_qty_${i}`).value;
         const price = document.getElementById(`q_price_${i}`).value;
         const sub = document.getElementById(`q_subtotal_${i}`).textContent.replace(/,/g, '');
@@ -2941,13 +3067,9 @@ const firebaseConfig = {
       for (let i = 1; i <= 30; i++) {
         const it = sampleItems[i - 1];
         if (it) {
-          document.getElementById(`q_name_${i}`).value = it.name;
-          document.getElementById(`q_qty_${i}`).value = it.qty;
-          document.getElementById(`q_price_${i}`).value = it.price;
+          setQuoteRowItem(i, it.name, it.qty, it.price);
         } else {
-          document.getElementById(`q_name_${i}`).value = "";
-          document.getElementById(`q_qty_${i}`).value = "";
-          document.getElementById(`q_price_${i}`).value = "";
+          setQuoteRowItem(i, "", "", "");
         }
       }
       calcQuoteTotals();
@@ -2962,23 +3084,7 @@ const firebaseConfig = {
       if (quoteRemarkCopy) quoteRemarkCopy.textContent = "";
 
       for (let i = 1; i <= 30; i++) {
-        const nameEl = document.getElementById(`q_name_${i}`);
-        const qtyEl = document.getElementById(`q_qty_${i}`);
-        const priceEl = document.getElementById(`q_price_${i}`);
-        const subEl = document.getElementById(`q_subtotal_${i}`);
-        if (nameEl) nameEl.value = "";
-        if (qtyEl) qtyEl.value = "";
-        if (priceEl) priceEl.value = "";
-        if (subEl) subEl.textContent = "-";
-
-        const copyName = document.getElementById(`copy_q_name_${i}`);
-        const copyQty = document.getElementById(`copy_q_qty_${i}`);
-        const copyPrice = document.getElementById(`copy_q_price_${i}`);
-        const copySub = document.getElementById(`copy_q_subtotal_${i}`);
-        if (copyName) copyName.textContent = "";
-        if (copyQty) copyQty.textContent = "";
-        if (copyPrice) copyPrice.textContent = "";
-        if (copySub) copySub.textContent = "";
+        setQuoteRowItem(i, "", "", "");
       }
 
       calcQuoteTotals();
@@ -3888,6 +3994,7 @@ const firebaseConfig = {
         savePriceList();
         renderPriceTable(document.getElementById("priceSearchInput").value);
         renderPriceDatalist();
+        renderAllQuoteRowOptions();
         renderQuickTags();
         document.getElementById("priceModal").classList.add("hidden");
       });
