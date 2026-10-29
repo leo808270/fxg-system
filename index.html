@@ -2400,10 +2400,10 @@ const firebaseConfig = {
       optCustom.textContent = "✏️ 自訂其他客戶名稱...";
       sel.appendChild(optCustom);
 
-      if (curVal && curVal !== "未具名" && curVal !== "自訂客戶") {
+      if (curVal && curVal !== "未具名" && curVal !== "自訂客戶" && curVal !== "") {
         setQuoteCustomerValue(curVal);
-      } else if (currentCustomerList.length > 0) {
-        setQuoteCustomerValue(currentCustomerList[0].name);
+      } else {
+        setQuoteCustomerValue("");
       }
     }
 
@@ -2903,16 +2903,35 @@ const firebaseConfig = {
       showToast("已成功填入示範估價單資料！");
     }
 
-    function clearQuote() {
+    function clearQuote(showNotification = true) {
       setQuoteCustomerValue("");
-      document.getElementById("quoteRemark").value = "";
+      const quoteRemark = document.getElementById("quoteRemark");
+      const quoteRemarkCopy = document.getElementById("quoteRemarkCopy");
+      if (quoteRemark) quoteRemark.value = "";
+      if (quoteRemarkCopy) quoteRemarkCopy.textContent = "";
+
       for (let i = 1; i <= 30; i++) {
-        document.getElementById(`q_name_${i}`).value = "";
-        document.getElementById(`q_qty_${i}`).value = "";
-        document.getElementById(`q_price_${i}`).value = "";
+        const nameEl = document.getElementById(`q_name_${i}`);
+        const qtyEl = document.getElementById(`q_qty_${i}`);
+        const priceEl = document.getElementById(`q_price_${i}`);
+        const subEl = document.getElementById(`q_subtotal_${i}`);
+        if (nameEl) nameEl.value = "";
+        if (qtyEl) qtyEl.value = "";
+        if (priceEl) priceEl.value = "";
+        if (subEl) subEl.textContent = "-";
+
+        const copyName = document.getElementById(`copy_q_name_${i}`);
+        const copyQty = document.getElementById(`copy_q_qty_${i}`);
+        const copyPrice = document.getElementById(`copy_q_price_${i}`);
+        const copySub = document.getElementById(`copy_q_subtotal_${i}`);
+        if (copyName) copyName.textContent = "";
+        if (copyQty) copyQty.textContent = "";
+        if (copyPrice) copyPrice.textContent = "";
+        if (copySub) copySub.textContent = "";
       }
+
       calcQuoteTotals();
-      showToast("估價單表格已清空");
+      if (showNotification) showToast("估價單表格已清空");
     }
 
 
@@ -3929,7 +3948,8 @@ const firebaseConfig = {
       checkUrlSyncParams();
       initFirebaseSync();
 
-      fillQuoteSample();
+      // 預設以乾淨空白的估價單開始，隨時可按「填入範例資料」示範
+      clearQuote(false);
     });
   </script>
 </body>
