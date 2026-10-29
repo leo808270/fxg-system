@@ -41,18 +41,19 @@
         width: 100% !important;
         max-width: 100% !important;
         margin: 0 auto !important;
-        padding: 2mm 5mm 2mm 5mm !important;
+        padding: 2mm 5mm 6mm 5mm !important;
         box-shadow: none !important;
         border: none !important;
         display: flex !important;
         flex-direction: column !important;
         justify-content: flex-start !important;
         box-sizing: border-box !important;
+        overflow: visible !important;
         page-break-inside: avoid !important;
         page-break-after: avoid !important;
         page-break-before: avoid !important;
       }
-      /* Each Half Sheet: Natural flow without clipping */
+      /* Each Half Sheet: Natural flow with zero clipping */
       .quote-half-sheet {
         width: 100% !important;
         box-sizing: border-box !important;
@@ -63,11 +64,12 @@
         page-break-after: avoid !important;
         margin: 0 !important;
         padding: 0 !important;
+        overflow: visible !important;
       }
       /* Tear/Cut line between the two slips */
       .cut-line {
         height: 4mm !important;
-        margin: 1.5mm 0 !important;
+        margin: 1mm 0 !important;
         border-top: 1px dashed #444 !important;
         display: flex !important;
         align-items: center !important;
@@ -111,14 +113,15 @@
       table.print-table tfoot td {
         height: 5.2mm !important;
         font-size: 8pt !important;
+        padding: 0.5px 2px !important;
       }
       .quote-half-sheet .header-store-title {
-        font-size: 15pt !important;
+        font-size: 14pt !important;
         line-height: 1.2 !important;
       }
       .quote-half-sheet .header-doc-title {
-        font-size: 15pt !important;
-        padding: 1px 12px !important;
+        font-size: 14pt !important;
+        padding: 1px 10px !important;
         line-height: 1.2 !important;
       }
       .quote-half-sheet .header-info-text {
@@ -132,8 +135,10 @@
       }
       .quote-half-sheet .footer-summary-row {
         font-size: 7.5pt !important;
-        margin-top: 1.5mm !important;
+        margin-top: 1mm !important;
         padding-top: 0 !important;
+        padding-bottom: 1.5mm !important;
+        line-height: 1.2 !important;
       }
     }
 
@@ -158,6 +163,7 @@
     .custom-scrollbar::-webkit-scrollbar-track {
       background: #f1f5f9;
     }
+
     /* Clean PDF Export Mode (Captures exact print layout without screen controls, select arrows, or shadows) */
     .pdf-export-mode .no-print {
       display: none !important;
@@ -172,78 +178,94 @@
       box-shadow: none !important;
       border: none !important;
       border-radius: 0 !important;
-      padding: 2mm 5mm !important;
+      padding: 2mm 5mm 6mm 5mm !important;
       width: 100% !important;
       max-width: 200mm !important;
       margin: 0 auto !important;
       background: #ffffff !important;
       box-sizing: border-box !important;
+      overflow: visible !important;
     }
     .pdf-export-mode .quote-half-sheet {
+      width: 100% !important;
       box-sizing: border-box !important;
       padding: 0 !important;
       display: flex !important;
       flex-direction: column !important;
       justify-content: flex-start !important;
+      margin: 0 !important;
+      overflow: visible !important;
     }
     .pdf-export-mode .cut-line {
       height: 4mm !important;
-      margin: 1.5mm 0 !important;
+      margin: 1mm 0 !important;
+      border-top: 1px dashed #444 !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      text-align: center !important;
+      position: relative !important;
+    }
+    .pdf-export-mode .cut-line::after {
+      content: "✂ 沿虛線裁開（第一聯：存根聯 ／ 第二聯：客戶收執聯）" !important;
+      position: relative !important;
+      top: -5px !important;
+      background: #fff !important;
+      padding: 0 8px !important;
+      font-size: 6.5pt !important;
+      color: #555 !important;
+    }
+    .pdf-export-mode table.print-table {
+      border-collapse: collapse !important;
+      width: 100% !important;
+      table-layout: fixed !important;
     }
     .pdf-export-mode table.print-table th,
     .pdf-export-mode table.print-table td {
-      height: 4.8mm !important;
+      border: 1px solid #000 !important;
       padding: 0.5px 2px !important;
+      height: 4.8mm !important;
       font-size: 7.8pt !important;
+      line-height: 1.15 !important;
+      color: #000 !important;
+      background: transparent !important;
+      box-sizing: border-box !important;
+    }
+    .pdf-export-mode table.print-table th {
+      font-size: 7.2pt !important;
+      font-weight: bold !important;
+      height: 4.9mm !important;
+      background-color: #f3f4f6 !important;
     }
     .pdf-export-mode table.print-table tfoot td {
       height: 5.2mm !important;
       font-size: 8pt !important;
-    }
-    .pdf-export-mode input {
-      border: none !important;
-      box-shadow: none !important;
-      background: transparent !important;
-      outline: none !important;
-    }
-    .pdf-export-mode .print-only {
-      display: block !important;
-    }
-    .pdf-export-mode .print-only-inline {
-      display: inline-block !important;
-    }
-    .pdf-export-mode #quoteSheetWrapper {
-      box-shadow: none !important;
-      border: none !important;
-      border-radius: 0 !important;
-      padding: 3mm 5mm !important;
-      width: 100% !important;
-      max-width: 200mm !important;
-      height: 272mm !important;
-      max-height: 275mm !important;
-      overflow: hidden !important;
-      margin: 0 auto !important;
-      background: #ffffff !important;
-      box-sizing: border-box !important;
-    }
-    .pdf-export-mode .quote-half-sheet {
-      height: 133mm !important;
-      max-height: 133mm !important;
-      min-height: 133mm !important;
-      overflow: hidden !important;
-      box-sizing: border-box !important;
-      padding: 0.5mm 0 !important;
-    }
-    .pdf-export-mode .cut-line {
-      height: 4mm !important;
-      margin: 0.5mm 0 !important;
-    }
-    .pdf-export-mode table.print-table th,
-    .pdf-export-mode table.print-table td {
-      height: 4.8mm !important;
-      max-height: 4.8mm !important;
       padding: 0.5px 2px !important;
-      font-size: 7.8pt !important;
+    }
+    .pdf-export-mode .quote-half-sheet .header-store-title {
+      font-size: 14pt !important;
+      line-height: 1.2 !important;
+    }
+    .pdf-export-mode .quote-half-sheet .header-doc-title {
+      font-size: 14pt !important;
+      padding: 1px 10px !important;
+      line-height: 1.2 !important;
+    }
+    .pdf-export-mode .quote-half-sheet .header-info-text {
+      font-size: 7.5pt !important;
+      line-height: 1.2 !important;
+    }
+    .pdf-export-mode .quote-half-sheet .customer-date-row {
+      font-size: 8pt !important;
+      padding: 1px 0 !important;
+      margin-top: 1px !important;
+    }
+    .pdf-export-mode .quote-half-sheet .footer-summary-row {
+      font-size: 7.5pt !important;
+      margin-top: 1mm !important;
+      padding-top: 0 !important;
+      padding-bottom: 1.5mm !important;
+      line-height: 1.2 !important;
     }
     .pdf-export-mode input {
       border: none !important;
