@@ -1212,6 +1212,31 @@ const firebaseConfig = {
     </div>
   </div>
 
+  <!-- Modal: 通用確認執行視窗 (In-Page Confirm Dialog) -->
+  <div id="confirmModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-slate-200 text-center space-y-4 transform transition-all">
+      <div class="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center text-2xl mx-auto shadow-inner">
+        ⚠️
+      </div>
+      <div>
+        <h3 id="confirmModalTitle" class="text-base font-bold text-slate-800">
+          確定要執行此操作？
+        </h3>
+        <p id="confirmModalDesc" class="text-xs text-slate-500 mt-1.5 leading-relaxed">
+          此操作將會刪除相關資料，執行後無法復原，請確認是否繼續。
+        </p>
+      </div>
+      <div class="flex items-center justify-center gap-3 pt-2">
+        <button type="button" id="btnConfirmCancel" class="flex-1 px-4 py-2.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl border border-slate-300 transition">
+          取消
+        </button>
+        <button type="button" id="btnConfirmExecute" class="flex-1 px-4 py-2.5 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-xl shadow transition">
+          確認執行
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Modal for Adding/Editing Price Item -->
   <div id="priceModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200">
@@ -3403,6 +3428,23 @@ const firebaseConfig = {
       }
     }
 
+    // --- In-Page Confirmation Modal Logic ---
+    let pendingConfirmCallback = null;
+
+    function showConfirmDialog(title, description, onConfirm, confirmBtnText = "確認執行") {
+      const modal = document.getElementById("confirmModal");
+      const titleEl = document.getElementById("confirmModalTitle");
+      const descEl = document.getElementById("confirmModalDesc");
+      const execBtn = document.getElementById("btnConfirmExecute");
+      
+      if (titleEl) titleEl.textContent = title;
+      if (descEl) descEl.textContent = description;
+      if (execBtn) execBtn.textContent = confirmBtnText;
+      
+      pendingConfirmCallback = onConfirm;
+      if (modal) modal.classList.remove("hidden");
+    }
+
     // --- Setup Listeners ---
     document.addEventListener("DOMContentLoaded", () => {
       initData();
@@ -3522,10 +3564,17 @@ const firebaseConfig = {
       const btnInvClearAll = document.getElementById("btnInvClearAll");
       if (btnInvClearAll) {
         btnInvClearAll.addEventListener("click", () => {
-          inventoryTransactions = [];
-          saveInventoryTransactions();
-          renderInventoryDashboard();
-          showToast("庫存與進出貨流水帳已全部歸零！");
+          showConfirmDialog(
+            "確定要將庫存全部歸零？",
+            "此操作將會清空所有進出貨與盤點流水帳，所有商品庫存將全數歸零，並即時同步至雲端與手機，此動作無法復原。",
+            () => {
+              inventoryTransactions = [];
+              saveInventoryTransactions();
+              renderInventoryDashboard();
+              showToast("庫存與進出貨流水帳已全部歸零！");
+            },
+            "確定全部歸零"
+          );
         });
       }
 
@@ -3596,6 +3645,27 @@ const firebaseConfig = {
           renderQuickTagModalContent();
           renderPriceTable(document.getElementById("priceSearchInput") ? document.getElementById("priceSearchInput").value : "");
           showToast("已回復為原廠預設常用標籤 (共 21 項)");
+        });
+      }
+
+      // Confirmation Modal Listeners
+      const btnConfirmCancel = document.getElementById("btnConfirmCancel");
+      if (btnConfirmCancel) {
+        btnConfirmCancel.addEventListener("click", () => {
+          document.getElementById("confirmModal").classList.add("hidden");
+          pendingConfirmCallback = null;
+        });
+      }
+
+      const btnConfirmExecute = document.getElementById("btnConfirmExecute");
+      if (btnConfirmExecute) {
+        btnConfirmExecute.addEventListener("click", () => {
+          document.getElementById("confirmModal").classList.add("hidden");
+          if (typeof pendingConfirmCallback === "function") {
+            const cb = pendingConfirmCallback;
+            pendingConfirmCallback = null;
+            cb();
+          }
         });
       }
 
@@ -3809,13 +3879,20 @@ const firebaseConfig = {
 
       // History Clear
       document.getElementById("btnClearAllHistory").addEventListener("click", () => {
-        savedDocuments = [];
-        try {
-          localStorage.setItem("fxg_documents", JSON.stringify([]));
-          queueCloudSync();
-        } catch (e) {}
-        renderHistoryTable();
-        showToast("已清空所有歷史單據並同步至雲端！");
+        showConfirmDialog(
+          "確定要清空所有歷史單據？",
+          "此操作將會清空所有已保存的估價單歷史記錄，並同步清除雲端與所有手機/電腦裝置，此動作無法復原。",
+          () => {
+            savedDocuments = [];
+            try {
+              localStorage.setItem("fxg_documents", JSON.stringify([]));
+              queueCloudSync();
+            } catch (e) {}
+            renderHistoryTable();
+            showToast("已清空所有歷史單據並同步至雲端！");
+          },
+          "確定清空單據"
+        );
       });
 
       // Settings Form
