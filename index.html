@@ -3214,7 +3214,10 @@ const firebaseConfig = {
               currentPriceList = toSafeArray(cloudData.currentPriceList);
               localStorage.setItem("fxg_price_list", JSON.stringify(currentPriceList));
             }
-            if (cloudData.savedDocuments !== undefined) {
+            if (cloudData.hasEmptyDocuments || cloudData.savedDocuments === null || cloudData.savedDocuments === undefined) {
+              savedDocuments = [];
+              localStorage.setItem("fxg_documents", JSON.stringify(savedDocuments));
+            } else {
               savedDocuments = toSafeArray(cloudData.savedDocuments);
               localStorage.setItem("fxg_documents", JSON.stringify(savedDocuments));
             }
@@ -3285,8 +3288,9 @@ const firebaseConfig = {
         customerList: toSafeArray(currentCustomerList),
         inventoryTransactions: toSafeArray(inventoryTransactions),
         hasEmptyInventory: (inventoryTransactions.length === 0),
-        currentPriceList: toSafeArray(currentPriceList),
         savedDocuments: toSafeArray(savedDocuments),
+        hasEmptyDocuments: (savedDocuments.length === 0),
+        currentPriceList: toSafeArray(currentPriceList),
         storeConfig: storeConfig || {}
       };
 
@@ -3344,7 +3348,10 @@ const firebaseConfig = {
               currentPriceList = toSafeArray(cloudData.currentPriceList);
               localStorage.setItem("fxg_price_list", JSON.stringify(currentPriceList));
             }
-            if (cloudData.savedDocuments !== undefined) {
+            if (cloudData.hasEmptyDocuments || cloudData.savedDocuments === null || cloudData.savedDocuments === undefined) {
+              savedDocuments = [];
+              localStorage.setItem("fxg_documents", JSON.stringify(savedDocuments));
+            } else {
               savedDocuments = toSafeArray(cloudData.savedDocuments);
               localStorage.setItem("fxg_documents", JSON.stringify(savedDocuments));
             }
@@ -3804,11 +3811,11 @@ const firebaseConfig = {
       document.getElementById("btnClearAllHistory").addEventListener("click", () => {
         savedDocuments = [];
         try {
-          localStorage.removeItem("fxg_documents");
-        queueCloudSync();
+          localStorage.setItem("fxg_documents", JSON.stringify([]));
+          queueCloudSync();
         } catch (e) {}
         renderHistoryTable();
-        showToast("已清空所有歷史單據");
+        showToast("已清空所有歷史單據並同步至雲端！");
       });
 
       // Settings Form
