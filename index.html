@@ -1648,7 +1648,7 @@ const firebaseConfig = {
       return { inQty, outQty, stock };
     }
 
-    function addStockTransaction(type, itemName, qty, target = "", remark = "", date = "") {
+    function addStockTransaction(type, itemName, qty, target = "", remark = "", date = "", docId = "") {
       const numQty = parseFloat(qty);
       if (isNaN(numQty) || numQty <= 0) return false;
 
@@ -1671,6 +1671,7 @@ const firebaseConfig = {
         target: target || (type === 'in' ? '供應商進貨' : '客戶出貨'),
         remark: remark || '',
         date: txDate,
+        docId: docId || '',
         createdAt: new Date().toISOString()
       };
 
@@ -2936,20 +2937,42 @@ const firebaseConfig = {
 
     function deleteHistoryItem(idx) {
       const doc = savedDocuments[idx];
-      const docLabel = doc ? `${doc.customer} (${doc.date || '無日期'})` : "該筆單據";
+      if (!doc) return;
+      const docLabel = `${doc.customer} (${doc.date || '無日期'})`;
       showConfirmDialog(
         `確定要刪除「${docLabel}」？`,
-        "此操作將會自歷史記錄中移除該張估價單，並即時同步清除雲端資料，此動作無法復原。",
+        "此操作將會自歷史記錄中永久移除該張估價單，並「自動刪除該單開立時扣減的進出貨流水帳與回復庫存」，同步清除雲端資料，此動作無法復原。",
         () => {
+          // 1. 刪除歷史單據紀錄
           savedDocuments.splice(idx, 1);
           try {
             localStorage.setItem("fxg_documents", JSON.stringify(savedDocuments));
-            queueCloudSync();
           } catch (e) {}
           renderHistoryTable();
-          showToast("單據已自歷史記錄刪除");
+
+          // 2. 自動刪除該筆單據產生的進出貨流水帳，並自動回復庫存
+          let removedCount = 0;
+          if (doc.id) {
+            const beforeCount = inventoryTransactions.length;
+            inventoryTransactions = inventoryTransactions.filter(tx => {
+              if (tx.docId === doc.id || (tx.remark && tx.remark.includes(doc.id))) {
+                return false;
+              }
+              return true;
+            });
+            removedCount = beforeCount - inventoryTransactions.length;
+          }
+
+          if (removedCount > 0) {
+            saveInventoryTransactions();
+            renderInventoryDashboard();
+            showToast(`單據已刪除，並自動撤銷 ${removedCount} 筆出庫流水帳與回復庫存！`);
+          } else {
+            queueCloudSync();
+            showToast("單據已自歷史記錄刪除");
+          }
         },
-        "確定刪除單據"
+        "確定刪除單據與流水帳"
       );
     }
 
@@ -2993,7 +3016,7 @@ const firebaseConfig = {
       if (autoDeduct && items.length > 0) {
         items.forEach(it => {
           if (it.qty > 0) {
-            addStockTransaction('out', it.name, it.qty, docRecord.customer, `估價單自動扣減庫存 (單號: ${docRecord.id})`, docRecord.date);
+            addStockTransaction('out', it.name, it.qty, docRecord.customer, `估價單自動扣減庫存 (單號: ${docRecord.id})`, docRecord.date, docRecord.id);
           }
         });
         showToast(`估價單儲存成功！已同步扣減 ${items.length} 項商品庫存`);
@@ -4059,15 +4082,29 @@ const firebaseConfig = {
       document.getElementById("btnClearAllHistory").addEventListener("click", () => {
         showConfirmDialog(
           "確定要清空所有歷史單據？",
-          "此操作將會清空所有已保存的估價單歷史記錄，並同步清除雲端與所有手機/電腦裝置，此動作無法復原。",
+          "此操作將會清空所有已保存的估價單歷史記錄，並「自動清除所有單據關聯的進出貨流水帳與回復庫存」，此動作無法復原。",
           () => {
             savedDocuments = [];
             try {
               localStorage.setItem("fxg_documents", JSON.stringify([]));
-              queueCloudSync();
             } catch (e) {}
             renderHistoryTable();
-            showToast("已清空所有歷史單據並同步至雲端！");
+
+            // 同步清除所有單據自動扣庫存產生的流水帳
+            const beforeCount = inventoryTransactions.length;
+            inventoryTransactions = inventoryTransactions.filter(tx => {
+              return !tx.docId && (!tx.remark || !tx.remark.includes("估價單自動扣減庫存"));
+            });
+            const removedCount = beforeCount - inventoryTransactions.length;
+
+            if (removedCount > 0) {
+              saveInventoryTransactions();
+              renderInventoryDashboard();
+            } else {
+              queueCloudSync();
+            }
+
+            showToast("已清空所有歷史單據與關聯流水帳，並同步至雲端！");
           },
           "確定清空單據"
         );
