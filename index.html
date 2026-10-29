@@ -2576,11 +2576,18 @@ const firebaseConfig = {
     function deleteCustomerItem(index) {
       if (index >= 0 && index < currentCustomerList.length) {
         const cust = currentCustomerList[index];
-        currentCustomerList.splice(index, 1);
-        saveCustomerList();
-        renderCustomerDropdown();
-        renderCustomerTable(document.getElementById("customerSearchInput") ? document.getElementById("customerSearchInput").value : "");
-        showToast(`已刪除客戶「${cust.name}」`);
+        showConfirmDialog(
+          `確定要刪除客戶「${cust.name}」？`,
+          `此操作將會自客戶名冊中移除「${cust.name}」，並即時同步至雲端與所有連線裝置。`,
+          () => {
+            currentCustomerList.splice(index, 1);
+            saveCustomerList();
+            renderCustomerDropdown();
+            renderCustomerTable(document.getElementById("customerSearchInput") ? document.getElementById("customerSearchInput").value : "");
+            showToast(`已刪除客戶「${cust.name}」`);
+          },
+          "確定刪除客戶"
+        );
       }
     }
 
@@ -2689,12 +2696,19 @@ const firebaseConfig = {
     function deletePriceItem(index) {
       if (index >= 0 && index < currentPriceList.length) {
         const item = currentPriceList[index];
-        currentPriceList.splice(index, 1);
-        savePriceList();
-        renderPriceTable(document.getElementById("priceSearchInput").value);
-        renderPriceDatalist();
-        renderQuickTags();
-        showToast(`已刪除商品「${item.name}」`);
+        showConfirmDialog(
+          `確定要刪除商品「${item.name}」？`,
+          `此操作將會自價目庫中移除「${item.name}」（單價 NT$ ${item.price.toLocaleString()}），並即時同步至雲端與所有裝置。`,
+          () => {
+            currentPriceList.splice(index, 1);
+            savePriceList();
+            renderPriceTable(document.getElementById("priceSearchInput").value);
+            renderPriceDatalist();
+            renderQuickTags();
+            showToast(`已刪除商品「${item.name}」`);
+          },
+          "確定刪除商品"
+        );
       }
     }
 
@@ -2795,13 +2809,22 @@ const firebaseConfig = {
     }
 
     function deleteHistoryItem(idx) {
-      savedDocuments.splice(idx, 1);
-      try {
-        localStorage.setItem("fxg_documents", JSON.stringify(savedDocuments));
-        queueCloudSync();
-      } catch (e) {}
-      renderHistoryTable();
-      showToast("單據已自歷史記錄刪除");
+      const doc = savedDocuments[idx];
+      const docLabel = doc ? `${doc.customer} (${doc.date || '無日期'})` : "該筆單據";
+      showConfirmDialog(
+        `確定要刪除「${docLabel}」？`,
+        "此操作將會自歷史記錄中移除該張估價單，並即時同步清除雲端資料，此動作無法復原。",
+        () => {
+          savedDocuments.splice(idx, 1);
+          try {
+            localStorage.setItem("fxg_documents", JSON.stringify(savedDocuments));
+            queueCloudSync();
+          } catch (e) {}
+          renderHistoryTable();
+          showToast("單據已自歷史記錄刪除");
+        },
+        "確定刪除單據"
+      );
     }
 
 
@@ -3781,11 +3804,18 @@ const firebaseConfig = {
       const btnCustReset = document.getElementById("btnCustomerReset");
       if (btnCustReset) {
         btnCustReset.addEventListener("click", () => {
-          currentCustomerList = [...DEFAULT_CUSTOMER_LIST];
-          saveCustomerList();
-          renderCustomerDropdown();
-          renderCustomerTable();
-          showToast("已回復為預設合作客戶清單 (共 5 家)");
+          showConfirmDialog(
+            "確定重設客戶名冊？",
+            "此操作將會將客戶資料庫回復為預設合作清單（共 5 家示範門市），自訂客戶將會被重設。",
+            () => {
+              currentCustomerList = [...DEFAULT_CUSTOMER_LIST];
+              saveCustomerList();
+              renderCustomerDropdown();
+              renderCustomerTable();
+              showToast("已回復為預設合作客戶清單 (共 5 家)");
+            },
+            "確定重設客戶名冊"
+          );
         });
       }
 
@@ -3863,12 +3893,19 @@ const firebaseConfig = {
       });
 
       document.getElementById("btnPriceReset").addEventListener("click", () => {
-        currentPriceList = [...DEFAULT_PRICE_LIST];
-        savePriceList();
-        renderPriceTable();
-        renderPriceDatalist();
-        renderQuickTags();
-        showToast("價目表已重設為原檔預設清單 (共 60 項)");
+        showConfirmDialog(
+          "確定重設價目表？",
+          "此操作將會將價目庫回復為原廠預設清單（共 60 項商品），自訂的新品項與改價將會被覆蓋重設。",
+          () => {
+            currentPriceList = [...DEFAULT_PRICE_LIST];
+            savePriceList();
+            renderPriceTable();
+            renderPriceDatalist();
+            renderQuickTags();
+            showToast("價目表已重設為原檔預設清單 (共 60 項)");
+          },
+          "確定重設價目表"
+        );
       });
 
       document.getElementById("btnPriceExport").addEventListener("click", () => {
