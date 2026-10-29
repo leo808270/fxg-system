@@ -949,16 +949,16 @@
         </div>
 
         <!-- Sync Info Banner -->
-        <div id="cloudSyncInfoBanner" class="p-3.5 rounded-xl bg-amber-50/80 border border-amber-200 text-xs text-amber-900 space-y-1">
+        <div id="cloudSyncInfoBanner" class="p-3.5 rounded-xl bg-amber-50/90 border border-amber-200 text-xs text-amber-900 space-y-2">
           <div class="flex flex-wrap items-center justify-between gap-2 font-semibold">
             <span class="flex items-center gap-1.5">
-              <span>📡</span> 雲端連線狀態：<span id="syncDetailState" class="font-bold text-amber-800">尚未設定 Firebase</span>
+              <span>📡</span> 即時連線狀態：<span id="syncDetailState" class="font-bold text-amber-800">尚未設定 Firebase</span>
             </span>
-            <span id="syncLastTime" class="text-slate-500 font-normal">最後同步：尚未連線</span>
+            <span id="syncLastTime" class="text-slate-700 font-mono text-[11px] bg-white/80 px-2 py-0.5 rounded border border-amber-200">資料最後異動：尚未連線</span>
           </div>
-          <p class="text-amber-800/80 text-[11px]">
-            提示：若未設定 Firebase，資料將儲存於目前這台裝置的瀏覽器中；設定 Firebase 後將自動享有跨裝置即時雙向同步與雲端永久備份。
-          </p>
+          <div class="p-2 bg-white/60 rounded-lg text-[11px] text-amber-900/90 leading-relaxed border border-amber-100">
+            💡 <strong>說明：</strong>「資料最後異動」代表雲端上<strong>最後一次有新增單據或修改資料的時間</strong>，並非實時跳動的時鐘。只要上方顯示「🟢 已連線」，即代表即時通道暢通，一旦有任何新資料將自動零秒同步！
+          </div>
         </div>
 
         <!-- Quick Paste Config Box -->
@@ -3168,7 +3168,7 @@ const firebaseConfig = {
           if (cloudData.deviceId === getLocalDeviceId() && (Date.now() - (cloudData.updatedAt || 0) < 3000)) {
             const timeStr = cloudData.updatedAtStr || new Date().toLocaleTimeString("zh-TW");
             const lastTimeEl = document.getElementById("syncLastTime");
-            if (lastTimeEl) lastTimeEl.textContent = "最後同步：" + timeStr;
+            if (lastTimeEl) lastTimeEl.textContent = "資料最後異動：" + timeStr;
             updateCloudUI("connected", "已同步最新狀態");
             return;
           }
@@ -3214,7 +3214,7 @@ const firebaseConfig = {
 
             const timeStr = cloudData.updatedAtStr || new Date().toLocaleTimeString("zh-TW");
             const lastTimeEl = document.getElementById("syncLastTime");
-            if (lastTimeEl) lastTimeEl.textContent = "最後同步：" + timeStr;
+            if (lastTimeEl) lastTimeEl.textContent = "資料最後異動：" + timeStr;
             updateCloudUI("connected", "已同步最新狀態 (" + timeStr + ")");
             showToast("🔄 已自動同步來自手機/其他電腦的最新資料！");
           } catch (err) {
@@ -3273,7 +3273,7 @@ const firebaseConfig = {
         .then(() => {
           const timeStr = new Date().toLocaleTimeString("zh-TW");
           const lastTimeEl = document.getElementById("syncLastTime");
-          if (lastTimeEl) lastTimeEl.textContent = "最後同步：" + timeStr;
+          if (lastTimeEl) lastTimeEl.textContent = "資料最後異動：" + timeStr;
           updateCloudUI("connected", "已同步最新狀態 (" + timeStr + ")");
           if (showNotification) showToast("✅ 本地資料已成功同步上傳至 Firebase 雲端！");
         })
@@ -3339,7 +3339,7 @@ const firebaseConfig = {
 
             const timeStr = cloudData.updatedAtStr || new Date().toLocaleTimeString("zh-TW");
             const lastTimeEl = document.getElementById("syncLastTime");
-            if (lastTimeEl) lastTimeEl.textContent = "最後同步：" + timeStr;
+            if (lastTimeEl) lastTimeEl.textContent = "資料最後異動：" + timeStr;
             updateCloudUI("connected", "已同步最新狀態 (" + timeStr + ")");
             showToast("✅ 已成功從雲端同步最新資料至本機！");
           } finally {
