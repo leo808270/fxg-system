@@ -168,10 +168,38 @@
     .custom-scrollbar::-webkit-scrollbar-track {
       background: #f1f5f9;
     }
+    /* Clean PDF Export Mode (Captures exact print layout without screen controls, select arrows, or shadows) */
+    .pdf-export-mode .no-print {
+      display: none !important;
+    }
+    .pdf-export-mode .print-only {
+      display: block !important;
+    }
+    .pdf-export-mode .print-only-inline {
+      display: inline-block !important;
+    }
+    .pdf-export-mode #quoteSheetWrapper {
+      box-shadow: none !important;
+      border: none !important;
+      border-radius: 0 !important;
+      padding: 4mm 6mm !important;
+      width: 100% !important;
+      max-width: 950px !important;
+      margin: 0 auto !important;
+      background: #ffffff !important;
+    }
+    .pdf-export-mode input {
+      border: none !important;
+      box-shadow: none !important;
+      background: transparent !important;
+      outline: none !important;
+    }
   </style>
   <!-- Google Firebase Realtime Database SDK (Compat build for cross-device cloud sync) -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <!-- Client-side Pure PDF Generator (html2pdf.js) for clean zero-URL mobile PDF export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 <body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col">
 
@@ -276,8 +304,11 @@
           <button id="btnQuoteExportExcel" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium shadow-sm hover:shadow transition flex items-center gap-1.5 text-sm">
             <span>📊</span> 匯出 CSV/Excel
           </button>
-          <button id="btnQuotePrint" class="px-5 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-bold shadow-md hover:shadow-lg transition flex items-center gap-2 text-sm">
-            <span>🖨️</span> 列印 / 匯出 PDF
+          <button id="btnQuoteExportCleanPDF" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold shadow-md hover:shadow-lg transition flex items-center gap-1.5 text-sm">
+            <span>📄</span> 下載純淨 PDF (無網址)
+          </button>
+          <button id="btnQuotePrint" class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-bold shadow-sm hover:shadow transition flex items-center gap-1.5 text-sm">
+            <span>🖨️</span> 列印單據
           </button>
         </div>
       </div>
@@ -3964,6 +3995,45 @@ const firebaseConfig = {
       document.getElementById("btnQuoteClear").addEventListener("click", clearQuote);
       document.getElementById("btnQuoteSave").addEventListener("click", saveCurrentQuote);
       document.getElementById("btnQuoteExportExcel").addEventListener("click", exportQuoteToCSV);
+    async function exportCleanPDF() {
+      syncQuoteToCopy(parseFloat(document.getElementById("quoteTotalDisplay").textContent.replace(/,/g, '')) || 0);
+
+      const dateVal = document.getElementById("quoteDate").value || new Date().toISOString().split('T')[0];
+      const custVal = getQuoteCustomerName() || "估價單";
+      const safeCust = custVal.replace(/[/\\:*?"<>|]/g, "_").trim();
+      const pdfFilename = `${dateVal}-${safeCust}.pdf`;
+
+      if (typeof html2pdf === "undefined") {
+        showToast("正在載入 PDF 引擎，改以列印模式產生...", false);
+        triggerQuotePrint();
+        return;
+      }
+
+      showToast("📄 正在為您產生純淨無網址的 PDF，請稍候...");
+
+      const target = document.getElementById("quoteSheetWrapper");
+      document.body.classList.add("pdf-export-mode");
+
+      const opt = {
+        margin: [4, 6, 4, 6],
+        filename: pdfFilename,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', logging: false },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      };
+
+      try {
+        await html2pdf().set(opt).from(target).save();
+        showToast(`✅ 已成功下載純淨 PDF：${pdfFilename}`);
+      } catch (err) {
+        console.error("PDF generation error:", err);
+        showToast("PDF 產生失敗，改為開啟列印視窗", false);
+        triggerQuotePrint();
+      } finally {
+        document.body.classList.remove("pdf-export-mode");
+      }
+    }
+
       function triggerQuotePrint() {
         syncQuoteToCopy(parseFloat(document.getElementById("quoteTotalDisplay").textContent.replace(/,/g, '')) || 0);
 
@@ -3994,6 +4064,11 @@ const firebaseConfig = {
         setTimeout(() => {
           document.title = originalTitle;
         }, 5000);
+      }
+
+      const btnExportClean = document.getElementById("btnQuoteExportCleanPDF");
+      if (btnExportClean) {
+        btnExportClean.addEventListener("click", exportCleanPDF);
       }
 
       const btnPrint = document.getElementById("btnQuotePrint");
