@@ -3851,6 +3851,7 @@ const firebaseConfig = {
       pendingConfirmCallback = onConfirm;
       if (modal) modal.classList.remove("hidden");
     }
+    const showConfirmModal = showConfirmDialog;
 
     
     // ==========================================
@@ -3939,7 +3940,7 @@ const firebaseConfig = {
     }
 
     function handleLogout() {
-      showConfirmModal(
+      showConfirmDialog(
         "確定要登出系統嗎？",
         "登出後需重新輸入帳號與密碼方可存取單據與庫存資料。",
         () => {
@@ -3954,7 +3955,8 @@ const firebaseConfig = {
           if (appView) appView.classList.add("hidden");
           if (loginView) loginView.classList.remove("hidden");
           showToast("ℹ️ 您已安全登出系統");
-        }
+        },
+        "確認登出"
       );
     }
 
