@@ -1639,8 +1639,12 @@ const firebaseConfig = {
     // --- Initial Master Price Data from 1001新估價單.xlsx ---
     const DEFAULT_PRICE_LIST = [
       { name: "里肌肉", price: 300, code: "999", spec: "1300克" },
+      { name: "里肌肉-正常", price: 300, code: "999-1", spec: "1300克" },
+      { name: "里肌肉-1點", price: 300, code: "999-2", spec: "1300克" },
+      { name: "里肌肉-2點", price: 300, code: "999-3", spec: "1300克" },
       { name: "里肌肉(23片)", price: 300, code: "998", spec: "1300克" },
       { name: "里肌肉(一公斤)", price: 220, code: "997", spec: "1000公克" },
+      { name: "豬柳", price: 190, code: "996-0", spec: "1公斤" },
       { name: "豬柳(袋裝)", price: 190, code: "996", spec: "1公斤(袋裝)" },
       { name: "細豬柳(袋裝)", price: 190, code: "995", spec: "1公斤(袋裝)" },
       { name: "豬柳(盒裝)", price: 95, code: "994", spec: "420克(盒裝)" },
@@ -2301,6 +2305,47 @@ const firebaseConfig = {
       return false;
     }
 
+    
+    // --- 智慧商品配對核心函式 (解決品名微調、後綴、簡稱導致配對失敗變成自訂品名的問題) ---
+    function findPriceListItem(name) {
+      if (!name) return null;
+      const str = String(name).trim();
+      if (!str) return null;
+
+      // 1. 完全比對 (Exact match)
+      let match = currentPriceList.find(p => p.name === str);
+      if (match) return match;
+
+      // 2. 忽略空白與大小寫比對 (Trimmed & Lowercase match)
+      const lower = str.toLowerCase();
+      match = currentPriceList.find(p => p.name.trim().toLowerCase() === lower);
+      if (match) return match;
+
+      // 3. 前綴與規格後綴比對 (例如 "里肌肉" 配對 "里肌肉-正常"、"里肌肉(23片)")
+      match = currentPriceList.find(p => 
+        p.name.startsWith(str + "-") || 
+        p.name.startsWith(str + "(") || 
+        p.name.startsWith(str + "（") ||
+        p.name.startsWith(str + " ")
+      );
+      if (match) return match;
+
+      // 4. 反向前綴比對 (例如標籤為 "里肌肉-正常"，價目表為 "里肌肉")
+      match = currentPriceList.find(p => 
+        str.startsWith(p.name + "-") || 
+        str.startsWith(p.name + "(") || 
+        str.startsWith(p.name + "（") ||
+        str.startsWith(p.name + " ")
+      );
+      if (match) return match;
+
+      // 5. 子字串包含比對
+      match = currentPriceList.find(p => p.name.includes(str) || str.includes(p.name));
+      if (match) return match;
+
+      return null;
+    }
+
     function renderQuickTags() {
       const qContainer = document.getElementById("quoteQuickTags");
       if (!qContainer) return;
@@ -2315,7 +2360,10 @@ const firebaseConfig = {
       }
 
       quickTagNames.forEach(name => {
-        const item = currentPriceList.find(p => p.name === name) || { name, price: 0 };
+        const matchedItem = findPriceListItem(name);
+        const item = matchedItem || { name, price: 0 };
+        const targetItemName = matchedItem ? matchedItem.name : name;
+        const targetItemPrice = matchedItem ? matchedItem.price : (item.price || 0);
         const wrapper = document.createElement("div");
         wrapper.className = "inline-flex items-center rounded-lg shadow-2xs transition";
 
@@ -2336,7 +2384,7 @@ const firebaseConfig = {
           btnQ.type = "button";
           btnQ.className = "text-xs bg-white hover:bg-amber-600 hover:text-white text-slate-700 px-2.5 py-1 rounded-lg border border-amber-300 font-medium transition shadow-2xs whitespace-nowrap flex items-center gap-1";
           btnQ.innerHTML = `<span>${name}</span> <span class="text-[10px] opacity-75 font-semibold">($${item.price})</span>`;
-          btnQ.addEventListener("click", () => addQuickItemToQuote(name, item.price));
+          btnQ.addEventListener("click", () => addQuickItemToQuote(targetItemName, targetItemPrice));
           wrapper.appendChild(btnQ);
         }
 
@@ -2376,7 +2424,7 @@ const firebaseConfig = {
         }
 
         quickTagNames.forEach(name => {
-          const item = currentPriceList.find(p => p.name === name) || { name, price: 0 };
+          const item = findPriceListItem(name) || { name, price: 0 };
           const chip = document.createElement("div");
           chip.className = "inline-flex items-center gap-1.5 px-2.5 py-1 bg-white border border-amber-300 rounded-lg text-xs font-medium text-slate-700 shadow-2xs";
           chip.innerHTML = `
@@ -2449,13 +2497,14 @@ const firebaseConfig = {
       }
 
       // Check if product exists in currentPriceList
-      const match = currentPriceList.find(p => p.name === name);
+      const match = findPriceListItem(name);
       if (match) {
         selectEl.value = match.name;
         if (customEl) customEl.classList.add("hidden");
         if (printEl) printEl.textContent = match.name;
         if (copyEl) copyEl.textContent = match.name;
-        if (priceEl && (price === null || price === "")) priceEl.value = match.price;
+        if (priceEl && (price === null || price === "" || price === 0)) priceEl.value = match.price;
+        else if (priceEl && price !== null) priceEl.value = price;
         if (qtyEl && (qty === null || qty === "") && !qtyEl.value) qtyEl.value = "1";
       } else {
         selectEl.value = "__custom__";
