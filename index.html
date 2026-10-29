@@ -276,11 +276,8 @@
           <button id="btnQuoteExportExcel" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium shadow-sm hover:shadow transition flex items-center gap-1.5 text-sm">
             <span>📊</span> 匯出 CSV/Excel
           </button>
-          <button id="btnQuoteExportPDF" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold shadow-sm hover:shadow transition flex items-center gap-1.5 text-sm">
-            <span>📄</span> 匯出 PDF
-          </button>
-          <button id="btnQuotePrint" class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-bold shadow-md hover:shadow-lg transition flex items-center gap-1.5 text-sm">
-            <span>🖨️</span> 列印單據
+          <button id="btnQuotePrint" class="px-5 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-bold shadow-md hover:shadow-lg transition flex items-center gap-2 text-sm">
+            <span>🖨️</span> 列印 / 匯出 PDF
           </button>
         </div>
       </div>
@@ -3944,7 +3941,7 @@ const firebaseConfig = {
       document.getElementById("btnQuoteClear").addEventListener("click", clearQuote);
       document.getElementById("btnQuoteSave").addEventListener("click", saveCurrentQuote);
       document.getElementById("btnQuoteExportExcel").addEventListener("click", exportQuoteToCSV);
-      function triggerQuotePrintOrPDF(isExportPDF = false) {
+      function triggerQuotePrint() {
         syncQuoteToCopy(parseFloat(document.getElementById("quoteTotalDisplay").textContent.replace(/,/g, '')) || 0);
 
         // 動態將網頁標題設為「日期-客戶名稱」，使瀏覽器「存為 PDF」時預設檔名即為「日期-客戶名稱.pdf」
@@ -3976,14 +3973,9 @@ const firebaseConfig = {
         }, 5000);
       }
 
-      const btnExportPDF = document.getElementById("btnQuoteExportPDF");
-      if (btnExportPDF) {
-        btnExportPDF.addEventListener("click", () => triggerQuotePrintOrPDF(true));
-      }
-
       const btnPrint = document.getElementById("btnQuotePrint");
       if (btnPrint) {
-        btnPrint.addEventListener("click", () => triggerQuotePrintOrPDF(false));
+        btnPrint.addEventListener("click", triggerQuotePrint);
       }
 
       // Quote Layout Toggle (Double copy vs Single copy)
