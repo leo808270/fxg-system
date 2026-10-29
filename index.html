@@ -16,7 +16,7 @@
     @media print {
       @page {
         size: A4 portrait;
-        margin: 5mm 6mm 5mm 6mm;
+        margin: 0; /* Auto-suppresses browser print header (title/date) and footer (URL/page numbers) */
       }
       html, body {
         width: 100% !important;
@@ -42,7 +42,7 @@
         width: 100% !important;
         max-width: 100% !important;
         margin: 0 auto !important;
-        padding: 0 !important;
+        padding: 5mm 6mm 5mm 6mm !important;
         box-shadow: none !important;
         border: none !important;
         display: flex !important;
@@ -3025,7 +3025,9 @@ const firebaseConfig = {
       }
       csvContent += `備註:,"${document.getElementById("quoteRemark").value}",,,合計:,${total}\n`;
 
-      downloadBlob(csvContent, `芳喜蓁站估價單_${customer}_${date}.csv`, "text/csv;charset=utf-8;");
+      const safeCust = customer.replace(/[/\\:*?"<>|]/g, "_").trim();
+      const csvFilename = `${date}-${safeCust}.csv`;
+      downloadBlob(csvContent, csvFilename, "text/csv;charset=utf-8;");
       showToast("估價單 CSV 匯出完成！");
     }
 
@@ -3941,7 +3943,26 @@ const firebaseConfig = {
       document.getElementById("btnQuoteExportExcel").addEventListener("click", exportQuoteToCSV);
       document.getElementById("btnQuotePrint").addEventListener("click", () => {
         syncQuoteToCopy(parseFloat(document.getElementById("quoteTotalDisplay").textContent.replace(/,/g, '')) || 0);
+
+        // 動態將網頁標題設為「日期-客戶名稱」，使瀏覽器「存為 PDF」時預設檔名即為「日期-客戶名稱.pdf」
+        const dateVal = document.getElementById("quoteDate").value || new Date().toISOString().split('T')[0];
+        const custVal = getQuoteCustomerName() || "估價單";
+        const safeCust = custVal.replace(/[/\\:*?"<>|]/g, "_").trim();
+        const originalTitle = document.title;
+        const pdfFilename = `${dateVal}-${safeCust}`;
+
+        document.title = pdfFilename;
+
         window.print();
+
+        // 列印視窗關閉後還原網頁原始標題
+        window.addEventListener("afterprint", () => {
+          document.title = originalTitle;
+        }, { once: true });
+
+        setTimeout(() => {
+          document.title = originalTitle;
+        }, 5000);
       });
 
       // Quote Layout Toggle (Double copy vs Single copy)
