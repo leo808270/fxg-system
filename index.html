@@ -12,7 +12,11 @@
       font-family: 'Noto Sans TC', system-ui, -apple-system, sans-serif;
     }
 
-    /* Print Specific Styling - Optimized for Exact A4 Single-Page Double-Slip Layout */
+    #loginView.hidden {
+      display: none !important;
+    }
+
+    /* Print Specific Styling - Optimized for Exact A4 Single-Page Double-Slip Full-Bleed Layout */
     @media print {
       @page {
         size: A4 portrait;
@@ -28,7 +32,7 @@
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
       }
-      .no-print, #toast {
+      .no-print, #toast, #loginView, #confirmModal, #customerModal, #itemEditModal, #quickPickAddModal, #inventoryActionModal {
         display: none !important;
       }
       .print-only {
@@ -41,7 +45,7 @@
         width: 100% !important;
         max-width: 100% !important;
         margin: 0 auto !important;
-        padding: 2mm 5mm 6mm 5mm !important;
+        padding: 2.5mm 5mm 5mm 5mm !important;
         box-shadow: none !important;
         border: none !important;
         display: flex !important;
@@ -53,7 +57,7 @@
         page-break-after: avoid !important;
         page-break-before: avoid !important;
       }
-      /* Each Half Sheet: Natural flow with zero clipping */
+      /* Each Half Sheet: Natural balanced full-page flow */
       .quote-half-sheet {
         width: 100% !important;
         box-sizing: border-box !important;
@@ -68,8 +72,8 @@
       }
       /* Tear/Cut line between the two slips */
       .cut-line {
-        height: 4mm !important;
-        margin: 1mm 0 !important;
+        height: 5mm !important;
+        margin: 1.5mm 0 !important;
         border-top: 1px dashed #444 !important;
         display: flex !important;
         align-items: center !important;
@@ -81,13 +85,13 @@
       .cut-line::after {
         content: "✂ 沿虛線裁開（第一聯：存根聯 ／ 第二聯：客戶收執聯）" !important;
         position: relative !important;
-        top: -5px !important;
+        top: -6px !important;
         background: #fff !important;
         padding: 0 8px !important;
-        font-size: 6.5pt !important;
+        font-size: 6.8pt !important;
         color: #555 !important;
       }
-      /* Print Table Styling - Compact rows for guaranteed 1-page fit */
+      /* Print Table Styling - 5.8mm rows for perfect full-page A4 balance without page 2 */
       table.print-table {
         border-collapse: collapse !important;
         width: 100% !important;
@@ -97,48 +101,48 @@
       table.print-table td {
         border: 1px solid #000 !important;
         padding: 0.5px 2px !important;
-        height: 4.8mm !important;
-        font-size: 7.8pt !important;
-        line-height: 1.15 !important;
+        height: 5.8mm !important;
+        font-size: 8.5pt !important;
+        line-height: 1.2 !important;
         color: #000 !important;
         background: transparent !important;
         box-sizing: border-box !important;
       }
       table.print-table th {
-        font-size: 7.2pt !important;
+        font-size: 7.8pt !important;
         font-weight: bold !important;
-        height: 4.9mm !important;
+        height: 5.8mm !important;
         background-color: #f3f4f6 !important;
       }
       table.print-table tfoot td {
-        height: 5.2mm !important;
-        font-size: 8pt !important;
+        height: 6.2mm !important;
+        font-size: 8.5pt !important;
         padding: 0.5px 2px !important;
       }
       .quote-half-sheet .header-store-title {
-        font-size: 14pt !important;
+        font-size: 15pt !important;
         line-height: 1.2 !important;
       }
       .quote-half-sheet .header-doc-title {
-        font-size: 14pt !important;
-        padding: 1px 10px !important;
+        font-size: 15pt !important;
+        padding: 1px 12px !important;
         line-height: 1.2 !important;
       }
       .quote-half-sheet .header-info-text {
-        font-size: 7.5pt !important;
-        line-height: 1.2 !important;
+        font-size: 7.8pt !important;
+        line-height: 1.25 !important;
       }
       .quote-half-sheet .customer-date-row {
-        font-size: 8pt !important;
-        padding: 1px 0 !important;
-        margin-top: 1px !important;
+        font-size: 8.5pt !important;
+        padding: 1.5px 0 !important;
+        margin-top: 1.5px !important;
       }
       .quote-half-sheet .footer-summary-row {
-        font-size: 7.5pt !important;
-        margin-top: 1mm !important;
+        font-size: 8pt !important;
+        margin-top: 1.5mm !important;
         padding-top: 0 !important;
         padding-bottom: 1.5mm !important;
-        line-height: 1.2 !important;
+        line-height: 1.25 !important;
       }
     }
 
@@ -165,7 +169,8 @@
     }
 
     /* Clean PDF Export Mode (Captures exact print layout without screen controls, select arrows, or shadows) */
-    .pdf-export-mode .no-print {
+    .pdf-export-mode .no-print,
+    .pdf-export-mode #loginView {
       display: none !important;
     }
     .pdf-export-mode .print-only {
@@ -178,7 +183,7 @@
       box-shadow: none !important;
       border: none !important;
       border-radius: 0 !important;
-      padding: 2mm 5mm 6mm 5mm !important;
+      padding: 2.5mm 5mm 5mm 5mm !important;
       width: 100% !important;
       max-width: 200mm !important;
       margin: 0 auto !important;
@@ -197,8 +202,8 @@
       overflow: visible !important;
     }
     .pdf-export-mode .cut-line {
-      height: 4mm !important;
-      margin: 1mm 0 !important;
+      height: 5mm !important;
+      margin: 1.5mm 0 !important;
       border-top: 1px dashed #444 !important;
       display: flex !important;
       align-items: center !important;
@@ -209,10 +214,10 @@
     .pdf-export-mode .cut-line::after {
       content: "✂ 沿虛線裁開（第一聯：存根聯 ／ 第二聯：客戶收執聯）" !important;
       position: relative !important;
-      top: -5px !important;
+      top: -6px !important;
       background: #fff !important;
       padding: 0 8px !important;
-      font-size: 6.5pt !important;
+      font-size: 6.8pt !important;
       color: #555 !important;
     }
     .pdf-export-mode table.print-table {
@@ -224,48 +229,48 @@
     .pdf-export-mode table.print-table td {
       border: 1px solid #000 !important;
       padding: 0.5px 2px !important;
-      height: 4.8mm !important;
-      font-size: 7.8pt !important;
-      line-height: 1.15 !important;
+      height: 5.8mm !important;
+      font-size: 8.5pt !important;
+      line-height: 1.2 !important;
       color: #000 !important;
       background: transparent !important;
       box-sizing: border-box !important;
     }
     .pdf-export-mode table.print-table th {
-      font-size: 7.2pt !important;
+      font-size: 7.8pt !important;
       font-weight: bold !important;
-      height: 4.9mm !important;
+      height: 5.8mm !important;
       background-color: #f3f4f6 !important;
     }
     .pdf-export-mode table.print-table tfoot td {
-      height: 5.2mm !important;
-      font-size: 8pt !important;
+      height: 6.2mm !important;
+      font-size: 8.5pt !important;
       padding: 0.5px 2px !important;
     }
     .pdf-export-mode .quote-half-sheet .header-store-title {
-      font-size: 14pt !important;
+      font-size: 15pt !important;
       line-height: 1.2 !important;
     }
     .pdf-export-mode .quote-half-sheet .header-doc-title {
-      font-size: 14pt !important;
-      padding: 1px 10px !important;
+      font-size: 15pt !important;
+      padding: 1px 12px !important;
       line-height: 1.2 !important;
     }
     .pdf-export-mode .quote-half-sheet .header-info-text {
-      font-size: 7.5pt !important;
-      line-height: 1.2 !important;
+      font-size: 7.8pt !important;
+      line-height: 1.25 !important;
     }
     .pdf-export-mode .quote-half-sheet .customer-date-row {
-      font-size: 8pt !important;
-      padding: 1px 0 !important;
-      margin-top: 1px !important;
+      font-size: 8.5pt !important;
+      padding: 1.5px 0 !important;
+      margin-top: 1.5px !important;
     }
     .pdf-export-mode .quote-half-sheet .footer-summary-row {
-      font-size: 7.5pt !important;
-      margin-top: 1mm !important;
+      font-size: 8pt !important;
+      margin-top: 1.5mm !important;
       padding-top: 0 !important;
       padding-bottom: 1.5mm !important;
-      line-height: 1.2 !important;
+      line-height: 1.25 !important;
     }
     .pdf-export-mode input {
       border: none !important;
@@ -281,6 +286,78 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 <body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col">
+  <!-- Fullscreen Branded Login Screen (Shown when unauthenticated) -->
+  <div id="loginView" class="no-print fixed inset-0 z-50 bg-gradient-to-br from-amber-950 via-slate-900 to-amber-900 flex items-center justify-center p-4 min-h-screen">
+    <div class="w-full max-w-md bg-white/95 backdrop-blur-md rounded-3xl shadow-2xl border border-amber-300/40 p-8 sm:p-10 space-y-6 text-slate-800 animate-fade-in">
+      
+      <!-- Brand & Header -->
+      <div class="text-center space-y-2">
+        <div class="mx-auto w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center text-white font-black text-3xl shadow-lg shadow-amber-500/30 border-2 border-white/80">
+          芳
+        </div>
+        <h1 class="text-2xl font-black tracking-wide text-slate-900 font-serif pt-1">
+          芳喜蓁站手工坊
+        </h1>
+        <p class="text-xs font-semibold text-amber-800 bg-amber-50 border border-amber-200/60 inline-block px-3 py-1 rounded-full">
+          估價單與庫存管理系統
+        </p>
+        <p class="text-xs text-slate-500 pt-1">請輸入帳號與密碼登入系統</p>
+      </div>
+
+      <!-- Login Form -->
+      <form id="loginForm" class="space-y-4">
+        <!-- Error Message Banner -->
+        <div id="loginErrorMsg" class="hidden text-xs text-rose-700 bg-rose-50 border border-rose-200 p-2.5 rounded-xl font-medium flex items-center gap-2">
+          <span>⚠️</span>
+          <span id="loginErrorText">帳號或密碼錯誤，請重新輸入</span>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1">
+            <span>👤</span> 系統帳號
+          </label>
+          <input type="text" id="loginUsername" required autocomplete="username" placeholder="請輸入帳號" value="admin" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:border-amber-600 focus:ring-2 focus:ring-amber-500/20 text-sm outline-none transition bg-slate-50/50 font-medium">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1.5 flex items-center justify-between">
+            <span class="flex items-center gap-1"><span>🔒</span> 登入密碼</span>
+            <button type="button" id="btnToggleLoginPwdText" class="text-[11px] text-amber-700 hover:text-amber-900 font-semibold">顯示密碼</button>
+          </label>
+          <div class="relative">
+            <input type="password" id="loginPassword" required autocomplete="current-password" placeholder="請輸入密碼" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:border-amber-600 focus:ring-2 focus:ring-amber-500/20 text-sm outline-none transition bg-slate-50/50 font-medium pr-10">
+            <button type="button" id="btnToggleLoginPwdIcon" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600">
+              👁️
+            </button>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between text-xs pt-1">
+          <label class="inline-flex items-center gap-2 cursor-pointer text-slate-600 hover:text-slate-800">
+            <input type="checkbox" id="loginRememberMe" checked class="rounded text-amber-600 focus:ring-amber-500">
+            <span>記住登入狀態 (下次免登入)</span>
+          </label>
+        </div>
+
+        <button type="submit" id="btnLoginSubmit" class="w-full py-3 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white rounded-xl font-bold text-sm shadow-lg shadow-amber-600/30 transition transform active:scale-98 flex items-center justify-center gap-2">
+          <span>登入系統</span>
+          <span>➔</span>
+        </button>
+      </form>
+
+      <!-- Preset Hint Box -->
+      <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 text-[11px] text-slate-500 space-y-1">
+        <p class="font-bold text-slate-700 flex items-center gap-1">
+          <span>💡</span> 系統預設登入憑證：
+        </p>
+        <p>• 預設帳號：<span class="font-mono font-bold text-amber-800 bg-amber-100/70 px-1.5 py-0.2 rounded">admin</span></p>
+        <p>• 預設密碼：<span class="font-mono font-bold text-amber-800 bg-amber-100/70 px-1.5 py-0.2 rounded">8888</span></p>
+        <p class="text-slate-400 text-[10px] pt-0.5">※ 登入後可隨時於「店家設定」修改帳號與密碼</p>
+      </div>
+
+    </div>
+  </div>
+
 
   <!-- Top Notification Toast Bar -->
   <div id="toast" class="no-print fixed top-5 right-5 z-50 transform transition-all duration-300 translate-y-[-100px] opacity-0 pointer-events-none bg-slate-900 text-white px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3 border border-slate-700">
@@ -288,6 +365,8 @@
     <span id="toastMsg" class="text-sm font-medium">訊息通知</span>
   </div>
 
+  <!-- Main Authenticated App View -->
+  <div id="appView" class="min-h-screen flex flex-col hidden">
   <!-- Navigation Bar (Screen Only) -->
   <header class="no-print bg-gradient-to-r from-amber-700 via-amber-800 to-amber-900 text-white shadow-lg sticky top-0 z-40">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -334,6 +413,10 @@
         </nav>
         <!-- Cloud Sync Status Indicator in Header -->
         <div class="flex items-center gap-2">
+          <button id="btnLogoutNav" type="button" title="登出系統" class="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-rose-950/80 hover:bg-rose-900 border border-rose-400/30 text-rose-100 transition shadow-sm cursor-pointer">
+            <span>🚪</span>
+            <span>登出</span>
+          </button>
           <button id="btnCloudSyncNav" title="點擊前往雲端同步設定" class="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-950/70 border border-amber-400/30 text-amber-100 hover:bg-amber-900 transition">
             <span id="cloudStatusDotNav" class="w-2.5 h-2.5 rounded-full bg-slate-400"></span>
             <span id="cloudStatusTextNav">本機模式 (未同步)</span>
@@ -1046,6 +1129,33 @@
         </form>
       </div>
 
+      <!-- Account & Password Management Card -->
+      <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 max-w-2xl mx-auto">
+        <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2 mb-2">
+          <span>🔐</span> 系統登入帳號與密碼修改
+        </h2>
+        <p class="text-xs text-slate-500 mb-4">修改進入系統所需的帳號與密碼，修改後將自動保存（支援多裝置雲端同步）</p>
+
+        <form id="authSettingsForm" class="space-y-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">系統登入帳號</label>
+              <input type="text" id="setAuthUsername" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:border-amber-600 outline-none font-medium" placeholder="預設: admin">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">系統登入密碼</label>
+              <input type="text" id="setAuthPassword" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:border-amber-600 outline-none font-medium" placeholder="預設: 8888">
+            </div>
+          </div>
+          <div class="flex justify-between items-center pt-2">
+            <span class="text-xs text-slate-400">※ 請妥善保管密碼，若遺忘可清除瀏覽器快取恢復預設值 (admin / 8888)</span>
+            <button type="submit" class="px-5 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-bold text-sm shadow transition flex items-center gap-1.5 cursor-pointer">
+              <span>💾</span> 保存帳密設定
+            </button>
+          </div>
+        </form>
+      </div>
+
       <!-- TAB 5 - Card 2: ☁️ Google Firebase 跨裝置雲端同步 -->
       <div id="firebaseConfigSection" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 max-w-2xl mx-auto space-y-5">
         <div class="flex flex-wrap items-start justify-between gap-4">
@@ -1207,6 +1317,8 @@ const firebaseConfig = {
     </div>
 
   </main>
+
+  </div><!-- End #appView -->
 
   <!-- Modal for Adding/Editing Customer -->
   <div id="customerModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
@@ -3531,6 +3643,18 @@ const firebaseConfig = {
               storeConfig = cloudData.storeConfig;
               localStorage.setItem("fxg_store_config", JSON.stringify(storeConfig));
             }
+            if (cloudData.credentials && typeof cloudData.credentials === "object") {
+              if (cloudData.credentials.username) {
+                localStorage.setItem(AUTH_CONFIG.storageKeyUser, cloudData.credentials.username);
+              }
+              if (cloudData.credentials.password) {
+                localStorage.setItem(AUTH_CONFIG.storageKeyPass, cloudData.credentials.password);
+              }
+              const setU = document.getElementById("setAuthUsername");
+              const setP = document.getElementById("setAuthPassword");
+              if (setU) setU.value = cloudData.credentials.username || AUTH_CONFIG.defaultUser;
+              if (setP) setP.value = cloudData.credentials.password || AUTH_CONFIG.defaultPass;
+            }
 
             // Re-render UI
             applyStoreConfigToUI();
@@ -3597,7 +3721,8 @@ const firebaseConfig = {
         savedDocuments: toSafeArray(savedDocuments),
         hasEmptyDocuments: (savedDocuments.length === 0),
         currentPriceList: toSafeArray(currentPriceList),
-        storeConfig: storeConfig || {}
+        storeConfig: storeConfig || {},
+        credentials: getStoredCredentials()
       };
 
       updateCloudUI("syncing", "正在上傳同步至雲端...");
@@ -3702,6 +3827,7 @@ const firebaseConfig = {
             history.replaceState(null, "", window.location.pathname + window.location.search);
             showToast("📱 成功由手機專屬連結匯入雲端設定！正在連線同步...");
             initFirebaseSync();
+      initAuthModule();
           }
         } catch (err) {
           console.error("Failed to parse sync url hash", err);
