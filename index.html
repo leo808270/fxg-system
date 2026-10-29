@@ -29,7 +29,7 @@
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
       }
-      .no-print {
+      .no-print, #toast {
         display: none !important;
       }
       .print-only {
@@ -176,7 +176,7 @@
 <body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col">
 
   <!-- Top Notification Toast Bar -->
-  <div id="toast" class="fixed top-5 right-5 z-50 transform transition-all duration-300 translate-y-[-100px] opacity-0 pointer-events-none bg-slate-900 text-white px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3 border border-slate-700">
+  <div id="toast" class="no-print fixed top-5 right-5 z-50 transform transition-all duration-300 translate-y-[-100px] opacity-0 pointer-events-none bg-slate-900 text-white px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3 border border-slate-700">
     <span id="toastIcon">ℹ️</span>
     <span id="toastMsg" class="text-sm font-medium">訊息通知</span>
   </div>
@@ -3956,15 +3956,15 @@ const firebaseConfig = {
 
         document.title = pdfFilename;
 
-        if (isExportPDF) {
-          showToast(`📄 準備匯出 PDF，預設檔名為：${pdfFilename}.pdf`);
-        } else {
-          showToast(`🖨️ 開啟列印對話框中...`);
+        // 確保列印/匯出時提示框完全隱藏，不印入紙張或 PDF
+        const toastEl = document.getElementById("toast");
+        if (toastEl) {
+          toastEl.classList.add("translate-y-[-100px]", "opacity-0", "pointer-events-none");
         }
 
         setTimeout(() => {
           window.print();
-        }, 120);
+        }, 80);
 
         // 列印視窗關閉後還原網頁原始標題
         window.addEventListener("afterprint", () => {
