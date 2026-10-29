@@ -3852,6 +3852,183 @@ const firebaseConfig = {
       if (modal) modal.classList.remove("hidden");
     }
 
+    
+    // ==========================================
+    // --- 系統登入與權限保護模組 (Authentication) ---
+    // ==========================================
+    const AUTH_CONFIG = {
+      defaultUser: "admin",
+      defaultPass: "8888",
+      storageKeyUser: "fxg_auth_username",
+      storageKeyPass: "fxg_auth_password",
+      sessionTokenKey: "fxg_auth_logged_in",
+      rememberKey: "fxg_auth_remember_me"
+    };
+
+    function getStoredCredentials() {
+      const u = localStorage.getItem(AUTH_CONFIG.storageKeyUser) || AUTH_CONFIG.defaultUser;
+      const p = localStorage.getItem(AUTH_CONFIG.storageKeyPass) || AUTH_CONFIG.defaultPass;
+      return { username: u.trim(), password: p.trim() };
+    }
+
+    function checkAuth() {
+      const isRemembered = localStorage.getItem(AUTH_CONFIG.rememberKey) === "true";
+      const isSessionAuth = sessionStorage.getItem(AUTH_CONFIG.sessionTokenKey) === "true";
+      const isLocalAuth = localStorage.getItem(AUTH_CONFIG.sessionTokenKey) === "true";
+
+      const authenticated = isRemembered ? isLocalAuth : isSessionAuth;
+      const loginView = document.getElementById("loginView");
+      const appView = document.getElementById("appView");
+
+      if (authenticated) {
+        if (loginView) loginView.classList.add("hidden");
+        if (appView) appView.classList.remove("hidden");
+      } else {
+        if (loginView) loginView.classList.remove("hidden");
+        if (appView) appView.classList.add("hidden");
+        const uInput = document.getElementById("loginUsername");
+        const pInput = document.getElementById("loginPassword");
+        if (uInput && !uInput.value) uInput.value = "admin";
+        if (pInput) setTimeout(() => pInput.focus(), 100);
+      }
+      return authenticated;
+    }
+
+    function handleLogin(e) {
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      const uInput = (document.getElementById("loginUsername") ? document.getElementById("loginUsername").value : "").trim();
+      const pInput = (document.getElementById("loginPassword") ? document.getElementById("loginPassword").value : "").trim();
+      const rememberCheckbox = document.getElementById("loginRememberMe");
+      const remember = rememberCheckbox ? rememberCheckbox.checked : true;
+      const errBanner = document.getElementById("loginErrorMsg");
+      const errText = document.getElementById("loginErrorText");
+
+      const creds = getStoredCredentials();
+
+      if (uInput === creds.username && pInput === creds.password) {
+        if (errBanner) errBanner.classList.add("hidden");
+
+        if (remember) {
+          localStorage.setItem(AUTH_CONFIG.rememberKey, "true");
+          localStorage.setItem(AUTH_CONFIG.sessionTokenKey, "true");
+        } else {
+          localStorage.removeItem(AUTH_CONFIG.rememberKey);
+          localStorage.removeItem(AUTH_CONFIG.sessionTokenKey);
+          sessionStorage.setItem(AUTH_CONFIG.sessionTokenKey, "true");
+        }
+
+        const loginView = document.getElementById("loginView");
+        const appView = document.getElementById("appView");
+        if (loginView) loginView.classList.add("hidden");
+        if (appView) appView.classList.remove("hidden");
+        showToast("🎉 歡迎登入「芳喜蓁站手工坊」系統！");
+        return false;
+      } else {
+        if (errBanner) {
+          errBanner.classList.remove("hidden");
+        }
+        if (errText) {
+          errText.textContent = "帳號或密碼錯誤！(預設帳號: admin，預設密碼: 8888)";
+        }
+        showToast("❌ 帳號或密碼錯誤，請重新確認", false);
+        return false;
+      }
+    }
+
+    function handleLogout() {
+      showConfirmModal(
+        "確定要登出系統嗎？",
+        "登出後需重新輸入帳號與密碼方可存取單據與庫存資料。",
+        () => {
+          localStorage.removeItem(AUTH_CONFIG.sessionTokenKey);
+          localStorage.removeItem(AUTH_CONFIG.rememberKey);
+          sessionStorage.removeItem(AUTH_CONFIG.sessionTokenKey);
+
+          const pInput = document.getElementById("loginPassword");
+          if (pInput) pInput.value = "";
+          const appView = document.getElementById("appView");
+          const loginView = document.getElementById("loginView");
+          if (appView) appView.classList.add("hidden");
+          if (loginView) loginView.classList.remove("hidden");
+          showToast("ℹ️ 您已安全登出系統");
+        }
+      );
+    }
+
+    function initAuthModule() {
+      const creds = getStoredCredentials();
+      const setU = document.getElementById("setAuthUsername");
+      const setP = document.getElementById("setAuthPassword");
+      if (setU) setU.value = creds.username;
+      if (setP) setP.value = creds.password;
+
+      // Login form submit & button click
+      const loginForm = document.getElementById("loginForm");
+      if (loginForm) {
+        loginForm.onsubmit = handleLogin;
+        loginForm.addEventListener("submit", handleLogin);
+      }
+      const btnLoginSubmit = document.getElementById("btnLoginSubmit");
+      if (btnLoginSubmit) {
+        btnLoginSubmit.addEventListener("click", handleLogin);
+      }
+
+      // Enter key on inputs
+      const pInput = document.getElementById("loginPassword");
+      if (pInput) {
+        pInput.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") handleLogin(e);
+        });
+      }
+
+      // Logout button in header
+      const btnLogout = document.getElementById("btnLogoutNav");
+      if (btnLogout) btnLogout.addEventListener("click", handleLogout);
+
+      // Password toggle buttons
+      const toggleText = document.getElementById("btnToggleLoginPwdText");
+      const toggleIcon = document.getElementById("btnToggleLoginPwdIcon");
+      function togglePwdVisibility() {
+        const pwd = document.getElementById("loginPassword");
+        if (!pwd) return;
+        if (pwd.type === "password") {
+          pwd.type = "text";
+          if (toggleText) toggleText.textContent = "隱藏密碼";
+        } else {
+          pwd.type = "password";
+          if (toggleText) toggleText.textContent = "顯示密碼";
+        }
+      }
+      if (toggleText) toggleText.addEventListener("click", togglePwdVisibility);
+      if (toggleIcon) toggleIcon.addEventListener("click", togglePwdVisibility);
+
+      // Settings password form submit
+      const authSettingsForm = document.getElementById("authSettingsForm");
+      if (authSettingsForm) {
+        authSettingsForm.addEventListener("submit", (e) => {
+          e.preventDefault();
+          const newU = (document.getElementById("setAuthUsername").value || AUTH_CONFIG.defaultUser).trim();
+          const newP = (document.getElementById("setAuthPassword").value || AUTH_CONFIG.defaultPass).trim();
+
+          localStorage.setItem(AUTH_CONFIG.storageKeyUser, newU);
+          localStorage.setItem(AUTH_CONFIG.storageKeyPass, newP);
+
+          // Sync updated credentials to cloud across devices
+          if (typeof pushLocalDataToCloud === "function") {
+            pushLocalDataToCloud(false);
+          }
+
+          showToast("✅ 帳號與密碼修改已成功保存！");
+        });
+      }
+
+      // Check current auth status immediately
+      checkAuth();
+    }
+
     // --- Setup Listeners ---
     document.addEventListener("DOMContentLoaded", () => {
       initData();
@@ -4589,6 +4766,7 @@ const firebaseConfig = {
 
       // 預設以乾淨空白的估價單開始，隨時可按「填入範例資料」示範
       clearQuote(false);
+      initAuthModule();
     });
   </script>
 </body>
