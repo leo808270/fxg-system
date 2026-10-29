@@ -35,6 +35,9 @@
       .print-only {
         display: block !important;
       }
+      .print-only-inline {
+        display: inline-block !important;
+      }
       .print-container {
         width: 100% !important;
         max-width: 100% !important;
@@ -205,6 +208,10 @@
             <span>📦</span>
             <span>庫存管理</span>
           </button>
+          <button id="navCustomerBtn" class="px-3 py-2 rounded-lg font-medium transition flex items-center gap-1.5 text-amber-200 hover:text-white hover:bg-amber-800/60">
+            <span>👥</span>
+            <span>客戶管理</span>
+          </button>
           <button id="navPriceBtn" class="px-3 py-2 rounded-lg font-medium transition flex items-center gap-1.5 text-amber-200 hover:text-white hover:bg-amber-800/60">
             <span>📋</span>
             <span>價目表庫</span>
@@ -326,9 +333,16 @@
 
             <!-- Customer & Date Row -->
             <div class="mt-1 pt-1 border-t border-black flex justify-between items-center text-xs sm:text-sm font-semibold customer-date-row">
-              <div class="flex items-center gap-2">
-                <span>客戶名稱：</span>
-                <input type="text" id="quoteCustomer" placeholder="請輸入客戶名稱" value="早安美而美（示範）" class="border-b border-black outline-none px-2 py-0.5 w-60 bg-transparent font-bold">
+              <div class="flex items-center gap-1.5 flex-wrap">
+                <span class="font-bold">客戶名稱：</span>
+                <select id="quoteCustomerSelect" class="no-print border-b border-black outline-none px-2 py-0.5 min-w-[210px] max-w-[290px] bg-transparent font-bold text-xs sm:text-sm cursor-pointer hover:bg-amber-50/50 transition">
+                  <!-- Dynamically populated from Customer Database -->
+                </select>
+                <input type="text" id="quoteCustomerCustomInput" placeholder="請輸入自訂客戶名稱" class="hidden no-print border-b border-black outline-none px-2 py-0.5 w-48 bg-transparent font-bold text-xs sm:text-sm">
+                <button type="button" id="btnQuickAddCustomerModal" title="快速新增客戶資料" class="no-print text-xs bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 px-2 py-0.5 rounded font-bold transition">
+                  +新增客戶
+                </button>
+                <span id="quoteCustomerPrintDisplay" class="hidden print-only-inline font-bold"></span>
               </div>
               <div class="flex items-center gap-2">
                 <span>日期：</span>
@@ -646,6 +660,101 @@
           </div>
         </div>
 
+      </div>
+    </div>
+
+    <!-- TAB 3: 客戶管理 (客戶名冊、常用備註與快速開單) -->
+    <div id="tabCustomer" class="space-y-6 hidden">
+      <!-- Top Metric Cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between">
+          <span class="text-xs font-bold text-slate-500 flex items-center gap-1">
+            <span>👥</span> 合作客戶總數
+          </span>
+          <div class="mt-2 flex items-baseline justify-between">
+            <span id="custStatTotal" class="text-2xl font-black text-slate-800">0</span>
+            <span class="text-xs text-slate-400">家門市/客戶</span>
+          </div>
+        </div>
+
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between">
+          <span class="text-xs font-bold text-emerald-600 flex items-center gap-1">
+            <span>📑</span> 累計開單合作客戶
+          </span>
+          <div class="mt-2 flex items-baseline justify-between">
+            <span id="custStatQuoted" class="text-2xl font-black text-emerald-700">0</span>
+            <span class="text-xs text-emerald-500">家已開單</span>
+          </div>
+        </div>
+
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between">
+          <span class="text-xs font-bold text-amber-600 flex items-center gap-1">
+            <span>📍</span> 在地配送熱區
+          </span>
+          <div class="mt-2 flex items-baseline justify-between">
+            <span id="custStatLocal" class="text-2xl font-black text-amber-700">台南市區</span>
+            <span class="text-xs text-slate-400">安平/中西/南區</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Customer Main Panel -->
+      <div class="bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-200 space-y-5">
+        <div class="flex flex-wrap items-center justify-between gap-4 pb-2 border-b border-slate-100">
+          <div>
+            <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+              <span>👥</span> 客戶資料庫管理
+            </h2>
+            <p class="text-xs text-slate-500 mt-1">
+              維護常用合作早餐店與經銷門市資料，估價單「客戶名稱」選單將即時自動更新，開單免重複打字
+            </p>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2">
+            <button id="btnCustomerAddModal" class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow">
+              <span>➕</span> 新增客戶資料
+            </button>
+            <button id="btnCustomerReset" class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-medium transition border border-slate-300">
+              <span>🔄</span> 重設為範例客戶
+            </button>
+            <button id="btnCustomerExportCSV" class="px-3.5 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-xl text-xs font-medium transition border border-blue-200 flex items-center gap-1">
+              <span>📊</span> 匯出客戶名冊 CSV
+            </button>
+          </div>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="flex flex-wrap items-center gap-3">
+          <div class="relative flex-1 min-w-[220px]">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">🔍</span>
+            <input type="text" id="customerSearchInput" placeholder="搜尋客戶名稱、電話、地址、統一編號、聯絡人..." class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:bg-white focus:border-amber-600 outline-none transition">
+          </div>
+          <span id="customerCountBadge" class="text-xs bg-slate-100 text-slate-600 px-3 py-2 rounded-xl font-medium border border-slate-200 whitespace-nowrap">
+            共 0 位客戶
+          </span>
+        </div>
+
+        <!-- Customer Table -->
+        <div class="border border-slate-200 rounded-xl overflow-hidden shadow-inner">
+          <div class="max-h-[550px] overflow-y-auto custom-scrollbar">
+            <table class="w-full text-left text-sm">
+              <thead class="bg-slate-100 text-slate-700 font-bold sticky top-0 border-b border-slate-200 text-xs">
+                <tr>
+                  <th class="py-3 px-4 w-48">客戶名稱</th>
+                  <th class="py-3 px-3 w-28">統一編號</th>
+                  <th class="py-3 px-4 w-40">聯絡人 / 電話</th>
+                  <th class="py-3 px-4">送貨營業地址</th>
+                  <th class="py-3 px-4">常用配送備註</th>
+                  <th class="py-3 px-3 w-24 text-center">歷史單據</th>
+                  <th class="py-3 px-4 w-44 text-center">操作</th>
+                </tr>
+              </thead>
+              <tbody id="customerListTableBody" class="divide-y divide-slate-100">
+                <!-- Dynamically populated by JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -969,6 +1078,69 @@ const firebaseConfig = {
 
   </main>
 
+  <!-- Modal for Adding/Editing Customer -->
+  <div id="customerModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200">
+      <div class="flex items-center justify-between mb-4">
+        <h3 id="customerModalTitle" class="text-lg font-bold text-slate-800 flex items-center gap-2">
+          <span>👥</span> 新增客戶資料
+        </h3>
+        <button type="button" id="btnCustomerModalCloseTop" class="text-slate-400 hover:text-slate-600 text-lg">✕</button>
+      </div>
+
+      <form id="customerItemForm" class="space-y-4">
+        <input type="hidden" id="editCustomerIndex" value="-1">
+        
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">客戶 / 門市名稱 <span class="text-rose-500">*</span></label>
+          <input type="text" id="modalCustName" required placeholder="例如：早安美而美（安平店）" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:border-amber-600 outline-none">
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">統一編號 / 代碼</label>
+            <input type="text" id="modalCustTaxId" placeholder="例如：88812345" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:border-amber-600 outline-none font-mono">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">聯絡人姓名</label>
+            <input type="text" id="modalCustContact" placeholder="例如：林店長" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:border-amber-600 outline-none">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">聯絡電話 / 手機</label>
+            <input type="text" id="modalCustPhone" placeholder="例如：0912-345-678" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:border-amber-600 outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">建立日期</label>
+            <input type="date" id="modalCustDate" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:border-amber-600 outline-none">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">送貨營業地址</label>
+          <input type="text" id="modalCustAddress" placeholder="例如：台南市安平區華平路123號" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:border-amber-600 outline-none">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">常用配送備註 / 款項備註</label>
+          <input type="text" id="modalCustRemark" placeholder="例如：固定每週二、五早上八點前送達，匯入安平分行帳戶" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:border-amber-600 outline-none">
+          <p class="text-[11px] text-slate-400 mt-1">💡 開立估價單選取該客戶時，可自動載入此備註</p>
+        </div>
+
+        <div class="flex justify-end gap-3 pt-3 border-t border-slate-100">
+          <button type="button" id="btnCustomerModalClose" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl border border-slate-300">
+            取消
+          </button>
+          <button type="submit" class="px-5 py-2 text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 rounded-xl shadow">
+            確認儲存客戶
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- Modal for Adding/Editing Price Item -->
   <div id="priceModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200">
@@ -1214,6 +1386,14 @@ const firebaseConfig = {
       "奶酥", "香蒜", "錫蘭紅茶", "麥香紅茶", "咖啡粉", "小鬆餅", "5808", "柴魚高湯粉"
     ];
 
+    const DEFAULT_CUSTOMER_LIST = [
+      { name: "早安美而美（安平店）", taxId: "88812345", contact: "林志豪", phone: "0912-345-678", address: "台南市安平區華平路123號", remark: "每週二、五早上 07:30 前送達", createdAt: "2026-10-01" },
+      { name: "弘爺漢堡（健康店）", taxId: "77765432", contact: "陳店長", phone: "0928-111-222", address: "台南市中西區健康路二段45號", remark: "固定週三進貨，款項月底結清", createdAt: "2026-10-05" },
+      { name: "美芝城早午餐（永華店）", taxId: "66698765", contact: "張小姐", phone: "0933-888-999", address: "台南市安平區永華路二段88號", remark: "假日生意好，週五需加量出貨", createdAt: "2026-10-10" },
+      { name: "拉亞漢堡（文平店）", taxId: "55543210", contact: "郭店長", phone: "0975-666-777", address: "台南市安平區文平路200號", remark: "送貨前請先電話聯絡", createdAt: "2026-10-15" },
+      { name: "麥味登早午餐（慶平店）", taxId: "44432198", contact: "謝老闆", phone: "0955-444-333", address: "台南市安平區慶平路350號", remark: "漢堡肉與蛋餅皮固定每週補貨", createdAt: "2026-10-20" }
+    ];
+
     const DEFAULT_STORE_CONFIG = {
       storeName: "芳喜蓁站手工坊",
       taxId: "40713530",
@@ -1226,6 +1406,7 @@ const firebaseConfig = {
 
     // State Variables
     let currentPriceList = [];
+    let currentCustomerList = [];
     let storeConfig = {};
     let savedDocuments = [];
     let quoteIsDoubleLayout = true;
@@ -1692,11 +1873,20 @@ const firebaseConfig = {
         savedDocuments = [];
       }
 
+      try {
+        const savedCustomers = localStorage.getItem("fxg_customer_list");
+        currentCustomerList = savedCustomers ? JSON.parse(savedCustomers) : [...DEFAULT_CUSTOMER_LIST];
+      } catch (e) {
+        currentCustomerList = [...DEFAULT_CUSTOMER_LIST];
+      }
+
       // Populate Today's date by default
       const today = new Date().toISOString().split('T')[0];
       document.getElementById("quoteDate").value = today;
       
       applyStoreConfigToUI();
+      renderCustomerDropdown();
+      renderCustomerTable();
       renderPriceDatalist();
       renderPriceTable();
       renderQuickTags();
@@ -1880,7 +2070,11 @@ const firebaseConfig = {
     }
 
     function syncQuoteToCopy(grandTotal) {
-      document.getElementById("quoteCustomerCopy").textContent = document.getElementById("quoteCustomer").value;
+      const custName = getQuoteCustomerName();
+      document.getElementById("quoteCustomerCopy").textContent = custName;
+      if (document.getElementById("quoteCustomerPrintDisplay")) {
+        document.getElementById("quoteCustomerPrintDisplay").textContent = custName;
+      }
       document.getElementById("quoteDateCopy").textContent = document.getElementById("quoteDate").value;
       document.getElementById("quoteRemarkCopy").textContent = document.getElementById("quoteRemark").value;
       document.getElementById("quoteTotalCopyDisplay").textContent = grandTotal.toLocaleString();
@@ -1929,6 +2123,263 @@ const firebaseConfig = {
 
 
 
+
+
+    // ==========================================
+    // --- CUSTOMER MANAGEMENT DATA & LOGIC ---
+    // ==========================================
+    function saveCustomerList() {
+      try {
+        localStorage.setItem("fxg_customer_list", JSON.stringify(currentCustomerList));
+        queueCloudSync();
+      } catch (e) {
+        console.error("Storage error:", e);
+      }
+    }
+
+    function getQuoteCustomerName() {
+      const sel = document.getElementById("quoteCustomerSelect");
+      const customInput = document.getElementById("quoteCustomerCustomInput");
+      if (!sel) return "未具名";
+      if (sel.value === "__custom__") {
+        return (customInput && customInput.value.trim()) || "自訂客戶";
+      }
+      return sel.value || "未具名";
+    }
+
+    function setQuoteCustomerValue(customerName) {
+      const sel = document.getElementById("quoteCustomerSelect");
+      const customInput = document.getElementById("quoteCustomerCustomInput");
+      const printDisplay = document.getElementById("quoteCustomerPrintDisplay");
+      const copyDisplay = document.getElementById("quoteCustomerCopy");
+      if (!sel) return;
+
+      if (!customerName) {
+        sel.value = "";
+        if (customInput) {
+          customInput.value = "";
+          customInput.classList.add("hidden");
+        }
+        if (printDisplay) printDisplay.textContent = "";
+        if (copyDisplay) copyDisplay.textContent = "";
+        return;
+      }
+
+      let matched = false;
+      for (let i = 0; i < sel.options.length; i++) {
+        if (sel.options[i].value === customerName) {
+          sel.selectedIndex = i;
+          matched = true;
+          break;
+        }
+      }
+
+      if (matched) {
+        if (customInput) customInput.classList.add("hidden");
+        if (printDisplay) printDisplay.textContent = customerName;
+        if (copyDisplay) copyDisplay.textContent = customerName;
+      } else {
+        sel.value = "__custom__";
+        if (customInput) {
+          customInput.value = customerName;
+          customInput.classList.remove("hidden");
+        }
+        if (printDisplay) printDisplay.textContent = customerName;
+        if (copyDisplay) copyDisplay.textContent = customerName;
+      }
+    }
+
+    function renderCustomerDropdown() {
+      const sel = document.getElementById("quoteCustomerSelect");
+      if (!sel) return;
+      const curVal = getQuoteCustomerName();
+      sel.innerHTML = "";
+
+      const optDefault = document.createElement("option");
+      optDefault.value = "";
+      optDefault.textContent = "-- 請選擇客戶 (點此展開選單) --";
+      sel.appendChild(optDefault);
+
+      currentCustomerList.forEach(c => {
+        const opt = document.createElement("option");
+        opt.value = c.name;
+        opt.textContent = `${c.name}${c.contact ? " (" + c.contact + ")" : ""}`;
+        sel.appendChild(opt);
+      });
+
+      const optCustom = document.createElement("option");
+      optCustom.value = "__custom__";
+      optCustom.textContent = "✏️ 自訂其他客戶名稱...";
+      sel.appendChild(optCustom);
+
+      if (curVal && curVal !== "未具名" && curVal !== "自訂客戶") {
+        setQuoteCustomerValue(curVal);
+      } else if (currentCustomerList.length > 0) {
+        setQuoteCustomerValue(currentCustomerList[0].name);
+      }
+    }
+
+    function renderCustomerTable(filterText = "") {
+      const tbody = document.getElementById("customerListTableBody");
+      if (!tbody) return;
+      tbody.innerHTML = "";
+
+      const normalizedFilter = filterText.toLowerCase().trim();
+      const filtered = currentCustomerList.filter(c => {
+        if (!normalizedFilter) return true;
+        return (c.name && c.name.toLowerCase().includes(normalizedFilter)) ||
+               (c.taxId && c.taxId.toLowerCase().includes(normalizedFilter)) ||
+               (c.contact && c.contact.toLowerCase().includes(normalizedFilter)) ||
+               (c.phone && c.phone.toLowerCase().includes(normalizedFilter)) ||
+               (c.address && c.address.toLowerCase().includes(normalizedFilter)) ||
+               (c.remark && c.remark.toLowerCase().includes(normalizedFilter));
+      });
+
+      // Update KPI metrics
+      let totalQuotedCount = 0;
+      currentCustomerList.forEach(c => {
+        const quotesForCust = savedDocuments.filter(d => d.customer === c.name).length;
+        if (quotesForCust > 0) totalQuotedCount++;
+      });
+
+      const statTotal = document.getElementById("custStatTotal");
+      const statQuoted = document.getElementById("custStatQuoted");
+      const countBadge = document.getElementById("customerCountBadge");
+
+      if (statTotal) statTotal.textContent = currentCustomerList.length;
+      if (statQuoted) statQuoted.textContent = totalQuotedCount;
+      if (countBadge) countBadge.textContent = `顯示 ${filtered.length} / 共 ${currentCustomerList.length} 位客戶`;
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-slate-400">查無符合條件的客戶資料</td></tr>`;
+        return;
+      }
+
+      filtered.forEach((cust, index) => {
+        const realIndex = currentCustomerList.indexOf(cust);
+        const quotesCount = savedDocuments.filter(d => d.customer === cust.name).length;
+        const tr = document.createElement("tr");
+        tr.className = "hover:bg-slate-50 transition";
+
+        tr.innerHTML = `
+          <td class="py-3 px-4 font-bold text-slate-800">
+            <div class="flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+              <span>${cust.name}</span>
+            </div>
+          </td>
+          <td class="py-3 px-3 font-mono text-xs text-slate-500 font-semibold">${cust.taxId || '-'}</td>
+          <td class="py-3 px-4 text-xs">
+            <div class="font-bold text-slate-700">${cust.contact || '-'}</div>
+            <div class="text-slate-500 font-mono">${cust.phone || '-'}</div>
+          </td>
+          <td class="py-3 px-4 text-xs text-slate-600 max-w-[200px] truncate" title="${cust.address || ''}">
+            ${cust.address || '-'}
+          </td>
+          <td class="py-3 px-4 text-xs text-amber-900 bg-amber-50/40 max-w-[200px] truncate" title="${cust.remark || ''}">
+            ${cust.remark || '-'}
+          </td>
+          <td class="py-3 px-3 text-center">
+            <span class="px-2 py-0.5 rounded text-xs font-bold ${quotesCount > 0 ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-400'}">
+              ${quotesCount} 張
+            </span>
+          </td>
+          <td class="py-3 px-4 text-center space-x-1.5 whitespace-nowrap">
+            <button class="btn-cust-quote text-xs bg-amber-50 hover:bg-amber-100 text-amber-800 px-2 py-1 rounded font-bold border border-amber-300 transition" data-name="${cust.name}">
+              📑 開估價單
+            </button>
+            <button class="btn-cust-edit text-xs text-blue-600 hover:text-blue-800 font-semibold px-1.5 py-1" data-index="${realIndex}">
+              編輯
+            </button>
+            <button class="btn-cust-del text-xs text-rose-600 hover:text-rose-800 font-semibold px-1.5 py-1" data-index="${realIndex}">
+              刪除
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      // Bind row events
+      tbody.querySelectorAll(".btn-cust-quote").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const name = btn.getAttribute("data-name");
+          startQuotationForCustomer(name);
+        });
+      });
+      tbody.querySelectorAll(".btn-cust-edit").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const idx = parseInt(btn.getAttribute("data-index"), 10);
+          openEditCustomerModal(idx);
+        });
+      });
+      tbody.querySelectorAll(".btn-cust-del").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const idx = parseInt(btn.getAttribute("data-index"), 10);
+          deleteCustomerItem(idx);
+        });
+      });
+    }
+
+    function startQuotationForCustomer(custName) {
+      const cust = currentCustomerList.find(c => c.name === custName);
+      switchTab('quote');
+      setQuoteCustomerValue(custName);
+      if (cust && cust.remark) {
+        document.getElementById("quoteRemark").value = cust.remark;
+        document.getElementById("quoteRemarkCopy").textContent = cust.remark;
+      }
+      showToast(`已為客戶「${custName}」開啟估價單`);
+    }
+
+    function openEditCustomerModal(index = -1) {
+      const modal = document.getElementById("customerModal");
+      const title = document.getElementById("customerModalTitle");
+      const idxInput = document.getElementById("editCustomerIndex");
+
+      if (index >= 0 && currentCustomerList[index]) {
+        const cust = currentCustomerList[index];
+        title.innerHTML = `<span>👥</span> 編輯客戶資料`;
+        idxInput.value = index;
+        document.getElementById("modalCustName").value = cust.name;
+        document.getElementById("modalCustTaxId").value = cust.taxId || "";
+        document.getElementById("modalCustContact").value = cust.contact || "";
+        document.getElementById("modalCustPhone").value = cust.phone || "";
+        document.getElementById("modalCustDate").value = cust.createdAt || new Date().toISOString().split('T')[0];
+        document.getElementById("modalCustAddress").value = cust.address || "";
+        document.getElementById("modalCustRemark").value = cust.remark || "";
+      } else {
+        title.innerHTML = `<span>👥</span> 新增客戶資料`;
+        idxInput.value = -1;
+        document.getElementById("customerItemForm").reset();
+        document.getElementById("modalCustDate").value = new Date().toISOString().split('T')[0];
+      }
+
+      modal.classList.remove("hidden");
+    }
+
+    function deleteCustomerItem(index) {
+      if (index >= 0 && index < currentCustomerList.length) {
+        const cust = currentCustomerList[index];
+        currentCustomerList.splice(index, 1);
+        saveCustomerList();
+        renderCustomerDropdown();
+        renderCustomerTable(document.getElementById("customerSearchInput") ? document.getElementById("customerSearchInput").value : "");
+        showToast(`已刪除客戶「${cust.name}」`);
+      }
+    }
+
+    function exportCustomerCSV() {
+      let csv = "\uFEFF";
+      csv += `${storeConfig.storeName || "芳喜蓁站手工坊"},合作客戶名冊資料庫,匯出日期:,${new Date().toISOString().split('T')[0]}\n\n`;
+      csv += `客戶名稱,統一編號,聯絡人,聯絡電話,送貨營業地址,常用配送備註,建立日期\n`;
+
+      currentCustomerList.forEach(c => {
+        csv += `"${c.name}","${c.taxId || ''}","${c.contact || ''}","${c.phone || ''}","${c.address || ''}","${c.remark || ''}","${c.createdAt || ''}"\n`;
+      });
+
+      downloadBlob(csv, `芳喜蓁站手工坊_客戶名冊_${new Date().toISOString().split('T')[0]}.csv`, "text/csv;charset=utf-8;");
+      showToast("客戶名冊 CSV 匯出完成！");
+    }
 
     // --- TAB 3: 價目表管理 ---
     function renderPriceTable(filterText = "") {
@@ -2087,7 +2538,7 @@ const firebaseConfig = {
       if (!doc) return;
 
       switchTab('quote');
-      document.getElementById("quoteCustomer").value = doc.customer || "";
+      setQuoteCustomerValue(doc.customer || "");
       document.getElementById("quoteDate").value = doc.date || "";
       document.getElementById("quoteRemark").value = doc.remark || "";
       
@@ -2142,7 +2593,7 @@ const firebaseConfig = {
       const docRecord = {
         id: "Q" + Date.now(),
         type: 'quote',
-        customer: document.getElementById("quoteCustomer").value || "未具名",
+        customer: getQuoteCustomerName() || "未具名",
         date: document.getElementById("quoteDate").value || "",
         remark: document.getElementById("quoteRemark").value || "",
         items: items,
@@ -2174,7 +2625,7 @@ const firebaseConfig = {
 
     // --- CSV / Excel Export Functionality ---
     function exportQuoteToCSV() {
-      const customer = document.getElementById("quoteCustomer").value || "估價單";
+      const customer = getQuoteCustomerName() || "估價單";
       const date = document.getElementById("quoteDate").value || "";
       let csvContent = "\uFEFF"; // UTF-8 BOM for Taiwan Excel
       csvContent += `${storeConfig.storeName},統一編號:${storeConfig.taxId},估價單\n`;
@@ -2216,7 +2667,7 @@ const firebaseConfig = {
 
     // --- Sample Fillers ---
     function fillQuoteSample() {
-      document.getElementById("quoteCustomer").value = "早安美而美 (示範早餐店)";
+      setQuoteCustomerValue("早安美而美（安平店）");
       document.getElementById("quoteRemark").value = "週五早上八點前送達，款項匯入指定安平分行帳戶";
       
       const sampleItems = [
@@ -2251,7 +2702,7 @@ const firebaseConfig = {
     }
 
     function clearQuote() {
-      document.getElementById("quoteCustomer").value = "";
+      setQuoteCustomerValue("");
       document.getElementById("quoteRemark").value = "";
       for (let i = 1; i <= 30; i++) {
         document.getElementById(`q_name_${i}`).value = "";
@@ -2267,7 +2718,7 @@ const firebaseConfig = {
 
     // --- Tab Switching Logic ---
     function switchTab(tabId) {
-      const tabs = ['tabQuote', 'tabInventory', 'tabPrice', 'tabHistory', 'tabSettings'];
+      const tabs = ['tabQuote', 'tabInventory', 'tabCustomer', 'tabPrice', 'tabHistory', 'tabSettings'];
       tabs.forEach(t => {
         const el = document.getElementById(t);
         if (el) el.classList.add('hidden');
@@ -2276,6 +2727,7 @@ const firebaseConfig = {
       const navBtns = [
         { id: 'navQuoteBtn', tab: 'tabQuote' },
         { id: 'navInventoryBtn', tab: 'tabInventory' },
+        { id: 'navCustomerBtn', tab: 'tabCustomer' },
         { id: 'navPriceBtn', tab: 'tabPrice' },
         { id: 'navHistoryBtn', tab: 'tabHistory' },
         { id: 'navSettingsBtn', tab: 'tabSettings' }
@@ -2283,6 +2735,8 @@ const firebaseConfig = {
 
       if (tabId === 'inventory') {
         renderInventoryDashboard();
+      } else if (tabId === 'customer') {
+        renderCustomerTable();
       }
 
       navBtns.forEach(b => {
@@ -2501,6 +2955,10 @@ const firebaseConfig = {
           // Apply cloud updates to local state
           isRemoteSyncUpdate = true;
           try {
+            if (Array.isArray(cloudData.customerList)) {
+              currentCustomerList = cloudData.customerList;
+              localStorage.setItem("fxg_customer_list", JSON.stringify(currentCustomerList));
+            }
             if (Array.isArray(cloudData.inventoryTransactions)) {
               inventoryTransactions = cloudData.inventoryTransactions;
               localStorage.setItem("fxg_inventory_tx", JSON.stringify(inventoryTransactions));
@@ -2520,6 +2978,8 @@ const firebaseConfig = {
 
             // Re-render UI
             applyStoreConfigToUI();
+            renderCustomerDropdown();
+            renderCustomerTable(document.getElementById("customerSearchInput") ? document.getElementById("customerSearchInput").value : "");
             renderPriceDatalist();
             renderPriceTable(document.getElementById("priceSearchInput") ? document.getElementById("priceSearchInput").value : "");
             renderQuickTags();
@@ -2573,6 +3033,7 @@ const firebaseConfig = {
         updatedAt: Date.now(),
         updatedAtStr: new Date().toLocaleString("zh-TW"),
         deviceId: getLocalDeviceId(),
+        customerList: currentCustomerList || [],
         inventoryTransactions: inventoryTransactions || [],
         currentPriceList: currentPriceList || [],
         savedDocuments: savedDocuments || [],
@@ -2614,6 +3075,10 @@ const firebaseConfig = {
 
           isRemoteSyncUpdate = true;
           try {
+            if (Array.isArray(cloudData.customerList)) {
+              currentCustomerList = cloudData.customerList;
+              localStorage.setItem("fxg_customer_list", JSON.stringify(currentCustomerList));
+            }
             if (Array.isArray(cloudData.inventoryTransactions)) {
               inventoryTransactions = cloudData.inventoryTransactions;
               localStorage.setItem("fxg_inventory_tx", JSON.stringify(inventoryTransactions));
@@ -2632,6 +3097,8 @@ const firebaseConfig = {
             }
 
             applyStoreConfigToUI();
+            renderCustomerDropdown();
+            renderCustomerTable(document.getElementById("customerSearchInput") ? document.getElementById("customerSearchInput").value : "");
             renderPriceDatalist();
             renderPriceTable(document.getElementById("priceSearchInput") ? document.getElementById("priceSearchInput").value : "");
             renderQuickTags();
@@ -2788,7 +3255,133 @@ const firebaseConfig = {
       document.getElementById("btnInvExportStockCSV").addEventListener("click", exportInventoryStockCSV);
       document.getElementById("btnInvExportLogCSV").addEventListener("click", exportInventoryLogCSV);
 
-      document.getElementById("navPriceBtn").addEventListener("click", () => switchTab('price'));
+
+      // Customer Navigation & Controls
+      const navCustBtn = document.getElementById("navCustomerBtn");
+      if (navCustBtn) {
+        navCustBtn.addEventListener("click", () => switchTab('customer'));
+      }
+
+      const quoteCustSelect = document.getElementById("quoteCustomerSelect");
+      const quoteCustCustomInput = document.getElementById("quoteCustomerCustomInput");
+      const quoteCustPrint = document.getElementById("quoteCustomerPrintDisplay");
+      const quoteCustCopy = document.getElementById("quoteCustomerCopy");
+
+      if (quoteCustSelect) {
+        quoteCustSelect.addEventListener("change", () => {
+          if (quoteCustSelect.value === "__custom__") {
+            quoteCustCustomInput.classList.remove("hidden");
+            quoteCustCustomInput.focus();
+            const val = quoteCustCustomInput.value.trim();
+            if (quoteCustPrint) quoteCustPrint.textContent = val;
+            if (quoteCustCopy) quoteCustCopy.textContent = val;
+          } else {
+            quoteCustCustomInput.classList.add("hidden");
+            const val = quoteCustSelect.value;
+            if (quoteCustPrint) quoteCustPrint.textContent = val;
+            if (quoteCustCopy) quoteCustCopy.textContent = val;
+
+            // Auto-populate remark if customer has one
+            const cust = currentCustomerList.find(c => c.name === val);
+            if (cust && cust.remark && !document.getElementById("quoteRemark").value) {
+              document.getElementById("quoteRemark").value = cust.remark;
+              document.getElementById("quoteRemarkCopy").textContent = cust.remark;
+              showToast(`已選取「${val}」，已為您自動填入常用配送備註`);
+            } else if (val) {
+              showToast(`已選取客戶「${val}」`);
+            }
+          }
+        });
+      }
+
+      if (quoteCustCustomInput) {
+        quoteCustCustomInput.addEventListener("input", () => {
+          const val = quoteCustCustomInput.value;
+          if (quoteCustPrint) quoteCustPrint.textContent = val;
+          if (quoteCustCopy) quoteCustCopy.textContent = val;
+        });
+      }
+
+      const btnQuickAddCust = document.getElementById("btnQuickAddCustomerModal");
+      if (btnQuickAddCust) {
+        btnQuickAddCust.addEventListener("click", () => openEditCustomerModal(-1));
+      }
+
+      const btnCustAddModal = document.getElementById("btnCustomerAddModal");
+      if (btnCustAddModal) {
+        btnCustAddModal.addEventListener("click", () => openEditCustomerModal(-1));
+      }
+
+      const btnCustModalCloseTop = document.getElementById("btnCustomerModalCloseTop");
+      if (btnCustModalCloseTop) {
+        btnCustModalCloseTop.addEventListener("click", () => document.getElementById("customerModal").classList.add("hidden"));
+      }
+
+      const btnCustModalClose = document.getElementById("btnCustomerModalClose");
+      if (btnCustModalClose) {
+        btnCustModalClose.addEventListener("click", () => document.getElementById("customerModal").classList.add("hidden"));
+      }
+
+      const customerForm = document.getElementById("customerItemForm");
+      if (customerForm) {
+        customerForm.addEventListener("submit", (e) => {
+          e.preventDefault();
+          const editIdx = parseInt(document.getElementById("editCustomerIndex").value, 10);
+          const name = document.getElementById("modalCustName").value.trim();
+          const taxId = document.getElementById("modalCustTaxId").value.trim();
+          const contact = document.getElementById("modalCustContact").value.trim();
+          const phone = document.getElementById("modalCustPhone").value.trim();
+          const address = document.getElementById("modalCustAddress").value.trim();
+          const remark = document.getElementById("modalCustRemark").value.trim();
+          const createdAt = document.getElementById("modalCustDate").value || new Date().toISOString().split('T')[0];
+
+          if (!name) {
+            showToast("請輸入客戶名稱！", false);
+            return;
+          }
+
+          const customerObj = { name, taxId, contact, phone, address, remark, createdAt };
+
+          if (editIdx >= 0) {
+            currentCustomerList[editIdx] = customerObj;
+            showToast(`已更新「${name}」客戶資訊`);
+          } else {
+            currentCustomerList.unshift(customerObj);
+            showToast(`成功新增客戶「${name}」！`);
+          }
+
+          saveCustomerList();
+          renderCustomerDropdown();
+          renderCustomerTable(document.getElementById("customerSearchInput") ? document.getElementById("customerSearchInput").value : "");
+          setQuoteCustomerValue(name);
+          document.getElementById("customerModal").classList.add("hidden");
+        });
+      }
+
+      const custSearchInput = document.getElementById("customerSearchInput");
+      if (custSearchInput) {
+        custSearchInput.addEventListener("input", (e) => {
+          renderCustomerTable(e.target.value);
+        });
+      }
+
+      const btnCustReset = document.getElementById("btnCustomerReset");
+      if (btnCustReset) {
+        btnCustReset.addEventListener("click", () => {
+          currentCustomerList = [...DEFAULT_CUSTOMER_LIST];
+          saveCustomerList();
+          renderCustomerDropdown();
+          renderCustomerTable();
+          showToast("已回復為預設合作客戶清單 (共 5 家)");
+        });
+      }
+
+      const btnCustExport = document.getElementById("btnCustomerExportCSV");
+      if (btnCustExport) {
+        btnCustExport.addEventListener("click", exportCustomerCSV);
+      }
+
+            document.getElementById("navPriceBtn").addEventListener("click", () => switchTab('price'));
       document.getElementById("navHistoryBtn").addEventListener("click", () => switchTab('history'));
       document.getElementById("navSettingsBtn").addEventListener("click", () => switchTab('settings'));
 
@@ -2913,9 +3506,7 @@ const firebaseConfig = {
       });
 
       // Auto update double layout on customer / date / remark inputs
-      document.getElementById("quoteCustomer").addEventListener("input", () => {
-        document.getElementById("quoteCustomerCopy").textContent = document.getElementById("quoteCustomer").value;
-      });
+
       document.getElementById("quoteDate").addEventListener("input", () => {
         document.getElementById("quoteDateCopy").textContent = document.getElementById("quoteDate").value;
       });
