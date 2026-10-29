@@ -20,18 +20,13 @@
       }
       html, body {
         width: 100% !important;
-        height: 100% !important;
-        max-height: 297mm !important;
         margin: 0 !important;
         padding: 0 !important;
         background-color: #fff !important;
         color: #000 !important;
         font-size: 8pt !important;
-        overflow: hidden !important;
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
-        page-break-inside: avoid !important;
-        page-break-after: avoid !important;
       }
       .no-print, #toast {
         display: none !important;
@@ -45,42 +40,35 @@
       .print-container {
         width: 100% !important;
         max-width: 100% !important;
-        height: 100% !important;
-        max-height: 297mm !important;
         margin: 0 auto !important;
-        padding: 3mm 5mm 3mm 5mm !important;
+        padding: 2mm 5mm 2mm 5mm !important;
         box-shadow: none !important;
         border: none !important;
         display: flex !important;
         flex-direction: column !important;
-        justify-content: space-between !important;
+        justify-content: flex-start !important;
         box-sizing: border-box !important;
-        overflow: hidden !important;
         page-break-inside: avoid !important;
         page-break-after: avoid !important;
         page-break-before: avoid !important;
       }
-      /* Each Half Sheet: Exactly 133mm high to guarantee 100% single page fit with 20mm safe margin */
+      /* Each Half Sheet: Natural flow without clipping */
       .quote-half-sheet {
         width: 100% !important;
-        height: 133mm !important;
-        max-height: 133mm !important;
-        min-height: 133mm !important;
         box-sizing: border-box !important;
         display: flex !important;
         flex-direction: column !important;
-        justify-content: space-between !important;
-        overflow: hidden !important;
+        justify-content: flex-start !important;
         page-break-inside: avoid !important;
         page-break-after: avoid !important;
         margin: 0 !important;
-        padding: 0.5mm 0 !important;
+        padding: 0 !important;
       }
       /* Tear/Cut line between the two slips */
       .cut-line {
         height: 4mm !important;
-        margin: 0.5mm 0 !important;
-        border-top: 1px dashed #555 !important;
+        margin: 1.5mm 0 !important;
+        border-top: 1px dashed #444 !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
@@ -108,9 +96,8 @@
         border: 1px solid #000 !important;
         padding: 0.5px 2px !important;
         height: 4.8mm !important;
-        max-height: 4.8mm !important;
         font-size: 7.8pt !important;
-        line-height: 1.1 !important;
+        line-height: 1.15 !important;
         color: #000 !important;
         background: transparent !important;
         box-sizing: border-box !important;
@@ -121,16 +108,9 @@
         height: 4.9mm !important;
         background-color: #f3f4f6 !important;
       }
-      /* Transparent borders for inputs during print so they appear as clean text */
-      .quote-half-sheet input {
-        border: none !important;
-        outline: none !important;
-        background: transparent !important;
-        padding: 0 !important;
-        font-size: inherit !important;
-        font-weight: inherit !important;
-        color: #000 !important;
-        box-shadow: none !important;
+      table.print-table tfoot td {
+        height: 5.2mm !important;
+        font-size: 8pt !important;
       }
       .quote-half-sheet .header-store-title {
         font-size: 15pt !important;
@@ -147,13 +127,13 @@
       }
       .quote-half-sheet .customer-date-row {
         font-size: 8pt !important;
-        padding: 2px 0 1px 0 !important;
-        margin-top: 2px !important;
+        padding: 1px 0 !important;
+        margin-top: 1px !important;
       }
       .quote-half-sheet .footer-summary-row {
         font-size: 7.5pt !important;
-        margin-top: 1px !important;
-        padding-top: 1px !important;
+        margin-top: 1.5mm !important;
+        padding-top: 0 !important;
       }
     }
 
@@ -181,6 +161,50 @@
     /* Clean PDF Export Mode (Captures exact print layout without screen controls, select arrows, or shadows) */
     .pdf-export-mode .no-print {
       display: none !important;
+    }
+    .pdf-export-mode .print-only {
+      display: block !important;
+    }
+    .pdf-export-mode .print-only-inline {
+      display: inline-block !important;
+    }
+    .pdf-export-mode #quoteSheetWrapper {
+      box-shadow: none !important;
+      border: none !important;
+      border-radius: 0 !important;
+      padding: 2mm 5mm !important;
+      width: 100% !important;
+      max-width: 200mm !important;
+      margin: 0 auto !important;
+      background: #ffffff !important;
+      box-sizing: border-box !important;
+    }
+    .pdf-export-mode .quote-half-sheet {
+      box-sizing: border-box !important;
+      padding: 0 !important;
+      display: flex !important;
+      flex-direction: column !important;
+      justify-content: flex-start !important;
+    }
+    .pdf-export-mode .cut-line {
+      height: 4mm !important;
+      margin: 1.5mm 0 !important;
+    }
+    .pdf-export-mode table.print-table th,
+    .pdf-export-mode table.print-table td {
+      height: 4.8mm !important;
+      padding: 0.5px 2px !important;
+      font-size: 7.8pt !important;
+    }
+    .pdf-export-mode table.print-table tfoot td {
+      height: 5.2mm !important;
+      font-size: 8pt !important;
+    }
+    .pdf-export-mode input {
+      border: none !important;
+      box-shadow: none !important;
+      background: transparent !important;
+      outline: none !important;
     }
     .pdf-export-mode .print-only {
       display: block !important;
@@ -425,7 +449,8 @@
               </div>
               <div class="flex items-center gap-2">
                 <span>日期：</span>
-                <input type="date" id="quoteDate" class="border-b border-black outline-none px-2 py-0.5 bg-transparent font-bold">
+                <input type="date" id="quoteDate" class="border-b border-black outline-none px-2 py-0.5 bg-transparent font-bold no-print">
+                <span id="quoteDatePrintDisplay" class="hidden print-only-inline font-bold"></span>
               </div>
             </div>
           </div>
@@ -455,7 +480,8 @@
                   <td colspan="6" class="border border-black py-1 px-2 text-left">
                     <div class="flex items-center gap-2">
                       <span class="font-bold">備註：</span>
-                      <input type="text" id="quoteRemark" placeholder="如需送貨備註或匯款資訊請在此註明" class="w-full border-b border-dashed border-black/40 outline-none px-1 bg-transparent text-xs">
+                      <input type="text" id="quoteRemark" placeholder="如需送貨備註或匯款資訊請在此註明" class="w-full border-b border-dashed border-black/40 outline-none px-1 bg-transparent text-xs no-print">
+                      <span id="quoteRemarkPrint" class="hidden print-only-inline text-xs font-normal"></span>
                     </div>
                   </td>
                   <td colspan="2" class="border border-black py-1 text-center bg-slate-100 font-bold text-xs sm:text-sm">
@@ -2334,11 +2360,13 @@ const firebaseConfig = {
             <input type="text" id="q_custom_name_${leftIdx}" data-index="${leftIdx}" placeholder="輸入自訂品名" class="hidden w-full h-full px-1.5 py-1 outline-none font-medium bg-white text-xs quote-item-custom-name no-print">
             <span id="q_print_name_${leftIdx}" class="hidden print-only-inline pl-1 font-medium text-xs"></span>
           </td>
-          <td class="border border-black p-0">
-            <input type="number" id="q_qty_${leftIdx}" data-index="${leftIdx}" min="0" step="any" placeholder="" class="w-full h-full px-1 py-1 text-center outline-none bg-transparent quote-item-qty font-bold">
+          <td class="border border-black p-0 text-center">
+            <input type="number" id="q_qty_${leftIdx}" data-index="${leftIdx}" min="0" step="any" placeholder="" class="w-full h-full px-1 py-1 text-center outline-none bg-transparent quote-item-qty font-bold no-print">
+            <span id="q_print_qty_${leftIdx}" class="hidden print-only-inline text-center font-bold"></span>
           </td>
-          <td class="border border-black p-0">
-            <input type="number" id="q_price_${leftIdx}" data-index="${leftIdx}" min="0" step="any" placeholder="" class="w-full h-full px-1 py-1 text-right outline-none bg-transparent quote-item-price">
+          <td class="border border-black p-0 text-right pr-1">
+            <input type="number" id="q_price_${leftIdx}" data-index="${leftIdx}" min="0" step="any" placeholder="" class="w-full h-full px-1 py-1 text-right outline-none bg-transparent quote-item-price no-print">
+            <span id="q_print_price_${leftIdx}" class="hidden print-only-inline text-right"></span>
           </td>
           <td class="border border-black px-1.5 py-1 text-right font-semibold text-slate-800 bg-slate-50/50" id="q_subtotal_${leftIdx}">
             -
@@ -2353,11 +2381,13 @@ const firebaseConfig = {
             <input type="text" id="q_custom_name_${rightIdx}" data-index="${rightIdx}" placeholder="輸入自訂品名" class="hidden w-full h-full px-1.5 py-1 outline-none font-medium bg-white text-xs quote-item-custom-name no-print">
             <span id="q_print_name_${rightIdx}" class="hidden print-only-inline pl-1 font-medium text-xs"></span>
           </td>
-          <td class="border border-black p-0">
-            <input type="number" id="q_qty_${rightIdx}" data-index="${rightIdx}" min="0" step="any" placeholder="" class="w-full h-full px-1 py-1 text-center outline-none bg-transparent quote-item-qty font-bold">
+          <td class="border border-black p-0 text-center">
+            <input type="number" id="q_qty_${rightIdx}" data-index="${rightIdx}" min="0" step="any" placeholder="" class="w-full h-full px-1 py-1 text-center outline-none bg-transparent quote-item-qty font-bold no-print">
+            <span id="q_print_qty_${rightIdx}" class="hidden print-only-inline text-center font-bold"></span>
           </td>
-          <td class="border border-black p-0">
-            <input type="number" id="q_price_${rightIdx}" data-index="${rightIdx}" min="0" step="any" placeholder="" class="w-full h-full px-1 py-1 text-right outline-none bg-transparent quote-item-price">
+          <td class="border border-black p-0 text-right pr-1">
+            <input type="number" id="q_price_${rightIdx}" data-index="${rightIdx}" min="0" step="any" placeholder="" class="w-full h-full px-1 py-1 text-right outline-none bg-transparent quote-item-price no-print">
+            <span id="q_print_price_${rightIdx}" class="hidden print-only-inline text-right"></span>
           </td>
           <td class="border border-black px-1.5 py-1 text-right font-semibold text-slate-800 bg-slate-50/50" id="q_subtotal_${rightIdx}">
             -
@@ -2486,6 +2516,12 @@ const firebaseConfig = {
         document.getElementById("quoteCustomerPrintDisplay").textContent = custName;
       }
       document.getElementById("quoteDateCopy").textContent = document.getElementById("quoteDate").value;
+      if (document.getElementById("quoteDatePrintDisplay")) {
+        document.getElementById("quoteDatePrintDisplay").textContent = document.getElementById("quoteDate").value;
+      }
+      if (document.getElementById("quoteRemarkPrint")) {
+        document.getElementById("quoteRemarkPrint").textContent = document.getElementById("quoteRemark").value;
+      }
       document.getElementById("quoteRemarkCopy").textContent = document.getElementById("quoteRemark").value;
       document.getElementById("quoteTotalCopyDisplay").textContent = grandTotal.toLocaleString();
       document.getElementById("quoteTotalWordsCopy").textContent = numberToChineseWords(grandTotal);
@@ -2507,6 +2543,11 @@ const firebaseConfig = {
         if (copyQty) copyQty.textContent = qty;
         if (copyPrice) copyPrice.textContent = price ? Number(price).toLocaleString() : '';
         if (copySub) copySub.textContent = sub === '-' ? '' : sub;
+
+        const printQty = document.getElementById(`q_print_qty_${i}`);
+        const printPrice = document.getElementById(`q_print_price_${i}`);
+        if (printQty) printQty.textContent = qty;
+        if (printPrice) printPrice.textContent = price ? Number(price).toLocaleString() : '';
       }
     }
 
