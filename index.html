@@ -45,9 +45,9 @@
       .print-container {
         width: 210mm !important;
         max-width: 210mm !important;
-        height: 297mm !important;
-        min-height: 297mm !important;
-        max-height: 297mm !important;
+        height: 296mm !important;
+        min-height: 296mm !important;
+        max-height: 296mm !important;
         margin: 0 auto !important;
         padding: 0 !important;
         box-shadow: none !important;
@@ -57,31 +57,36 @@
         justify-content: space-between !important;
         box-sizing: border-box !important;
         overflow: hidden !important;
+        page-break-inside: avoid !important;
+        page-break-after: avoid !important;
+        page-break-before: avoid !important;
       }
       #quoteDoubleCopy {
         width: 100% !important;
-        height: 151mm !important;
-        max-height: 151mm !important;
+        height: 150.5mm !important;
+        max-height: 150.5mm !important;
         box-sizing: border-box !important;
         margin: 0 !important;
         padding: 0 !important;
         display: flex !important;
         flex-direction: column !important;
         justify-content: space-between !important;
+        page-break-inside: avoid !important;
       }
-      /* Each Half Sheet: Exactly 146mm high (50% of A4 page with 5mm cut line) */
+      /* Each Half Sheet: Exactly 145.5mm high (50% of page with cut line) */
       .quote-half-sheet {
         width: 100% !important;
-        height: 146mm !important;
-        min-height: 146mm !important;
-        max-height: 146mm !important;
+        height: 145.5mm !important;
+        min-height: 145.5mm !important;
+        max-height: 145.5mm !important;
         box-sizing: border-box !important;
         display: flex !important;
         flex-direction: column !important;
         justify-content: space-between !important;
         margin: 0 !important;
-        padding: 3mm 6mm !important;
+        padding: 2.5mm 6mm !important;
         overflow: hidden !important;
+        page-break-inside: avoid !important;
       }
       /* Tear/Cut line exactly centered between the two slips at 50% */
       .cut-line {
@@ -95,6 +100,7 @@
         text-align: center !important;
         position: relative !important;
         box-sizing: border-box !important;
+        page-break-inside: avoid !important;
       }
       .cut-line::after {
         content: "✂ 沿虛線裁開（第一聯：存根聯 ／ 第二聯：客戶收執聯）" !important;
@@ -105,7 +111,7 @@
         font-size: 6.8pt !important;
         color: #555 !important;
       }
-      /* Print Table Styling - 6.0mm rows for full, comfortable layout */
+      /* Print Table Styling - 5.8mm rows for full, comfortable layout */
       table.print-table {
         border-collapse: collapse !important;
         width: 100% !important;
@@ -115,8 +121,8 @@
       table.print-table td {
         border: 1px solid #000 !important;
         padding: 0.5px 2px !important;
-        height: 6.0mm !important;
-        max-height: 6.0mm !important;
+        height: 5.8mm !important;
+        max-height: 5.8mm !important;
         font-size: 8.5pt !important;
         line-height: 1.2 !important;
         color: #000 !important;
@@ -126,11 +132,11 @@
       table.print-table th {
         font-size: 7.8pt !important;
         font-weight: bold !important;
-        height: 6.0mm !important;
+        height: 5.8mm !important;
         background-color: #f3f4f6 !important;
       }
       table.print-table tfoot td {
-        height: 6.4mm !important;
+        height: 6.2mm !important;
         font-size: 8.5pt !important;
         padding: 0.5px 2px !important;
       }
@@ -149,8 +155,8 @@
       }
       .quote-half-sheet .customer-date-row {
         font-size: 8.5pt !important;
-        padding: 1.5px 0 !important;
-        margin-top: 1.5px !important;
+        padding: 1px 0 !important;
+        margin-top: 1px !important;
       }
       .quote-half-sheet .footer-summary-row {
         font-size: 8pt !important;
@@ -201,9 +207,9 @@
       padding: 0 !important;
       width: 210mm !important;
       max-width: 210mm !important;
-      min-height: 297mm !important;
-      height: 297mm !important;
-      max-height: 297mm !important;
+      min-height: 296mm !important;
+      height: 296mm !important;
+      max-height: 296mm !important;
       margin: 0 auto !important;
       background: #ffffff !important;
       box-sizing: border-box !important;
@@ -214,8 +220,8 @@
     }
     .pdf-export-mode #quoteDoubleCopy {
       width: 100% !important;
-      height: 151mm !important;
-      max-height: 151mm !important;
+      height: 150.5mm !important;
+      max-height: 150.5mm !important;
       box-sizing: border-box !important;
       margin: 0 !important;
       padding: 0 !important;
@@ -225,11 +231,11 @@
     }
     .pdf-export-mode .quote-half-sheet {
       width: 100% !important;
-      height: 146mm !important;
-      min-height: 146mm !important;
-      max-height: 146mm !important;
+      height: 145.5mm !important;
+      min-height: 145.5mm !important;
+      max-height: 145.5mm !important;
       box-sizing: border-box !important;
-      padding: 3mm 6mm !important;
+      padding: 2.5mm 6mm !important;
       display: flex !important;
       flex-direction: column !important;
       justify-content: space-between !important;
@@ -266,8 +272,8 @@
     .pdf-export-mode table.print-table td {
       border: 1px solid #000 !important;
       padding: 0.5px 2px !important;
-      height: 6.0mm !important;
-      max-height: 6.0mm !important;
+      height: 5.8mm !important;
+      max-height: 5.8mm !important;
       font-size: 8.5pt !important;
       line-height: 1.2 !important;
       color: #000 !important;
@@ -277,11 +283,11 @@
     .pdf-export-mode table.print-table th {
       font-size: 7.8pt !important;
       font-weight: bold !important;
-      height: 6.0mm !important;
+      height: 5.8mm !important;
       background-color: #f3f4f6 !important;
     }
     .pdf-export-mode table.print-table tfoot td {
-      height: 6.4mm !important;
+      height: 6.2mm !important;
       font-size: 8.5pt !important;
       padding: 0.5px 2px !important;
     }
@@ -300,8 +306,8 @@
     }
     .pdf-export-mode .quote-half-sheet .customer-date-row {
       font-size: 8.5pt !important;
-      padding: 1.5px 0 !important;
-      margin-top: 1.5px !important;
+      padding: 1px 0 !important;
+      margin-top: 1px !important;
     }
     .pdf-export-mode .quote-half-sheet .footer-summary-row {
       font-size: 8pt !important;
@@ -4644,50 +4650,41 @@ const firebaseConfig = {
         return;
       }
 
-      showToast("📄 正在為您產生純淨無網址的 PDF，請稍候...");
+      showToast("📄 正在為您產生純淨無網址的單頁 PDF，請稍候...");
 
       const target = document.getElementById("quoteSheetWrapper");
       document.body.classList.add("pdf-export-mode");
 
       try {
-        // Helper to locate jsPDF constructor
-        const getJsPDF = () => {
-          if (window.jspdf && window.jspdf.jsPDF) return window.jspdf.jsPDF;
-          if (window.jsPDF) return window.jsPDF;
-          return null;
-        };
-
-        const JsPDFClass = getJsPDF();
-        const h2c = window.html2canvas;
-
-        if (h2c && JsPDFClass) {
-          // Direct 1-Page A4 Canvas Rendering: 100% guarantees exactly 1 page, zero pagebreak splitting, both slips intact
-          const canvas = await h2c(target, {
+        const opt = {
+          margin: 0,
+          filename: pdfFilename,
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: {
             scale: 2,
             useCORS: true,
             backgroundColor: '#ffffff',
             scrollY: 0,
             scrollX: 0
-          });
+          },
+          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
 
-          const pdf = new JsPDFClass('portrait', 'mm', 'a4');
-          const imgData = canvas.toDataURL('image/jpeg', 0.98);
-          // Scale entire rendered dual-slip sheet to fill the full 210 x 297 mm A4 page with zero bottom gap
-          pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297);
-          pdf.save(pdfFilename);
-          showToast(`✅ 已成功下載純淨單頁 PDF：${pdfFilename}`);
-        } else {
-          // Standard html2pdf fallback with pagebreak disabled
-          const opt = {
-            margin: 0,
-            filename: pdfFilename,
-            image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', scrollY: 0, scrollX: 0 },
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-          };
-          await html2pdf().set(opt).from(target).save();
-          showToast(`✅ 已成功下載純淨 PDF：${pdfFilename}`);
-        }
+        // Render PDF and automatically prune any accidental trailing page
+        await html2pdf()
+          .set(opt)
+          .from(target)
+          .toPdf()
+          .get('pdf')
+          .then(function(pdf) {
+            // Strictly enforce single-page output: delete page 2 or any subsequent blank pages
+            while (pdf.internal.getNumberOfPages() > 1) {
+              pdf.deletePage(pdf.internal.getNumberOfPages());
+            }
+          })
+          .save();
+
+        showToast(`✅ 已成功下載純淨單頁 PDF：${pdfFilename}`);
       } catch (err) {
         console.error("PDF generation error:", err);
         showToast("PDF 產生失敗，改為開啟列印視窗", false);
