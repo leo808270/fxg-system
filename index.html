@@ -16,7 +16,7 @@
       display: none !important;
     }
 
-    /* Print Specific Styling - Optimized for Exact A4 Single-Page Double-Slip Full-Bleed Layout */
+    /* Print Specific Styling - Exactly 50% / 50% Symmetrical Double-Slip Layout on A4 */
     @media print {
       @page {
         size: A4 portrait;
@@ -24,6 +24,7 @@
       }
       html, body {
         width: 100% !important;
+        height: 100% !important;
         margin: 0 !important;
         padding: 0 !important;
         background-color: #fff !important;
@@ -42,44 +43,52 @@
         display: inline-block !important;
       }
       .print-container {
-        width: 100% !important;
-        max-width: 100% !important;
+        width: 210mm !important;
+        max-width: 210mm !important;
+        height: 297mm !important;
+        min-height: 297mm !important;
+        max-height: 297mm !important;
         margin: 0 auto !important;
-        padding: 2.5mm 5mm 5mm 5mm !important;
+        padding: 0 !important;
         box-shadow: none !important;
         border: none !important;
         display: flex !important;
         flex-direction: column !important;
-        justify-content: flex-start !important;
+        justify-content: space-between !important;
         box-sizing: border-box !important;
-        overflow: visible !important;
+        overflow: hidden !important;
         page-break-inside: avoid !important;
         page-break-after: avoid !important;
         page-break-before: avoid !important;
       }
-      /* Each Half Sheet: Natural balanced full-page flow */
+      /* Each Half Sheet: Exactly 146mm high (50% of A4 page with 5mm cut line) */
       .quote-half-sheet {
         width: 100% !important;
+        height: 146mm !important;
+        min-height: 146mm !important;
+        max-height: 146mm !important;
         box-sizing: border-box !important;
         display: flex !important;
         flex-direction: column !important;
-        justify-content: flex-start !important;
+        justify-content: space-between !important;
         page-break-inside: avoid !important;
         page-break-after: avoid !important;
         margin: 0 !important;
-        padding: 0 !important;
-        overflow: visible !important;
+        padding: 3mm 6mm !important;
+        overflow: hidden !important;
       }
-      /* Tear/Cut line between the two slips */
+      /* Tear/Cut line exactly centered between the two slips at 50% */
       .cut-line {
+        width: 100% !important;
         height: 5mm !important;
-        margin: 1.5mm 0 !important;
+        margin: 0 !important;
         border-top: 1px dashed #444 !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
         text-align: center !important;
         position: relative !important;
+        box-sizing: border-box !important;
         page-break-inside: avoid !important;
       }
       .cut-line::after {
@@ -91,7 +100,7 @@
         font-size: 6.8pt !important;
         color: #555 !important;
       }
-      /* Print Table Styling - 5.8mm rows for perfect full-page A4 balance without page 2 */
+      /* Print Table Styling - 6.0mm rows for full, comfortable layout */
       table.print-table {
         border-collapse: collapse !important;
         width: 100% !important;
@@ -101,7 +110,8 @@
       table.print-table td {
         border: 1px solid #000 !important;
         padding: 0.5px 2px !important;
-        height: 5.8mm !important;
+        height: 6.0mm !important;
+        max-height: 6.0mm !important;
         font-size: 8.5pt !important;
         line-height: 1.2 !important;
         color: #000 !important;
@@ -111,11 +121,11 @@
       table.print-table th {
         font-size: 7.8pt !important;
         font-weight: bold !important;
-        height: 5.8mm !important;
+        height: 6.0mm !important;
         background-color: #f3f4f6 !important;
       }
       table.print-table tfoot td {
-        height: 6.2mm !important;
+        height: 6.4mm !important;
         font-size: 8.5pt !important;
         padding: 0.5px 2px !important;
       }
@@ -139,9 +149,9 @@
       }
       .quote-half-sheet .footer-summary-row {
         font-size: 8pt !important;
-        margin-top: 1.5mm !important;
+        margin-top: 1mm !important;
         padding-top: 0 !important;
-        padding-bottom: 1.5mm !important;
+        padding-bottom: 1mm !important;
         line-height: 1.25 !important;
       }
     }
@@ -183,33 +193,44 @@
       box-shadow: none !important;
       border: none !important;
       border-radius: 0 !important;
-      padding: 2.5mm 5mm 5mm 5mm !important;
-      width: 100% !important;
-      max-width: 200mm !important;
+      padding: 0 !important;
+      width: 210mm !important;
+      max-width: 210mm !important;
+      min-height: 297mm !important;
+      height: 297mm !important;
+      max-height: 297mm !important;
       margin: 0 auto !important;
       background: #ffffff !important;
       box-sizing: border-box !important;
-      overflow: visible !important;
+      display: flex !important;
+      flex-direction: column !important;
+      justify-content: space-between !important;
+      overflow: hidden !important;
     }
     .pdf-export-mode .quote-half-sheet {
       width: 100% !important;
+      height: 146mm !important;
+      min-height: 146mm !important;
+      max-height: 146mm !important;
       box-sizing: border-box !important;
-      padding: 0 !important;
+      padding: 3mm 6mm !important;
       display: flex !important;
       flex-direction: column !important;
-      justify-content: flex-start !important;
+      justify-content: space-between !important;
       margin: 0 !important;
-      overflow: visible !important;
+      overflow: hidden !important;
     }
     .pdf-export-mode .cut-line {
+      width: 100% !important;
       height: 5mm !important;
-      margin: 1.5mm 0 !important;
+      margin: 0 !important;
       border-top: 1px dashed #444 !important;
       display: flex !important;
       align-items: center !important;
       justify-content: center !important;
       text-align: center !important;
       position: relative !important;
+      box-sizing: border-box !important;
     }
     .pdf-export-mode .cut-line::after {
       content: "✂ 沿虛線裁開（第一聯：存根聯 ／ 第二聯：客戶收執聯）" !important;
@@ -229,7 +250,8 @@
     .pdf-export-mode table.print-table td {
       border: 1px solid #000 !important;
       padding: 0.5px 2px !important;
-      height: 5.8mm !important;
+      height: 6.0mm !important;
+      max-height: 6.0mm !important;
       font-size: 8.5pt !important;
       line-height: 1.2 !important;
       color: #000 !important;
@@ -239,11 +261,11 @@
     .pdf-export-mode table.print-table th {
       font-size: 7.8pt !important;
       font-weight: bold !important;
-      height: 5.8mm !important;
+      height: 6.0mm !important;
       background-color: #f3f4f6 !important;
     }
     .pdf-export-mode table.print-table tfoot td {
-      height: 6.2mm !important;
+      height: 6.4mm !important;
       font-size: 8.5pt !important;
       padding: 0.5px 2px !important;
     }
@@ -267,9 +289,9 @@
     }
     .pdf-export-mode .quote-half-sheet .footer-summary-row {
       font-size: 8pt !important;
-      margin-top: 1.5mm !important;
+      margin-top: 1mm !important;
       padding-top: 0 !important;
-      padding-bottom: 1.5mm !important;
+      padding-bottom: 1mm !important;
       line-height: 1.25 !important;
     }
     .pdf-export-mode input {
