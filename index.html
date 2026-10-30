@@ -306,6 +306,12 @@
 
       <!-- Login Form -->
       <form id="loginForm" class="space-y-4">
+        <!-- Inactivity Logout Notice Banner -->
+        <div id="loginInactivityNotice" class="hidden text-xs text-amber-900 bg-amber-50 border border-amber-300 p-2.5 rounded-xl font-medium flex items-center gap-2">
+          <span class="text-base leading-none">⏰</span>
+          <span>系統已閒置超過 10 分鐘，為確保店家資料安全已自動登出。請重新輸入密碼登入。</span>
+        </div>
+
         <!-- Error Message Banner -->
         <div id="loginErrorMsg" class="hidden text-xs text-rose-700 bg-rose-50 border border-rose-200 p-2.5 rounded-xl font-medium flex items-center gap-2">
           <span>⚠️</span>
@@ -1149,6 +1155,15 @@
           </div>
           <div class="flex justify-between items-center pt-2">
             <span class="text-xs text-slate-400">※ 請妥善保管密碼，若遺忘可清除瀏覽器快取恢復預設值 (admin / 8888)</span>
+          </div>
+
+          <!-- Inactivity Protection Indicator -->
+          <div class="mt-4 p-3.5 bg-amber-50/70 border border-amber-200/90 rounded-xl text-xs text-amber-950 flex items-start gap-2.5">
+            <span class="text-lg leading-none">🛡️</span>
+            <div class="space-y-0.5">
+              <span class="font-bold text-amber-900">自動安全鎖定保護（已啟用）：</span>
+              <p class="text-slate-600 leading-relaxed">系統已啟用「閒置 10 分鐘自動登出」防護機制。當裝置超過 10 分鐘無任何滑鼠、鍵盤或觸控操作時，系統將自動返回登入鎖定畫面，防止離開座位時單據與庫存資料外流。</p>
+            </div>
             <button type="submit" class="px-5 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-bold text-sm shadow transition flex items-center gap-1.5 cursor-pointer">
               <span>💾</span> 保存帳密設定
             </button>
@@ -3906,6 +3921,128 @@ const firebaseConfig = {
     // ==========================================
     // --- 系統登入與權限保護模組 (Authentication) ---
     // ==========================================
+    // --- 閒置 10 分鐘自動登出防護機制 (Inactivity Auto-Logout) ---
+    // ==========================================
+    let inactivityTimeoutId = null;
+    let lastUserActivityTime = Date.now();
+    const INACTIVITY_LIMIT_MS = 10 * 60 * 1000; // 10 minutes
+
+    function isUserAuthenticated() {
+      const isRemembered = localStorage.getItem(AUTH_CONFIG.rememberKey) === "true";
+      const isSessionAuth = sessionStorage.getItem(AUTH_CONFIG.sessionTokenKey) === "true";
+      const isLocalAuth = localStorage.getItem(AUTH_CONFIG.sessionTokenKey) === "true";
+      return isRemembered ? isLocalAuth : isSessionAuth;
+    }
+
+    function recordUserActivity() {
+      if (!isUserAuthenticated()) return;
+      const now = Date.now();
+      if (now - lastUserActivityTime > 3000) {
+        lastUserActivityTime = now;
+        try {
+          sessionStorage.setItem("fxg_last_activity_time", String(now));
+        } catch (e) {}
+      } else {
+        lastUserActivityTime = now;
+      }
+      restartInactivityTimer();
+    }
+
+    function checkInactivityExpiration() {
+      if (!isUserAuthenticated()) return;
+      const stored = sessionStorage.getItem("fxg_last_activity_time");
+      const lastActive = stored ? Math.max(Number(stored), lastUserActivityTime) : lastUserActivityTime;
+      const elapsed = Date.now() - lastActive;
+
+      if (elapsed >= INACTIVITY_LIMIT_MS) {
+        performAutoLogout();
+      }
+    }
+
+    function restartInactivityTimer() {
+      if (inactivityTimeoutId) {
+        clearTimeout(inactivityTimeoutId);
+      }
+      if (!isUserAuthenticated()) return;
+
+      inactivityTimeoutId = setTimeout(() => {
+        checkInactivityExpiration();
+      }, INACTIVITY_LIMIT_MS + 500);
+    }
+
+    function performAutoLogout() {
+      if (inactivityTimeoutId) {
+        clearTimeout(inactivityTimeoutId);
+        inactivityTimeoutId = null;
+      }
+
+      // Clear session auth tokens
+      localStorage.removeItem(AUTH_CONFIG.sessionTokenKey);
+      localStorage.removeItem(AUTH_CONFIG.rememberKey);
+      sessionStorage.removeItem(AUTH_CONFIG.sessionTokenKey);
+      sessionStorage.removeItem("fxg_last_activity_time");
+
+      // Close open modals
+      ['confirmModal', 'customerModal', 'itemEditModal', 'quickPickAddModal', 'inventoryActionModal'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.add('hidden');
+      });
+
+      // Clear password field
+      const pInput = document.getElementById("loginPassword");
+      if (pInput) pInput.value = "";
+
+      // Transition views
+      const appView = document.getElementById("appView");
+      const loginView = document.getElementById("loginView");
+      if (appView) appView.classList.add("hidden");
+      if (loginView) loginView.classList.remove("hidden");
+
+      // Show inactivity notice banner
+      const notice = document.getElementById("loginInactivityNotice");
+      if (notice) notice.classList.remove("hidden");
+      const errBanner = document.getElementById("loginErrorMsg");
+      if (errBanner) errBanner.classList.add("hidden");
+
+      showToast("⏰ 系統已閒置超過 10 分鐘，已自動安全登出", false);
+    }
+
+    function initInactivityWatcher() {
+      const activityEvents = ['mousedown', 'keydown', 'touchstart', 'touchmove', 'scroll', 'click'];
+      activityEvents.forEach(evt => {
+        window.addEventListener(evt, recordUserActivity, { passive: true });
+      });
+
+      let mouseMoveThrottle = 0;
+      window.addEventListener('mousemove', () => {
+        const now = Date.now();
+        if (now - mouseMoveThrottle > 5000) {
+          mouseMoveThrottle = now;
+          recordUserActivity();
+        }
+      }, { passive: true });
+
+      // Check on visibilitychange / focus (essential for mobile wake-up & laptop lid open)
+      document.addEventListener("visibilitychange", () => {
+        if (!document.hidden) {
+          checkInactivityExpiration();
+        }
+      });
+      window.addEventListener("focus", () => {
+        checkInactivityExpiration();
+      });
+
+      // Regular heartbeat check every 15 seconds
+      setInterval(() => {
+        checkInactivityExpiration();
+      }, 15000);
+
+      if (isUserAuthenticated()) {
+        recordUserActivity();
+      }
+    }
+
+    // ==========================================
     const AUTH_CONFIG = {
       defaultUser: "admin",
       defaultPass: "8888",
@@ -3974,6 +4111,11 @@ const firebaseConfig = {
         const appView = document.getElementById("appView");
         if (loginView) loginView.classList.add("hidden");
         if (appView) appView.classList.remove("hidden");
+        const notice = document.getElementById("loginInactivityNotice");
+        if (notice) notice.classList.add("hidden");
+        lastUserActivityTime = Date.now();
+        sessionStorage.setItem("fxg_last_activity_time", String(Date.now()));
+        restartInactivityTimer();
         showToast("🎉 歡迎登入「芳喜蓁站手工坊」系統！");
         return false;
       } else {
@@ -4003,6 +4145,10 @@ const firebaseConfig = {
           const loginView = document.getElementById("loginView");
           if (appView) appView.classList.add("hidden");
           if (loginView) loginView.classList.remove("hidden");
+          sessionStorage.removeItem("fxg_last_activity_time");
+          if (inactivityTimeoutId) clearTimeout(inactivityTimeoutId);
+          const notice = document.getElementById("loginInactivityNotice");
+          if (notice) notice.classList.add("hidden");
           showToast("ℹ️ 您已安全登出系統");
         },
         "確認登出"
@@ -4078,6 +4224,7 @@ const firebaseConfig = {
 
       // Check current auth status immediately
       checkAuth();
+      initInactivityWatcher();
     }
 
     // --- Setup Listeners ---
