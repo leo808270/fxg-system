@@ -16,6 +16,21 @@
       display: none !important;
     }
 
+    /* Screen mode table styling: comfortable 14px text and clean input fields */
+    .quote-item-select, .quote-item-custom-name, .quote-item-qty, .quote-item-price {
+      font-size: 13.5px !important;
+    }
+
+    /* Hide browser default spin buttons for cleaner numeric inputs */
+    input[type=number]::-webkit-inner-spin-button, 
+    input[type=number]::-webkit-outer-spin-button { 
+      -webkit-appearance: none; 
+      margin: 0; 
+    }
+    input[type=number] {
+      -moz-appearance: textfield;
+    }
+
     /* Print Specific Styling - Exactly 50% / 50% Symmetrical Double-Slip Layout on A4 */
     @media print {
       @page {
@@ -111,7 +126,7 @@
         font-size: 6.8pt !important;
         color: #555 !important;
       }
-      /* Print Table Styling - 5.8mm rows for full, comfortable layout */
+      /* Print Table Styling - 9.6pt larger, unified typography across Slip 1 and Slip 2 */
       table.print-table {
         border-collapse: collapse !important;
         width: 100% !important;
@@ -123,22 +138,32 @@
         padding: 0.5px 2px !important;
         height: 5.8mm !important;
         max-height: 5.8mm !important;
-        font-size: 8.5pt !important;
+        font-size: 9.6pt !important;
         line-height: 1.2 !important;
         color: #000 !important;
         background: transparent !important;
         box-sizing: border-box !important;
       }
       table.print-table th {
-        font-size: 7.8pt !important;
+        font-size: 8.5pt !important;
         font-weight: bold !important;
         height: 5.8mm !important;
         background-color: #f3f4f6 !important;
       }
+      table.print-table td span,
+      table.print-table td input,
+      table.print-table td select {
+        font-size: 9.6pt !important;
+      }
       table.print-table tfoot td {
         height: 6.2mm !important;
-        font-size: 8.5pt !important;
+        font-size: 9.2pt !important;
         padding: 0.5px 2px !important;
+      }
+      table.print-table tfoot td span#quoteTotalDisplay,
+      table.print-table tfoot td span#quoteTotalCopyDisplay {
+        font-size: 10.5pt !important;
+        font-weight: 900 !important;
       }
       .quote-half-sheet .header-store-title {
         font-size: 15pt !important;
@@ -274,22 +299,32 @@
       padding: 0.5px 2px !important;
       height: 5.8mm !important;
       max-height: 5.8mm !important;
-      font-size: 8.5pt !important;
+      font-size: 9.6pt !important;
       line-height: 1.2 !important;
       color: #000 !important;
       background: transparent !important;
       box-sizing: border-box !important;
     }
     .pdf-export-mode table.print-table th {
-      font-size: 7.8pt !important;
+      font-size: 8.5pt !important;
       font-weight: bold !important;
       height: 5.8mm !important;
       background-color: #f3f4f6 !important;
     }
+    .pdf-export-mode table.print-table td span,
+    .pdf-export-mode table.print-table td input,
+    .pdf-export-mode table.print-table td select {
+      font-size: 9.6pt !important;
+    }
     .pdf-export-mode table.print-table tfoot td {
       height: 6.2mm !important;
-      font-size: 8.5pt !important;
+      font-size: 9.2pt !important;
       padding: 0.5px 2px !important;
+    }
+    .pdf-export-mode table.print-table tfoot td span#quoteTotalDisplay,
+    .pdf-export-mode table.print-table tfoot td span#quoteTotalCopyDisplay {
+      font-size: 10.5pt !important;
+      font-weight: 900 !important;
     }
     .pdf-export-mode .quote-half-sheet .header-store-title {
       font-size: 15pt !important;
@@ -2596,18 +2631,18 @@ const firebaseConfig = {
           <!-- Left Column (1-15) -->
           <td class="border border-black font-bold bg-slate-50 text-slate-700">${leftIdx}</td>
           <td class="border border-black p-0 text-left relative overflow-hidden">
-            <select id="q_name_${leftIdx}" data-index="${leftIdx}" class="w-full h-full px-1 py-1 outline-none font-medium bg-transparent quote-item-select cursor-pointer text-xs no-print text-ellipsis">
+            <select id="q_name_${leftIdx}" data-index="${leftIdx}" class="w-full h-full px-1 py-1 outline-none font-medium bg-transparent quote-item-select cursor-pointer no-print text-ellipsis">
               ${optionsHtml}
             </select>
-            <input type="text" id="q_custom_name_${leftIdx}" data-index="${leftIdx}" placeholder="輸入自訂品名" class="hidden w-full h-full px-1.5 py-1 outline-none font-medium bg-white text-xs quote-item-custom-name no-print">
-            <span id="q_print_name_${leftIdx}" class="hidden print-only-inline pl-1 font-medium text-xs"></span>
+            <input type="text" id="q_custom_name_${leftIdx}" data-index="${leftIdx}" placeholder="輸入自訂品名" class="hidden w-full h-full px-1.5 py-1 outline-none font-medium bg-white quote-item-custom-name no-print">
+            <span id="q_print_name_${leftIdx}" class="hidden print-only-inline pl-1 font-medium"></span>
           </td>
           <td class="border border-black p-0 text-center">
-            <input type="number" id="q_qty_${leftIdx}" data-index="${leftIdx}" min="0" step="any" placeholder="" class="w-full h-full px-1 py-1 text-center outline-none bg-transparent quote-item-qty font-bold no-print">
+            <input type="text" inputmode="decimal" id="q_qty_${leftIdx}" data-index="${leftIdx}" placeholder="" class="w-full h-full px-1 py-1 text-center outline-none bg-transparent quote-item-qty font-bold no-print" autocomplete="off">
             <span id="q_print_qty_${leftIdx}" class="hidden print-only-inline text-center font-bold"></span>
           </td>
           <td class="border border-black p-0 text-right pr-1">
-            <input type="number" id="q_price_${leftIdx}" data-index="${leftIdx}" min="0" step="any" placeholder="" class="w-full h-full px-1 py-1 text-right outline-none bg-transparent quote-item-price no-print">
+            <input type="text" inputmode="decimal" id="q_price_${leftIdx}" data-index="${leftIdx}" placeholder="" class="w-full h-full px-1 py-1 text-right outline-none bg-transparent quote-item-price no-print" autocomplete="off">
             <span id="q_print_price_${leftIdx}" class="hidden print-only-inline text-right"></span>
           </td>
           <td class="border border-black px-1.5 py-1 text-right font-semibold text-slate-800 bg-slate-50/50" id="q_subtotal_${leftIdx}">
@@ -2617,18 +2652,18 @@ const firebaseConfig = {
           <!-- Right Column (16-30) -->
           <td class="border border-black font-bold bg-slate-100 text-slate-700">${rightIdx}</td>
           <td class="border border-black p-0 text-left relative overflow-hidden">
-            <select id="q_name_${rightIdx}" data-index="${rightIdx}" class="w-full h-full px-1 py-1 outline-none font-medium bg-transparent quote-item-select cursor-pointer text-xs no-print text-ellipsis">
+            <select id="q_name_${rightIdx}" data-index="${rightIdx}" class="w-full h-full px-1 py-1 outline-none font-medium bg-transparent quote-item-select cursor-pointer no-print text-ellipsis">
               ${optionsHtml}
             </select>
-            <input type="text" id="q_custom_name_${rightIdx}" data-index="${rightIdx}" placeholder="輸入自訂品名" class="hidden w-full h-full px-1.5 py-1 outline-none font-medium bg-white text-xs quote-item-custom-name no-print">
-            <span id="q_print_name_${rightIdx}" class="hidden print-only-inline pl-1 font-medium text-xs"></span>
+            <input type="text" id="q_custom_name_${rightIdx}" data-index="${rightIdx}" placeholder="輸入自訂品名" class="hidden w-full h-full px-1.5 py-1 outline-none font-medium bg-white quote-item-custom-name no-print">
+            <span id="q_print_name_${rightIdx}" class="hidden print-only-inline pl-1 font-medium"></span>
           </td>
           <td class="border border-black p-0 text-center">
-            <input type="number" id="q_qty_${rightIdx}" data-index="${rightIdx}" min="0" step="any" placeholder="" class="w-full h-full px-1 py-1 text-center outline-none bg-transparent quote-item-qty font-bold no-print">
+            <input type="text" inputmode="decimal" id="q_qty_${rightIdx}" data-index="${rightIdx}" placeholder="" class="w-full h-full px-1 py-1 text-center outline-none bg-transparent quote-item-qty font-bold no-print" autocomplete="off">
             <span id="q_print_qty_${rightIdx}" class="hidden print-only-inline text-center font-bold"></span>
           </td>
           <td class="border border-black p-0 text-right pr-1">
-            <input type="number" id="q_price_${rightIdx}" data-index="${rightIdx}" min="0" step="any" placeholder="" class="w-full h-full px-1 py-1 text-right outline-none bg-transparent quote-item-price no-print">
+            <input type="text" inputmode="decimal" id="q_price_${rightIdx}" data-index="${rightIdx}" placeholder="" class="w-full h-full px-1 py-1 text-right outline-none bg-transparent quote-item-price no-print" autocomplete="off">
             <span id="q_print_price_${rightIdx}" class="hidden print-only-inline text-right"></span>
           </td>
           <td class="border border-black px-1.5 py-1 text-right font-semibold text-slate-800 bg-slate-50/50" id="q_subtotal_${rightIdx}">
@@ -2645,11 +2680,78 @@ const firebaseConfig = {
       document.querySelectorAll(".quote-item-custom-name").forEach(input => {
         input.addEventListener("input", onQuoteCustomNameInput);
       });
+
+      // Quantity input listeners: enter-to-next-row navigation & numeric input
       document.querySelectorAll(".quote-item-qty").forEach(input => {
         input.addEventListener("input", onQuoteQtyOrPriceChange);
+
+        // Auto-select text on focus for rapid overwriting
+        input.addEventListener("focus", function() {
+          this.select();
+        });
+
+        // Enter key & Arrow keys navigation: jump smoothly to next quantity field
+        input.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            const curIdx = parseInt(input.getAttribute("data-index"), 10);
+            let nextIdx = curIdx + 1;
+            if (nextIdx > 30) {
+              const remark = document.getElementById("quoteRemark");
+              if (remark) {
+                remark.focus();
+                return;
+              }
+              nextIdx = 1;
+            }
+            const nextInput = document.getElementById(`q_qty_${nextIdx}`);
+            if (nextInput) {
+              nextInput.focus();
+              nextInput.select();
+            }
+          } else if (e.key === "ArrowDown") {
+            e.preventDefault();
+            const curIdx = parseInt(input.getAttribute("data-index"), 10);
+            if (curIdx < 30) {
+              const nextInput = document.getElementById(`q_qty_${curIdx + 1}`);
+              if (nextInput) {
+                nextInput.focus();
+                nextInput.select();
+              }
+            }
+          } else if (e.key === "ArrowUp") {
+            e.preventDefault();
+            const curIdx = parseInt(input.getAttribute("data-index"), 10);
+            if (curIdx > 1) {
+              const prevInput = document.getElementById(`q_qty_${curIdx - 1}`);
+              if (prevInput) {
+                prevInput.focus();
+                prevInput.select();
+              }
+            }
+          }
+        });
       });
+
+      // Price input listeners
       document.querySelectorAll(".quote-item-price").forEach(input => {
         input.addEventListener("input", onQuoteQtyOrPriceChange);
+        input.addEventListener("focus", function() {
+          this.select();
+        });
+        input.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            const curIdx = parseInt(input.getAttribute("data-index"), 10);
+            let nextIdx = curIdx + 1;
+            if (nextIdx > 30) nextIdx = 1;
+            const nextInput = document.getElementById(`q_price_${nextIdx}`);
+            if (nextInput) {
+              nextInput.focus();
+              nextInput.select();
+            }
+          }
+        });
       });
 
       // Synchronize copy block for double layout
@@ -2664,17 +2766,17 @@ const firebaseConfig = {
         const rightIdx = i + 15;
         const tr = document.createElement("tr");
         tr.innerHTML = `
-          <td class="border border-black py-0.5">${leftIdx}</td>
-          <td class="border border-black py-0.5 text-left pl-2" id="copy_q_name_${leftIdx}"></td>
-          <td class="border border-black py-0.5 text-center" id="copy_q_qty_${leftIdx}"></td>
+          <td class="border border-black py-0.5 font-bold bg-slate-50 text-slate-700">${leftIdx}</td>
+          <td class="border border-black py-0.5 text-left pl-2 font-medium" id="copy_q_name_${leftIdx}"></td>
+          <td class="border border-black py-0.5 text-center font-bold" id="copy_q_qty_${leftIdx}"></td>
           <td class="border border-black py-0.5 text-right pr-1" id="copy_q_price_${leftIdx}"></td>
-          <td class="border border-black py-0.5 text-right pr-1 font-semibold" id="copy_q_subtotal_${leftIdx}"></td>
+          <td class="border border-black py-0.5 text-right pr-1 font-semibold text-slate-800 bg-slate-50/50" id="copy_q_subtotal_${leftIdx}"></td>
           
-          <td class="border border-black py-0.5 bg-slate-50">${rightIdx}</td>
-          <td class="border border-black py-0.5 text-left pl-2" id="copy_q_name_${rightIdx}"></td>
-          <td class="border border-black py-0.5 text-center" id="copy_q_qty_${rightIdx}"></td>
+          <td class="border border-black py-0.5 font-bold bg-slate-100 text-slate-700">${rightIdx}</td>
+          <td class="border border-black py-0.5 text-left pl-2 font-medium" id="copy_q_name_${rightIdx}"></td>
+          <td class="border border-black py-0.5 text-center font-bold" id="copy_q_qty_${rightIdx}"></td>
           <td class="border border-black py-0.5 text-right pr-1" id="copy_q_price_${rightIdx}"></td>
-          <td class="border border-black py-0.5 text-right pr-1 font-semibold" id="copy_q_subtotal_${rightIdx}"></td>
+          <td class="border border-black py-0.5 text-right pr-1 font-semibold text-slate-800 bg-slate-50/50" id="copy_q_subtotal_${rightIdx}"></td>
         `;
         tbody.appendChild(tr);
       }
