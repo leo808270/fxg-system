@@ -35,7 +35,7 @@
     @media print {
       @page {
         size: A4 portrait;
-        margin: 0; /* Auto-suppresses browser print header (title/date) and footer (URL/page numbers) */
+        margin: 0; /* Auto-suppresses browser print header and footer where supported */
       }
       html, body, #appView, main, #tabQuote {
         width: 100% !important;
@@ -59,13 +59,13 @@
       .print-only-inline {
         display: inline-block !important;
       }
-      /* Print container: 276mm calibrated height with 21mm safety buffer ensuring 100% single-page fit on all printers */
+      /* Print container: Exactly 239.5mm total height, safely within iOS Safari AirPrint printable area (245mm) */
       .print-container {
         width: 100% !important;
-        max-width: 200mm !important;
+        max-width: 195mm !important;
         height: auto !important;
-        max-height: 278mm !important;
-        margin: 2mm auto 0 auto !important;
+        max-height: 242mm !important;
+        margin: 0 auto !important;
         padding: 0 !important;
         box-shadow: none !important;
         border: none !important;
@@ -80,8 +80,8 @@
       }
       #quoteDoubleCopy {
         width: 100% !important;
-        height: 140mm !important;
-        max-height: 140mm !important;
+        height: 122mm !important;
+        max-height: 122mm !important;
         box-sizing: border-box !important;
         margin: 0 !important;
         padding: 0 !important;
@@ -90,25 +90,26 @@
         justify-content: space-between !important;
         page-break-inside: avoid !important;
       }
-      /* Each Half Sheet: Exactly 136mm high (100% equal in size) */
+      /* Each Half Sheet: Exactly 118mm high (guaranteed single page on iOS AirPrint) */
       .quote-half-sheet {
         width: 100% !important;
-        height: 136mm !important;
-        min-height: 136mm !important;
-        max-height: 136mm !important;
+        height: 118mm !important;
+        min-height: 118mm !important;
+        max-height: 118mm !important;
         box-sizing: border-box !important;
         display: flex !important;
         flex-direction: column !important;
         justify-content: space-between !important;
         margin: 0 !important;
-        padding: 1.5mm 4mm !important;
+        padding: 1mm 3mm !important;
         overflow: hidden !important;
         page-break-inside: avoid !important;
+        page-break-after: avoid !important;
       }
       /* Tear/Cut line exactly centered between the two slips */
       .cut-line {
         width: 100% !important;
-        height: 4mm !important;
+        height: 3.5mm !important;
         margin: 0 !important;
         border-top: 1px dashed #444 !important;
         display: flex !important;
@@ -122,13 +123,13 @@
       .cut-line::after {
         content: "✂ 沿虛線裁開（第一聯：存根聯 ／ 第二聯：客戶收執聯）" !important;
         position: relative !important;
-        top: -6px !important;
+        top: -5px !important;
         background: #fff !important;
-        padding: 0 8px !important;
-        font-size: 6.8pt !important;
+        padding: 0 6px !important;
+        font-size: 6.5pt !important;
         color: #555 !important;
       }
-      /* Print Table Styling - 9.3pt large, bold, unified typography across Slip 1 and Slip 2 */
+      /* Print Table Styling - Compact 4.6mm rows for guaranteed 1-page fit on mobile AirPrint */
       table.print-table {
         border-collapse: collapse !important;
         width: 100% !important;
@@ -137,60 +138,60 @@
       table.print-table th, 
       table.print-table td {
         border: 1px solid #000 !important;
-        padding: 0.5px 2px !important;
-        height: 5.5mm !important;
-        max-height: 5.5mm !important;
-        font-size: 9.3pt !important;
-        line-height: 1.2 !important;
+        padding: 0.2px 1.5px !important;
+        height: 4.6mm !important;
+        max-height: 4.6mm !important;
+        font-size: 8.2pt !important;
+        line-height: 1.15 !important;
         color: #000 !important;
         background: transparent !important;
         box-sizing: border-box !important;
       }
       table.print-table th {
-        font-size: 8.2pt !important;
+        font-size: 7.5pt !important;
         font-weight: bold !important;
-        height: 5.5mm !important;
+        height: 4.8mm !important;
         background-color: #f3f4f6 !important;
       }
       table.print-table td span,
       table.print-table td input,
       table.print-table td select {
-        font-size: 9.3pt !important;
+        font-size: 8.2pt !important;
       }
       table.print-table tfoot td {
-        height: 5.8mm !important;
-        font-size: 9.0pt !important;
-        padding: 0.5px 2px !important;
+        height: 5.0mm !important;
+        font-size: 8.2pt !important;
+        padding: 0.2px 1.5px !important;
       }
       table.print-table tfoot td span#quoteTotalDisplay,
       table.print-table tfoot td span#quoteTotalCopyDisplay {
-        font-size: 10.2pt !important;
+        font-size: 9.5pt !important;
         font-weight: 900 !important;
       }
       .quote-half-sheet .header-store-title {
-        font-size: 14pt !important;
-        line-height: 1.2 !important;
+        font-size: 13.5pt !important;
+        line-height: 1.15 !important;
       }
       .quote-half-sheet .header-doc-title {
-        font-size: 14pt !important;
-        padding: 1px 10px !important;
-        line-height: 1.2 !important;
+        font-size: 13.5pt !important;
+        padding: 1px 8px !important;
+        line-height: 1.15 !important;
       }
       .quote-half-sheet .header-info-text {
-        font-size: 7.5pt !important;
-        line-height: 1.25 !important;
+        font-size: 7.2pt !important;
+        line-height: 1.2 !important;
       }
       .quote-half-sheet .customer-date-row {
-        font-size: 8.2pt !important;
-        padding: 1px 0 !important;
-        margin-top: 1px !important;
+        font-size: 7.8pt !important;
+        padding: 0.5px 0 !important;
+        margin-top: 0.5px !important;
       }
       .quote-half-sheet .footer-summary-row {
-        font-size: 7.8pt !important;
-        margin-top: 1mm !important;
+        font-size: 7.5pt !important;
+        margin-top: 0.5mm !important;
         padding-top: 0 !important;
-        padding-bottom: 0.5mm !important;
-        line-height: 1.2 !important;
+        padding-bottom: 0.2mm !important;
+        line-height: 1.15 !important;
       }
     }
 
