@@ -410,7 +410,7 @@
             <button type="button" id="btnToggleLoginPwdText" class="text-[11px] text-amber-700 hover:text-amber-900 font-semibold">顯示密碼</button>
           </label>
           <div class="relative">
-            <input type="password" id="loginPassword" required autocomplete="current-password" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="請輸入密碼 (預設: 8888)" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:border-amber-600 focus:ring-2 focus:ring-amber-500/20 text-sm outline-none transition bg-slate-50/50 font-medium pr-10">
+            <input type="password" id="loginPassword" required autocomplete="current-password" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="請輸入密碼" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:border-amber-600 focus:ring-2 focus:ring-amber-500/20 text-sm outline-none transition bg-slate-50/50 font-medium pr-10">
             <button type="button" id="btnToggleLoginPwdIcon" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600">
               👁️
             </button>
@@ -430,21 +430,9 @@
         </button>
       </form>
 
-      <!-- 1-Click Master Default Login Button -->
-        <div class="pt-1 text-center">
-          <button type="button" id="btnQuickMasterLogin" onclick="quickDefaultLogin()" class="text-xs text-amber-700 hover:text-amber-900 underline font-semibold transition cursor-pointer p-1">
-            🔑 忘記密碼？點此直接以預設密碼 (8888) 一鍵登入
-          </button>
-        </div>
-
-        <!-- Preset Hint Box -->
-      <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 text-[11px] text-slate-500 space-y-1">
-        <p class="font-bold text-slate-700 flex items-center gap-1">
-          <span>💡</span> 系統預設登入憑證：
-        </p>
-        <p>• 預設帳號：<span class="font-mono font-bold text-amber-800 bg-amber-100/70 px-1.5 py-0.2 rounded">admin</span></p>
-        <p>• 預設密碼：<span class="font-mono font-bold text-amber-800 bg-amber-100/70 px-1.5 py-0.2 rounded">8888</span></p>
-        <p class="text-slate-400 text-[10px] pt-0.5">※ 登入後可隨時於「店家設定」修改帳號與密碼</p>
+      <!-- Security Footer Note (No password leakage) -->
+      <div class="pt-2 text-center text-[11px] text-slate-400 border-t border-slate-100">
+        芳喜蓁站手工坊內部授權使用 ｜ 統編：40713530
       </div>
 
     </div>
@@ -5349,11 +5337,10 @@ const firebaseConfig = {
 
       const creds = getStoredCredentials();
 
-      // Case-insensitive username check, match custom OR master default credentials (admin / 8888)
-      const isCustomMatch = (uInput.toLowerCase() === creds.username.toLowerCase() && pInput === creds.password);
-      const isDefaultMatch = (uInput.toLowerCase() === "admin" && pInput === "8888");
+      // Strict authentication: must match exact stored username (case-insensitive) and exact stored password
+      const isValid = (uInput.toLowerCase() === creds.username.toLowerCase() && pInput === creds.password);
 
-      if (isCustomMatch || isDefaultMatch) {
+      if (isValid) {
         if (errBanner) errBanner.classList.add("hidden");
 
         if (remember) {
@@ -5388,19 +5375,11 @@ const firebaseConfig = {
           errBanner.classList.remove("hidden");
         }
         if (errText) {
-          errText.textContent = "帳號或密碼錯誤！(預設帳號: admin，預設密碼: 8888)";
+          errText.textContent = "帳號或密碼錯誤，請確認後重新輸入！";
         }
-        showToast("❌ 帳號或密碼錯誤，請重新確認 (預設密碼: 8888)", false);
+        showToast("❌ 帳號或密碼錯誤，請重新確認", false);
         return false;
       }
-    }
-
-    function quickDefaultLogin() {
-      const u = document.getElementById("loginUsername");
-      const p = document.getElementById("loginPassword");
-      if (u) u.value = "admin";
-      if (p) p.value = "8888";
-      handleLogin(null);
     }
 
     function handleLogout() {
