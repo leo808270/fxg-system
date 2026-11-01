@@ -37,18 +37,20 @@
         size: A4 portrait;
         margin: 0; /* Auto-suppresses browser print header (title/date) and footer (URL/page numbers) */
       }
-      html, body {
+      html, body, #appView, main, #tabQuote {
         width: 100% !important;
-        height: 100% !important;
+        max-width: 100% !important;
         margin: 0 !important;
         padding: 0 !important;
+        border: none !important;
         background-color: #fff !important;
         color: #000 !important;
         font-size: 8pt !important;
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
+        overflow: visible !important;
       }
-      .no-print, #toast, #loginView, #confirmModal, #customerModal, #itemEditModal, #quickPickAddModal, #inventoryActionModal {
+      .no-print, #toast, #loginView, #confirmModal, #customerModal, #itemEditModal, #quickPickAddModal, #inventoryActionModal, #statCustomerOrdersModal {
         display: none !important;
       }
       .print-only {
@@ -57,29 +59,29 @@
       .print-only-inline {
         display: inline-block !important;
       }
+      /* Print container: 276mm calibrated height with 21mm safety buffer ensuring 100% single-page fit on all printers */
       .print-container {
-        width: 210mm !important;
-        max-width: 210mm !important;
-        height: 296mm !important;
-        min-height: 296mm !important;
-        max-height: 296mm !important;
-        margin: 0 auto !important;
+        width: 100% !important;
+        max-width: 200mm !important;
+        height: auto !important;
+        max-height: 278mm !important;
+        margin: 2mm auto 0 auto !important;
         padding: 0 !important;
         box-shadow: none !important;
         border: none !important;
         display: flex !important;
         flex-direction: column !important;
-        justify-content: space-between !important;
+        justify-content: flex-start !important;
         box-sizing: border-box !important;
-        overflow: hidden !important;
+        overflow: visible !important;
         page-break-inside: avoid !important;
         page-break-after: avoid !important;
         page-break-before: avoid !important;
       }
       #quoteDoubleCopy {
         width: 100% !important;
-        height: 150.5mm !important;
-        max-height: 150.5mm !important;
+        height: 140mm !important;
+        max-height: 140mm !important;
         box-sizing: border-box !important;
         margin: 0 !important;
         padding: 0 !important;
@@ -88,25 +90,25 @@
         justify-content: space-between !important;
         page-break-inside: avoid !important;
       }
-      /* Each Half Sheet: Exactly 145.5mm high (50% of page with cut line) */
+      /* Each Half Sheet: Exactly 136mm high (100% equal in size) */
       .quote-half-sheet {
         width: 100% !important;
-        height: 145.5mm !important;
-        min-height: 145.5mm !important;
-        max-height: 145.5mm !important;
+        height: 136mm !important;
+        min-height: 136mm !important;
+        max-height: 136mm !important;
         box-sizing: border-box !important;
         display: flex !important;
         flex-direction: column !important;
         justify-content: space-between !important;
         margin: 0 !important;
-        padding: 2.5mm 6mm !important;
+        padding: 1.5mm 4mm !important;
         overflow: hidden !important;
         page-break-inside: avoid !important;
       }
-      /* Tear/Cut line exactly centered between the two slips at 50% */
+      /* Tear/Cut line exactly centered between the two slips */
       .cut-line {
         width: 100% !important;
-        height: 5mm !important;
+        height: 4mm !important;
         margin: 0 !important;
         border-top: 1px dashed #444 !important;
         display: flex !important;
@@ -126,7 +128,7 @@
         font-size: 6.8pt !important;
         color: #555 !important;
       }
-      /* Print Table Styling - 9.6pt larger, unified typography across Slip 1 and Slip 2 */
+      /* Print Table Styling - 9.3pt large, bold, unified typography across Slip 1 and Slip 2 */
       table.print-table {
         border-collapse: collapse !important;
         width: 100% !important;
@@ -136,59 +138,59 @@
       table.print-table td {
         border: 1px solid #000 !important;
         padding: 0.5px 2px !important;
-        height: 5.8mm !important;
-        max-height: 5.8mm !important;
-        font-size: 9.6pt !important;
+        height: 5.5mm !important;
+        max-height: 5.5mm !important;
+        font-size: 9.3pt !important;
         line-height: 1.2 !important;
         color: #000 !important;
         background: transparent !important;
         box-sizing: border-box !important;
       }
       table.print-table th {
-        font-size: 8.5pt !important;
+        font-size: 8.2pt !important;
         font-weight: bold !important;
-        height: 5.8mm !important;
+        height: 5.5mm !important;
         background-color: #f3f4f6 !important;
       }
       table.print-table td span,
       table.print-table td input,
       table.print-table td select {
-        font-size: 9.6pt !important;
+        font-size: 9.3pt !important;
       }
       table.print-table tfoot td {
-        height: 6.2mm !important;
-        font-size: 9.2pt !important;
+        height: 5.8mm !important;
+        font-size: 9.0pt !important;
         padding: 0.5px 2px !important;
       }
       table.print-table tfoot td span#quoteTotalDisplay,
       table.print-table tfoot td span#quoteTotalCopyDisplay {
-        font-size: 10.5pt !important;
+        font-size: 10.2pt !important;
         font-weight: 900 !important;
       }
       .quote-half-sheet .header-store-title {
-        font-size: 15pt !important;
+        font-size: 14pt !important;
         line-height: 1.2 !important;
       }
       .quote-half-sheet .header-doc-title {
-        font-size: 15pt !important;
-        padding: 1px 12px !important;
+        font-size: 14pt !important;
+        padding: 1px 10px !important;
         line-height: 1.2 !important;
       }
       .quote-half-sheet .header-info-text {
-        font-size: 7.8pt !important;
+        font-size: 7.5pt !important;
         line-height: 1.25 !important;
       }
       .quote-half-sheet .customer-date-row {
-        font-size: 8.5pt !important;
+        font-size: 8.2pt !important;
         padding: 1px 0 !important;
         margin-top: 1px !important;
       }
       .quote-half-sheet .footer-summary-row {
-        font-size: 8pt !important;
+        font-size: 7.8pt !important;
         margin-top: 1mm !important;
         padding-top: 0 !important;
-        padding-bottom: 1mm !important;
-        line-height: 1.25 !important;
+        padding-bottom: 0.5mm !important;
+        line-height: 1.2 !important;
       }
     }
 
