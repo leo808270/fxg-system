@@ -357,6 +357,16 @@
       background: transparent !important;
       outline: none !important;
     }
+  
+    /* Mobile smooth horizontal scroll without ugly scrollbar */
+    .nav-scroll::-webkit-scrollbar {
+      display: none;
+    }
+    .nav-scroll {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+    }
   </style>
   <!-- Google Firebase Realtime Database SDK (Compat build for cross-device cloud sync) -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -449,65 +459,67 @@
   <div id="appView" class="min-h-screen flex flex-col hidden">
   <!-- Navigation Bar (Screen Only) -->
   <header class="no-print bg-gradient-to-r from-amber-700 via-amber-800 to-amber-900 text-white shadow-lg sticky top-0 z-40">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex items-center justify-between h-16">
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-xl bg-amber-500 flex items-center justify-center font-black text-xl text-amber-950 shadow-inner">
+    <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+      <!-- Top Row: Brand Info + Status / Logout Action Buttons -->
+      <div class="flex items-center justify-between py-2 sm:py-2.5 border-b border-amber-600/30">
+        <!-- Brand Info -->
+        <div class="flex items-center gap-2.5 min-w-0">
+          <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-amber-500 flex items-center justify-center font-black text-lg sm:text-xl text-amber-950 shadow-inner flex-shrink-0">
             芳
           </div>
-          <div>
-            <h1 class="text-lg font-bold tracking-wide flex items-center gap-2">
-              芳喜蓁站手工坊
-              <span class="text-xs bg-amber-600/80 px-2 py-0.5 rounded font-normal text-amber-100">單據製作系統</span>
+          <div class="min-w-0">
+            <h1 class="text-base sm:text-lg font-bold tracking-wide flex items-center gap-1.5 truncate">
+              <span class="truncate">芳喜蓁站手工坊</span>
+              <span class="text-[10px] sm:text-xs bg-amber-600/90 px-1.5 py-0.5 rounded font-normal text-amber-100 flex-shrink-0">單據系統</span>
             </h1>
-            <p class="text-xs text-amber-200">統編: 40713530 ｜ 專業估價單・庫存統計・價目管理</p>
+            <p class="text-[11px] text-amber-200 truncate hidden sm:block">統編: 40713530 ｜ 專業估價單・庫存統計・價目管理</p>
           </div>
         </div>
 
-        <!-- Navigation Tabs -->
-        <nav class="flex items-center gap-1 sm:gap-2 text-sm flex-wrap">
-          <button id="navQuoteBtn" class="px-3 py-2 rounded-lg font-medium transition flex items-center gap-1.5 bg-amber-600 text-white shadow">
-            <span>📑</span>
-            <span>估價單</span>
-          </button>
-          <button id="navInventoryBtn" class="px-3 py-2 rounded-lg font-medium transition flex items-center gap-1.5 text-amber-200 hover:text-white hover:bg-amber-800/60">
-            <span>📦</span>
-            <span>庫存管理</span>
-          </button>
-          <button id="navCustomerBtn" class="px-3 py-2 rounded-lg font-medium transition flex items-center gap-1.5 text-amber-200 hover:text-white hover:bg-amber-800/60">
-            <span>👥</span>
-            <span>客戶管理</span>
-          </button>
-          <button id="navStatsBtn" class="px-3 py-2 rounded-lg font-medium transition flex items-center gap-1.5 text-amber-200 hover:text-white hover:bg-amber-800/60">
-            <span>📊</span>
-            <span>出貨統計</span>
-          </button>
-          <button id="navPriceBtn" class="px-3 py-2 rounded-lg font-medium transition flex items-center gap-1.5 text-amber-200 hover:text-white hover:bg-amber-800/60">
-            <span>📋</span>
-            <span>價目表庫</span>
-          </button>
-          <button id="navHistoryBtn" class="px-3 py-2 rounded-lg font-medium transition flex items-center gap-1.5 text-amber-200 hover:text-white hover:bg-amber-800/60">
-            <span>📁</span>
-            <span>歷史單據</span>
-          </button>
-          <button id="navSettingsBtn" class="px-3 py-2 rounded-lg font-medium transition flex items-center gap-1.5 text-amber-200 hover:text-white hover:bg-amber-800/60">
-            <span>⚙️</span>
-            <span>店家設定</span>
-          </button>
-        </nav>
-        <!-- Cloud Sync Status Indicator in Header -->
-        <div class="flex items-center gap-2">
-          <button id="btnLogoutNav" type="button" title="登出系統" class="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-rose-950/80 hover:bg-rose-900 border border-rose-400/30 text-rose-100 transition shadow-sm cursor-pointer">
-            <span>🚪</span>
-            <span>登出</span>
-          </button>
-          <button id="btnCloudSyncNav" title="點擊前往雲端同步設定" class="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-950/70 border border-amber-400/30 text-amber-100 hover:bg-amber-900 transition">
+        <!-- Utility Buttons: Cloud Sync Status & Logout -->
+        <div class="flex items-center gap-1.5 sm:gap-2 flex-shrink-0 ml-2">
+          <button id="btnCloudSyncNav" title="點擊前往雲端同步設定" class="flex items-center gap-1.5 px-2.5 py-1 sm:py-1.5 rounded-full text-xs font-semibold bg-amber-950/70 border border-amber-400/30 text-amber-100 hover:bg-amber-900 transition flex-shrink-0 cursor-pointer">
             <span id="cloudStatusDotNav" class="w-2.5 h-2.5 rounded-full bg-slate-400"></span>
-            <span id="cloudStatusTextNav">本機模式 (未同步)</span>
+            <span id="cloudStatusTextNav" class="text-xs">本機模式 (未同步)</span>
+          </button>
+          <button id="btnLogoutNav" type="button" title="登出系統" class="flex items-center gap-1 px-2.5 py-1 sm:py-1.5 rounded-full text-xs font-semibold bg-rose-950/80 hover:bg-rose-900 border border-rose-400/30 text-rose-100 transition shadow-sm cursor-pointer flex-shrink-0">
+            <span>🚪</span>
+            <span class="text-xs">登出</span>
           </button>
         </div>
-
       </div>
+
+      <!-- Navigation Tabs Row: Scrollable on Mobile, Responsive & Clean -->
+      <nav class="flex items-center gap-1.5 sm:gap-2 py-1.5 pb-2 overflow-x-auto whitespace-nowrap nav-scroll -mx-3 px-3 sm:mx-0 sm:px-0">
+        <button id="navQuoteBtn" class="px-3 py-1.5 sm:py-2 rounded-lg font-medium transition flex items-center gap-1.5 bg-amber-600 text-white shadow whitespace-nowrap flex-shrink-0 text-xs sm:text-sm">
+          <span>📑</span>
+          <span>估價單</span>
+        </button>
+        <button id="navInventoryBtn" class="px-3 py-1.5 sm:py-2 rounded-lg font-medium transition flex items-center gap-1.5 text-amber-200 hover:text-white hover:bg-amber-800/60 whitespace-nowrap flex-shrink-0 text-xs sm:text-sm">
+          <span>📦</span>
+          <span>庫存管理</span>
+        </button>
+        <button id="navCustomerBtn" class="px-3 py-1.5 sm:py-2 rounded-lg font-medium transition flex items-center gap-1.5 text-amber-200 hover:text-white hover:bg-amber-800/60 whitespace-nowrap flex-shrink-0 text-xs sm:text-sm">
+          <span>👥</span>
+          <span>客戶管理</span>
+        </button>
+        <button id="navStatsBtn" class="px-3 py-1.5 sm:py-2 rounded-lg font-medium transition flex items-center gap-1.5 text-amber-200 hover:text-white hover:bg-amber-800/60 whitespace-nowrap flex-shrink-0 text-xs sm:text-sm">
+          <span>📊</span>
+          <span>出貨統計</span>
+        </button>
+        <button id="navPriceBtn" class="px-3 py-1.5 sm:py-2 rounded-lg font-medium transition flex items-center gap-1.5 text-amber-200 hover:text-white hover:bg-amber-800/60 whitespace-nowrap flex-shrink-0 text-xs sm:text-sm">
+          <span>📋</span>
+          <span>價目表庫</span>
+        </button>
+        <button id="navHistoryBtn" class="px-3 py-1.5 sm:py-2 rounded-lg font-medium transition flex items-center gap-1.5 text-amber-200 hover:text-white hover:bg-amber-800/60 whitespace-nowrap flex-shrink-0 text-xs sm:text-sm">
+          <span>📁</span>
+          <span>歷史單據</span>
+        </button>
+        <button id="navSettingsBtn" class="px-3 py-1.5 sm:py-2 rounded-lg font-medium transition flex items-center gap-1.5 text-amber-200 hover:text-white hover:bg-amber-800/60 whitespace-nowrap flex-shrink-0 text-xs sm:text-sm">
+          <span>⚙️</span>
+          <span>店家設定</span>
+        </button>
+      </nav>
     </div>
   </header>
 
@@ -3882,7 +3894,17 @@ const firebaseConfig = {
             .metrics { display: flex; justify-content: space-around; background: #f8fafc; padding: 10px; border: 1px solid #cbd5e1; margin-bottom: 15px; font-size: 13px; }
             table { width: 100%; border-collapse: collapse; font-size: 12px; }
             th { background: #f1f5f9; border: 1px solid #000; padding: 6px; }
-          </style>
+          
+    /* Mobile smooth horizontal scroll without ugly scrollbar */
+    .nav-scroll::-webkit-scrollbar {
+      display: none;
+    }
+    .nav-scroll {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+    }
+  </style>
         </head>
         <body>
           <h1>芳喜蓁站手工坊 ｜ 各店家個別出貨數量統計報表</h1>
@@ -4688,9 +4710,9 @@ const firebaseConfig = {
         const btn = document.getElementById(b.id);
         if (btn) {
           if (b.tab === `tab${tabId.charAt(0).toUpperCase() + tabId.slice(1)}`) {
-            btn.className = "px-3 py-2 rounded-lg font-medium transition flex items-center gap-1.5 bg-amber-600 text-white shadow";
+            btn.className = "px-3 py-1.5 sm:py-2 rounded-lg font-medium transition flex items-center gap-1.5 bg-amber-600 text-white shadow whitespace-nowrap flex-shrink-0 text-xs sm:text-sm";
           } else {
-            btn.className = "px-3 py-2 rounded-lg font-medium transition flex items-center gap-1.5 text-amber-200 hover:text-white hover:bg-amber-800/60";
+            btn.className = "px-3 py-1.5 sm:py-2 rounded-lg font-medium transition flex items-center gap-1.5 text-amber-200 hover:text-white hover:bg-amber-800/60 whitespace-nowrap flex-shrink-0 text-xs sm:text-sm";
           }
         }
       });
