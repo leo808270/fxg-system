@@ -6535,8 +6535,8 @@ const firebaseConfig = {
         const pageSubtitle = (numPages > 1) ? `${subTitle} (第 ${pageIdx + 1} 頁)` : subTitle;
 
         const pageEl = document.createElement("div");
-        pageEl.className = "catalog-print-sheet-page bg-white text-black shadow-2xl mx-auto html2pdf__page-break";
-        pageEl.style.cssText = "width: 297mm; min-height: 209mm; max-height: 209mm; padding: 4.5mm 9mm; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; font-family: 'Noto Sans TC', system-ui, -apple-system, sans-serif; background: #ffffff;";
+        pageEl.className = "catalog-print-sheet-page bg-white text-black shadow-2xl mx-auto";
+        pageEl.style.cssText = "width: 297mm; height: 198mm; max-height: 200mm; padding: 4mm 9mm; box-sizing: border-box; display: flex; flex-direction: column; justify-content: flex-start; gap: 2.5mm; font-family: 'Noto Sans TC', system-ui, -apple-system, sans-serif; background: #ffffff; margin-bottom: 24px;";
 
         pageEl.innerHTML = `
           <!-- Title & Header Area -->
@@ -6650,32 +6650,34 @@ const firebaseConfig = {
             scrollX: 0,
             scrollY: 0
           },
-          jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' },
-          pagebreak: { mode: ['avoid-all', 'css'] }
+          jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
         };
 
-        if (pages.length === 1) {
-          // Single-page exact full-bleed render
-          await html2pdf()
-            .set(opt)
-            .from(pages[0])
-            .toPdf()
-            .get('pdf')
-            .then(function(pdf) {
-              while (pdf.internal.getNumberOfPages() > 1) {
-                pdf.deletePage(pdf.internal.getNumberOfPages());
-              }
-            })
-            .save();
-        } else {
-          // Multi-page render
-          await html2pdf()
-            .set(opt)
-            .from(container)
-            .save();
-        }
+        // Render Page 1 first
+        const worker = html2pdf().set(opt).from(pages[0]).toPdf();
 
-        showToast(`✅ 已成功下載 ${currentCatalogFilename}！`);
+        await worker.get('pdf').then(async function(pdf) {
+          // Prune any accidental trailing blank page from Page 1
+          while (pdf.internal.getNumberOfPages() > 1) {
+            pdf.deletePage(pdf.internal.getNumberOfPages());
+          }
+
+          // If there are additional pages, render each page directly into the PDF
+          for (let i = 1; i < pages.length; i++) {
+            pdf.addPage('a4', 'landscape');
+            const canvas = await html2canvas(pages[i], {
+              scale: 2,
+              useCORS: true,
+              backgroundColor: '#ffffff',
+              scrollX: 0,
+              scrollY: 0
+            });
+            const imgData = canvas.toDataURL('image/jpeg', 0.98);
+            pdf.addImage(imgData, 'JPEG', 0, 0, 297, 210);
+          }
+        }).save();
+
+        showToast(`✅ 已成功下載 ${currentCatalogFilename} (共 ${pages.length} 頁)！`);
       } catch (err) {
         console.error("PDF generation error:", err);
         showToast("下載失敗，改以直接列印模式輸出", false);
