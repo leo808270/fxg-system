@@ -2514,13 +2514,25 @@ const firebaseConfig = {
 
     function openInvAdjustModal(presetName = "") {
       const modal = document.getElementById("modalInvAdjust");
-      document.getElementById("formInvAdjust").reset();
+      const form = document.getElementById("formInvAdjust");
+      if (form) form.reset();
+
+      const nameEl = document.getElementById("invAdjName");
+      const curStockEl = document.getElementById("invAdjCurStock") || document.getElementById("invAdjOldStock");
+      const realQtyEl = document.getElementById("invAdjRealQty") || document.getElementById("invAdjNewStock");
+
       if (presetName) {
-        document.getElementById("invAdjName").value = presetName;
+        if (nameEl) nameEl.value = presetName;
         const stats = getItemStockStats(presetName);
-        document.getElementById("invAdjOldStock").value = stats.stock;
-        document.getElementById("invAdjNewStock").value = stats.stock;
+        if (curStockEl) curStockEl.value = stats.stock;
+        if (realQtyEl) {
+          realQtyEl.value = stats.stock;
+          setTimeout(() => realQtyEl.select(), 50);
+        }
+      } else {
+        if (curStockEl) curStockEl.value = "-";
       }
+
       modal.classList.remove("hidden");
     }
 
@@ -5777,25 +5789,49 @@ const firebaseConfig = {
         }
       });
 
-      document.getElementById("invAdjName").addEventListener("input", (e) => {
-        const val = e.target.value.trim();
-        if (val) {
-          const stats = getItemStockStats(val);
-          document.getElementById("invAdjOldStock").value = stats.stock;
-        }
-      });
+      const invAdjNameEl = document.getElementById("invAdjName");
+      if (invAdjNameEl) {
+        const updateStock = () => {
+          const val = invAdjNameEl.value.trim();
+          const curStockEl = document.getElementById("invAdjCurStock") || document.getElementById("invAdjOldStock");
+          if (val) {
+            const stats = getItemStockStats(val);
+            if (curStockEl) curStockEl.value = stats.stock;
+          } else {
+            if (curStockEl) curStockEl.value = "-";
+          }
+        };
+        invAdjNameEl.addEventListener("input", updateStock);
+        invAdjNameEl.addEventListener("change", updateStock);
+      }
 
-      document.getElementById("formInvAdjust").addEventListener("submit", (e) => {
-        e.preventDefault();
-        const name = document.getElementById("invAdjName").value.trim();
-        const newStock = document.getElementById("invAdjNewStock").value;
-        const remark = document.getElementById("invAdjRemark").value.trim();
+      const formInvAdjEl = document.getElementById("formInvAdjust");
+      if (formInvAdjEl) {
+        formInvAdjEl.addEventListener("submit", (e) => {
+          e.preventDefault();
+          const nameEl = document.getElementById("invAdjName");
+          const realQtyEl = document.getElementById("invAdjRealQty") || document.getElementById("invAdjNewStock");
+          const remarkEl = document.getElementById("invAdjReason") || document.getElementById("invAdjRemark");
 
-        if (addStockAdjustment(name, newStock, remark)) {
-          showToast(`已完成「${name}」盤點校正，最新庫存為 ${newStock}`);
-          document.getElementById("modalInvAdjust").classList.add("hidden");
-        }
-      });
+          const name = nameEl ? nameEl.value.trim() : "";
+          const newStock = realQtyEl ? realQtyEl.value.trim() : "";
+          const remark = remarkEl ? remarkEl.value.trim() : "";
+
+          if (!name) {
+            showToast("請選擇或輸入盤點品項！", false);
+            return;
+          }
+          if (newStock === "" || isNaN(parseFloat(newStock))) {
+            showToast("請輸入實際盤點實存數量！", false);
+            return;
+          }
+
+          if (addStockAdjustment(name, newStock, remark)) {
+            showToast(`已完成「${name}」盤點校正，最新庫存已更新為 ${newStock}`);
+            document.getElementById("modalInvAdjust").classList.add("hidden");
+          }
+        });
+      }
 
       // Quick filter low stock
       document.getElementById("btnFilterLowStockQuick").addEventListener("click", () => {
