@@ -1278,13 +1278,10 @@
           </div>
 
           <div class="flex flex-wrap gap-2">
-            <button id="btnPriceAddModal" class="px-3.5 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1 shadow">
+            <button id="btnPriceAddModal" class="px-3.5 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1 shadow cursor-pointer">
               <span>➕</span> 新增品項
             </button>
-            <button id="btnPriceReset" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-medium transition border border-slate-300">
-              <span>🔄</span> 重設為原廠預設
-            </button>
-            <button id="btnPriceExport" class="px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-xl text-xs font-medium transition border border-blue-200">
+            <button id="btnPriceExport" class="px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-xl text-xs font-medium transition border border-blue-200 cursor-pointer">
               <span>📥</span> 匯出價目表 JSON
             </button>
           </div>
@@ -6268,21 +6265,24 @@ const firebaseConfig = {
         document.getElementById("priceModal").classList.add("hidden");
       });
 
-      document.getElementById("btnPriceReset").addEventListener("click", () => {
-        showConfirmDialog(
-          "確定重設價目表？",
-          "此操作將會將價目庫回復為原廠預設清單（共 60 項商品），自訂的新品項與改價將會被覆蓋重設。",
-          () => {
-            currentPriceList = [...DEFAULT_PRICE_LIST];
-            savePriceList();
-            renderPriceTable();
-            renderPriceDatalist();
-            renderQuickTags();
-            showToast("價目表已重設為原檔預設清單 (共 60 項)");
-          },
-          "確定重設價目表"
-        );
-      });
+      const btnPriceReset = document.getElementById("btnPriceReset");
+      if (btnPriceReset) {
+        btnPriceReset.addEventListener("click", () => {
+          showConfirmDialog(
+            "確定重設價目表？",
+            "此操作將會將價目庫回復為原廠預設清單（共 60 項商品），自訂的新品項與改價將會被覆蓋重設。",
+            () => {
+              currentPriceList = [...DEFAULT_PRICE_LIST];
+              savePriceList();
+              renderPriceTable();
+              renderPriceDatalist();
+              renderQuickTags();
+              showToast("價目表已重設為原檔預設清單 (共 60 項)");
+            },
+            "確定重設價目表"
+          );
+        });
+      }
 
       document.getElementById("btnPriceExport").addEventListener("click", () => {
         const jsonStr = JSON.stringify(currentPriceList, null, 2);
