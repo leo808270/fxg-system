@@ -1828,7 +1828,7 @@ const firebaseConfig = {
               <h3 id="catalogModalTitle" class="text-base sm:text-lg font-bold text-slate-800 flex items-center gap-2">
                 產品目錄 (A4 橫向) - 預覽與下載
               </h3>
-              <p class="text-[11px] text-slate-500">預設全部商品顯示；點擊「⚙️ 勾選顯示品項」或表格旁「✕」可移除不需顯示的商品</p>
+              <p class="text-[11px] text-slate-500">預設全部商品顯示；點擊「⚙️ 勾選顯示品項」或「✕」可移除品項；點擊綠色「📥 下載 PDF 檔案」即可直接下載完整橫向 PDF</p>
             </div>
           </div>
           <div class="flex flex-wrap items-center gap-2">
@@ -6675,7 +6675,10 @@ const firebaseConfig = {
             const imgData = canvas.toDataURL('image/jpeg', 0.98);
             pdf.addImage(imgData, 'JPEG', 0, 0, 297, 210);
           }
-        }).save();
+
+          // Save directly via jsPDF instance
+          pdf.save(currentCatalogFilename);
+        });
 
         showToast(`✅ 已成功下載 ${currentCatalogFilename} (共 ${pages.length} 頁)！`);
       } catch (err) {
@@ -6688,20 +6691,23 @@ const firebaseConfig = {
     }
 
     function printCatalogDirect() {
-      const styleEl = document.createElement("style");
-      styleEl.id = "catalogLandscapePrintStyle";
-      styleEl.textContent = "@page { size: A4 landscape !important; margin: 0 !important; }";
-      document.head.appendChild(styleEl);
+      let styleEl = document.getElementById("catalogLandscapePrintStyle");
+      if (!styleEl) {
+        styleEl = document.createElement("style");
+        styleEl.id = "catalogLandscapePrintStyle";
+        document.head.appendChild(styleEl);
+      }
+      styleEl.textContent = "@media print { @page { size: A4 landscape !important; margin: 0 !important; } }";
 
       document.body.classList.add("print-catalog-mode");
 
       setTimeout(() => {
         window.print();
-      }, 100);
+      }, 150);
 
       window.addEventListener("afterprint", () => {
         document.body.classList.remove("print-catalog-mode");
-        if (styleEl.parentNode) styleEl.parentNode.removeChild(styleEl);
+        if (styleEl && styleEl.parentNode) styleEl.parentNode.removeChild(styleEl);
       }, { once: true });
     }
 
