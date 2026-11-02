@@ -443,6 +443,48 @@
       scrollbar-width: none;
       -webkit-overflow-scrolling: touch;
     }
+
+    /* Print Styling for A4 Landscape Catalog & Price List */
+    @media print {
+      body.print-catalog-mode {
+        width: 100% !important;
+        height: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #ffffff !important;
+      }
+      body.print-catalog-mode .no-print,
+      body.print-catalog-mode #appView,
+      body.print-catalog-mode #loginView,
+      body.print-catalog-mode #toast,
+      body.print-catalog-mode .print-container,
+      body.print-catalog-mode .modal-header {
+        display: none !important;
+      }
+      body.print-catalog-mode #catalogPreviewModal {
+        display: block !important;
+        position: static !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        background: transparent !important;
+      }
+      .no-print-action {
+        display: none !important;
+      }
+      body.print-catalog-mode .catalog-print-sheet-page {
+        width: 297mm !important;
+        height: 209mm !important;
+        max-height: 209mm !important;
+        box-shadow: none !important;
+        margin: 0 auto !important;
+        page-break-after: always !important;
+        page-break-inside: avoid !important;
+      }
+      body.print-catalog-mode .catalog-print-sheet-page:last-child {
+        page-break-after: avoid !important;
+      }
+    }
+
   </style>
   <!-- Google Firebase Realtime Database SDK (Compat build for cross-device cloud sync) -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -1769,6 +1811,69 @@ const firebaseConfig = {
         <button type="button" id="btnStatOrdersModalCloseBottom" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-semibold transition">
           關閉視窗
         </button>
+      </div>
+    </div>
+  </div>
+
+    <!-- Modal: 產品目錄與價目表 A4 橫向預覽與匯出 -->
+  <div id="catalogPreviewModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4 overflow-y-auto hidden">
+    <div class="bg-white rounded-2xl w-full max-w-6xl max-h-[96vh] shadow-2xl border border-slate-300 flex flex-col overflow-hidden my-auto animate-fade-in">
+      <!-- Fixed Header Bar -->
+      <div class="modal-header flex flex-col border-b border-slate-200 flex-shrink-0 bg-slate-50">
+        <!-- Top Row: Title & Action Buttons -->
+        <div class="flex flex-wrap items-center justify-between p-3 sm:p-4 gap-2">
+          <div class="flex items-center gap-2.5">
+            <span class="text-2xl">📄</span>
+            <div>
+              <h3 id="catalogModalTitle" class="text-base sm:text-lg font-bold text-slate-800 flex items-center gap-2">
+                產品目錄 (A4 橫向) - 預覽與下載
+              </h3>
+              <p class="text-[11px] text-slate-500">預設全部商品顯示；點擊「⚙️ 勾選顯示品項」或表格旁「✕」可移除不需顯示的商品</p>
+            </div>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <button type="button" id="btnToggleCatalogFilter" class="px-3 py-1.5 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-2xs cursor-pointer">
+              <span>⚙️</span> 勾選顯示商品 (<span id="catalogVisibleCountBadge">64/64</span>)
+            </button>
+            <button type="button" id="btnResetCatalogAllVisible" class="px-2.5 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 rounded-xl text-xs font-bold transition flex items-center gap-1 cursor-pointer" title="還原為預設全部顯示">
+              <span>🔄</span> 全選顯示
+            </button>
+            <button type="button" id="btnDownloadCatalogPdfAction" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow cursor-pointer">
+              <span>📥</span> 下載 PDF 檔案
+            </button>
+            <button type="button" id="btnPrintCatalogAction" class="px-3.5 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow cursor-pointer">
+              <span>🖨️</span> 直接列印 (A4橫向)
+            </button>
+            <button type="button" id="btnCatalogModalClose" class="text-slate-400 hover:text-slate-700 text-lg w-8 h-8 rounded-lg hover:bg-slate-200 flex items-center justify-center transition cursor-pointer">✕</button>
+          </div>
+        </div>
+
+        <!-- Collapsible Product Visibility Checklist Drawer -->
+        <div id="catalogFilterDrawer" class="hidden p-3.5 bg-white border-t border-slate-200 space-y-2 text-xs">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div class="flex items-center gap-2">
+              <span class="font-bold text-slate-700">
+                ☑️ 勾選欲在表格中顯示的商品（取消勾選即自表格移除）：
+              </span>
+              <span id="catalogDrawerCount" class="text-amber-800 font-bold bg-amber-50 px-2 py-0.5 rounded border border-amber-200"></span>
+            </div>
+            <div class="flex items-center gap-2">
+              <input type="text" id="catalogFilterSearchInput" placeholder="🔍 快速篩選品名..." class="px-2.5 py-1 bg-slate-50 border border-slate-300 rounded-lg text-xs outline-none focus:border-amber-600 w-36 sm:w-48">
+              <button type="button" id="btnCatalogDrawerSelectAll" class="px-2.5 py-1 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 rounded-lg font-bold transition cursor-pointer">全選</button>
+              <button type="button" id="btnCatalogDrawerClearAll" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 border border-slate-300 rounded-lg font-medium transition cursor-pointer">全不選</button>
+            </div>
+          </div>
+          <div id="catalogChecklistContainer" class="p-2.5 bg-slate-50 border border-slate-200 rounded-xl max-h-48 overflow-y-auto custom-scrollbar grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+            <!-- Dynamically populated checkboxes -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Scrollable Preview Area -->
+      <div class="p-3 sm:p-6 overflow-auto custom-scrollbar flex-1 bg-slate-200/90 flex flex-col items-center gap-6">
+        <div id="catalogPrintContainer" class="space-y-6">
+          <!-- Dynamically populated page(s) -->
+        </div>
       </div>
     </div>
   </div>
@@ -6272,99 +6377,31 @@ const firebaseConfig = {
     // =========================================================
     // --- EXPORT PRODUCT CATALOG & PRICE LIST A4 LANDSCAPE PDF ---
     // =========================================================
-    async function exportCatalogPDF() {
-      await generatePriceOrCatalogPDF('catalog');
-    }
+    let currentCatalogType = 'catalog';
+    let currentCatalogFilename = '芳喜蓁站手工坊_產品目錄.pdf';
+    let catalogExcludedItems = new Set(); // Stores items user chose to hide; defaults to empty (ALL shown)
 
-    async function exportPriceListPDF() {
-      await generatePriceOrCatalogPDF('price');
-    }
-
-    async function generatePriceOrCatalogPDF(type = 'catalog') {
+    function openCatalogPreview(type = 'catalog') {
+      currentCatalogType = type;
       const isPrice = (type === 'price');
+      const subTitle = isPrice ? "價目表" : "產品目錄";
+      currentCatalogFilename = isPrice ? "芳喜蓁站手工坊_價目表.pdf" : "芳喜蓁站手工坊_產品目錄.pdf";
+
+      document.getElementById("catalogModalTitle").textContent = `${subTitle} (A4 橫向) - 預覽與下載`;
+
+      // Render the catalog sheets & checklist
+      renderCatalogSheets();
+      renderCatalogDrawerChecklist();
+
+      // Show preview modal
+      document.getElementById("catalogPreviewModal").classList.remove("hidden");
+    }
+
+    function renderCatalogSheets() {
+      const isPrice = (currentCatalogType === 'price');
       const titleMain = storeConfig.storeName || "芳喜蓁站手工坊";
       const subTitle = isPrice ? "價目表" : "產品目錄";
-      const defaultFilename = isPrice ? "芳喜蓁站手工坊_價目表.pdf" : "芳喜蓁站手工坊_產品目錄.pdf";
 
-      showToast(`📄 正在為您產生${subTitle} A4 橫向 PDF，請稍候...`);
-
-      // Prepare items up to 48 rows (24 per column)
-      const items = [...currentPriceList];
-      const maxRows = 24;
-
-      let leftRowsHtml = "";
-
-      for (let i = 0; i < maxRows; i++) {
-        const leftIdx = i + 1;
-        const rightIdx = i + 1 + maxRows;
-
-        const leftItem = items[leftIdx - 1] || null;
-        const rightItem = items[rightIdx - 1] || null;
-
-        // Left Row
-        const lName = leftItem ? leftItem.name : "";
-        const lSpec = leftItem ? (leftItem.spec || "") : "";
-        const lPrice = leftItem ? (typeof leftItem.price === 'number' ? leftItem.price : (leftItem.price || '')) : "";
-
-        // Right Row
-        const rName = rightItem ? rightItem.name : "";
-        const rSpec = rightItem ? (rightItem.spec || "") : "";
-        const rPrice = rightItem ? (typeof rightItem.price === 'number' ? rightItem.price : (rightItem.price || '')) : "";
-
-        if (isPrice) {
-          leftRowsHtml += `
-            <tr style="height: 6.2mm; max-height: 6.2mm;">
-              <td style="width: 5%; border: 1px solid #000; text-align: center; font-size: 10pt; font-weight: bold; padding: 0;">${leftIdx}</td>
-              <td style="width: 20%; border: 1px solid #000; text-align: left; padding: 0 4px; font-size: 10pt; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${lName}</td>
-              <td style="width: 16%; border: 1px solid #000; text-align: left; padding: 0 4px; font-size: 9.5pt; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${lSpec}</td>
-              <td style="width: 9%; border: 1px solid #000; text-align: right; padding: 0 4px; font-size: 10pt; font-weight: bold;">${lPrice !== '' ? lPrice : ''}</td>
-              <td style="width: 5%; border: 1px solid #000; text-align: center; font-size: 10pt; font-weight: bold; padding: 0;">${rightIdx}</td>
-              <td style="width: 20%; border: 1px solid #000; text-align: left; padding: 0 4px; font-size: 10pt; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${rName}</td>
-              <td style="width: 16%; border: 1px solid #000; text-align: left; padding: 0 4px; font-size: 9.5pt; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${rSpec}</td>
-              <td style="width: 9%; border: 1px solid #000; text-align: right; padding: 0 4px; font-size: 10pt; font-weight: bold;">${rPrice !== '' ? rPrice : ''}</td>
-            </tr>
-          `;
-        } else {
-          leftRowsHtml += `
-            <tr style="height: 6.2mm; max-height: 6.2mm;">
-              <td style="width: 6%; border: 1px solid #000; text-align: center; font-size: 10pt; font-weight: bold; padding: 0;">${leftIdx}</td>
-              <td style="width: 22%; border: 1px solid #000; text-align: left; padding: 0 5px; font-size: 10.5pt; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${lName}</td>
-              <td style="width: 22%; border: 1px solid #000; text-align: left; padding: 0 5px; font-size: 10pt; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${lSpec}</td>
-              <td style="width: 6%; border: 1px solid #000; text-align: center; font-size: 10pt; font-weight: bold; padding: 0;">${rightIdx}</td>
-              <td style="width: 22%; border: 1px solid #000; text-align: left; padding: 0 5px; font-size: 10.5pt; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${rName}</td>
-              <td style="width: 22%; border: 1px solid #000; text-align: left; padding: 0 5px; font-size: 10pt; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${rSpec}</td>
-            </tr>
-          `;
-        }
-      }
-
-      const theadHtml = isPrice ? `
-        <thead>
-          <tr style="height: 6.2mm; max-height: 6.2mm; background-color: #ffffff;">
-            <th style="width: 5%; border: 1px solid #000; padding: 0;"></th>
-            <th style="width: 20%; border: 1px solid #000; text-align: center; font-size: 10.5pt; font-weight: bold;">品名</th>
-            <th style="width: 16%; border: 1px solid #000; text-align: center; font-size: 10.5pt; font-weight: bold;">數量</th>
-            <th style="width: 9%; border: 1px solid #000; text-align: center; font-size: 10.5pt; font-weight: bold;">金額</th>
-            <th style="width: 5%; border: 1px solid #000; padding: 0;"></th>
-            <th style="width: 20%; border: 1px solid #000; text-align: center; font-size: 10.5pt; font-weight: bold;">品名</th>
-            <th style="width: 16%; border: 1px solid #000; text-align: center; font-size: 10.5pt; font-weight: bold;">數量</th>
-            <th style="width: 9%; border: 1px solid #000; text-align: center; font-size: 10.5pt; font-weight: bold;">金額</th>
-          </tr>
-        </thead>
-      ` : `
-        <thead>
-          <tr style="height: 6.2mm; max-height: 6.2mm; background-color: #ffffff;">
-            <th style="width: 6%; border: 1px solid #000; padding: 0;"></th>
-            <th style="width: 22%; border: 1px solid #000; text-align: center; font-size: 10.5pt; font-weight: bold;">品名</th>
-            <th style="width: 22%; border: 1px solid #000; text-align: center; font-size: 10.5pt; font-weight: bold;">數量</th>
-            <th style="width: 6%; border: 1px solid #000; padding: 0;"></th>
-            <th style="width: 22%; border: 1px solid #000; text-align: center; font-size: 10.5pt; font-weight: bold;">品名</th>
-            <th style="width: 22%; border: 1px solid #000; text-align: center; font-size: 10.5pt; font-weight: bold;">數量</th>
-          </tr>
-        </thead>
-      `;
-
-      // Header top metadata
       const addr = storeConfig.address || "台南市安平區安平路446巷27弄23號1樓";
       const c1Name = storeConfig.contact1Name || "許芳瑜";
       const c1Phone = storeConfig.contact1Phone || "0931-310-660";
@@ -6372,101 +6409,308 @@ const firebaseConfig = {
       const c2Phone = storeConfig.contact2Phone || "0989-730-103";
       const taxId = storeConfig.taxId || "40713530";
 
-      const headerMetaRight = isPrice ? `
-        <div style="font-size: 8.5pt; color: #000; line-height: 1.35; text-align: left; padding-right: 5mm;">
-          <div>統一編號：${taxId}</div>
-          <div>食藥署登錄字號：D-200013583-000002</div>
-        </div>
-      ` : ``;
+      // Filter active items (Default: ALL shown)
+      const allItems = [...currentPriceList];
+      const activeItems = allItems.filter(item => !catalogExcludedItems.has(item.name));
 
-      // Wrapper element for PDF generation (A4 landscape: 297mm x 210mm)
-      const wrapper = document.createElement("div");
-      wrapper.id = "tempPdfExportWrapper";
-      wrapper.style.cssText = `
-        position: fixed;
-        left: -9999px;
-        top: 0;
-        width: 297mm;
-        height: 210mm;
-        box-sizing: border-box;
-        background: #ffffff;
-        color: #000000;
-        padding: 5mm 9mm;
-        font-family: 'Noto Sans TC', system-ui, sans-serif;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-      `;
+      // Update badge counts
+      const badge = document.getElementById("catalogVisibleCountBadge");
+      if (badge) badge.textContent = `${activeItems.length}/${allItems.length}`;
+      const drawerBadge = document.getElementById("catalogDrawerCount");
+      if (drawerBadge) drawerBadge.textContent = `顯示 ${activeItems.length} / 共 ${allItems.length} 項`;
 
-      wrapper.innerHTML = `
-        <!-- Title & Header Area -->
-        <div style="width: 100%; box-sizing: border-box; margin-bottom: 2mm;">
-          <div style="text-align: center; margin-bottom: 1.5mm;">
-            <div style="font-size: 20pt; font-weight: 900; letter-spacing: 2px; line-height: 1.15; font-family: 'Noto Serif TC', serif, 'Noto Sans TC';">${titleMain}</div>
-            <div style="font-size: 15pt; font-weight: bold; letter-spacing: 4px; line-height: 1.2;">${subTitle}</div>
+      const perPage = 48; // 24 rows * 2 columns
+      const numPages = Math.max(1, Math.ceil(activeItems.length / perPage));
+
+      const container = document.getElementById("catalogPrintContainer");
+      if (!container) return;
+      container.innerHTML = "";
+
+      for (let pageIdx = 0; pageIdx < numPages; pageIdx++) {
+        const pageStart = pageIdx * perPage;
+        const pageItems = activeItems.slice(pageStart, pageStart + perPage);
+
+        let rowsHtml = "";
+        const maxRows = 24;
+
+        for (let i = 0; i < maxRows; i++) {
+          const leftGlobalIdx = pageStart + i + 1;
+          const rightGlobalIdx = pageStart + i + 1 + maxRows;
+
+          const leftItem = pageItems[i] || null;
+          const rightItem = pageItems[i + maxRows] || null;
+
+          const lName = leftItem ? leftItem.name : "";
+          const lSpec = leftItem ? (leftItem.spec || "") : "";
+          const lPrice = leftItem ? (typeof leftItem.price === 'number' ? leftItem.price : (leftItem.price || '')) : "";
+
+          const rName = rightItem ? rightItem.name : "";
+          const rSpec = rightItem ? (rightItem.spec || "") : "";
+          const rPrice = rightItem ? (typeof rightItem.price === 'number' ? rightItem.price : (rightItem.price || '')) : "";
+
+          // Remove button for quick exclusion directly on the table
+          const lRemoveBtn = lName ? `<button type="button" class="btn-remove-catalog-row no-print-action text-rose-400 hover:text-rose-700 hover:bg-rose-100 px-1 rounded text-[11px] ml-1 font-bold transition shrink-0 cursor-pointer" data-name="${lName}" title="從本表中移除此品項">✕</button>` : "";
+          const rRemoveBtn = rName ? `<button type="button" class="btn-remove-catalog-row no-print-action text-rose-400 hover:text-rose-700 hover:bg-rose-100 px-1 rounded text-[11px] ml-1 font-bold transition shrink-0 cursor-pointer" data-name="${rName}" title="從本表中移除此品項">✕</button>` : "";
+
+          if (isPrice) {
+            rowsHtml += `
+              <tr style="height: 6.2mm; max-height: 6.2mm;">
+                <td style="width: 5%; border: 1px solid #000; text-align: center; font-size: 10pt; font-weight: bold; padding: 0;">${leftGlobalIdx}</td>
+                <td style="width: 20%; border: 1px solid #000; text-align: left; padding: 0 4px; font-size: 10pt; font-weight: 500;">
+                  <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                    <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${lName}</span>
+                    ${lRemoveBtn}
+                  </div>
+                </td>
+                <td style="width: 16%; border: 1px solid #000; text-align: left; padding: 0 4px; font-size: 9.5pt; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${lSpec}</td>
+                <td style="width: 9%; border: 1px solid #000; text-align: right; padding: 0 4px; font-size: 10pt; font-weight: bold;">${lPrice !== '' ? lPrice : ''}</td>
+                <td style="width: 5%; border: 1px solid #000; text-align: center; font-size: 10pt; font-weight: bold; padding: 0;">${rightGlobalIdx}</td>
+                <td style="width: 20%; border: 1px solid #000; text-align: left; padding: 0 4px; font-size: 10pt; font-weight: 500;">
+                  <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                    <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${rName}</span>
+                    ${rRemoveBtn}
+                  </div>
+                </td>
+                <td style="width: 16%; border: 1px solid #000; text-align: left; padding: 0 4px; font-size: 9.5pt; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${rSpec}</td>
+                <td style="width: 9%; border: 1px solid #000; text-align: right; padding: 0 4px; font-size: 10pt; font-weight: bold;">${rPrice !== '' ? rPrice : ''}</td>
+              </tr>
+            `;
+          } else {
+            rowsHtml += `
+              <tr style="height: 6.2mm; max-height: 6.2mm;">
+                <td style="width: 6%; border: 1px solid #000; text-align: center; font-size: 10pt; font-weight: bold; padding: 0;">${leftGlobalIdx}</td>
+                <td style="width: 22%; border: 1px solid #000; text-align: left; padding: 0 5px; font-size: 10.5pt; font-weight: 500;">
+                  <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                    <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${lName}</span>
+                    ${lRemoveBtn}
+                  </div>
+                </td>
+                <td style="width: 22%; border: 1px solid #000; text-align: left; padding: 0 5px; font-size: 10pt; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${lSpec}</td>
+                <td style="width: 6%; border: 1px solid #000; text-align: center; font-size: 10pt; font-weight: bold; padding: 0;">${rightGlobalIdx}</td>
+                <td style="width: 22%; border: 1px solid #000; text-align: left; padding: 0 5px; font-size: 10.5pt; font-weight: 500;">
+                  <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                    <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${rName}</span>
+                    ${rRemoveBtn}
+                  </div>
+                </td>
+                <td style="width: 22%; border: 1px solid #000; text-align: left; padding: 0 5px; font-size: 10pt; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${rSpec}</td>
+              </tr>
+            `;
+          }
+        }
+
+        const theadHtml = isPrice ? `
+          <thead>
+            <tr style="height: 6.2mm; max-height: 6.2mm; background-color: #ffffff;">
+              <th style="width: 5%; border: 1px solid #000; padding: 0;"></th>
+              <th style="width: 20%; border: 1px solid #000; text-align: center; font-size: 10.5pt; font-weight: bold;">品名</th>
+              <th style="width: 16%; border: 1px solid #000; text-align: center; font-size: 10.5pt; font-weight: bold;">數量</th>
+              <th style="width: 9%; border: 1px solid #000; text-align: center; font-size: 10.5pt; font-weight: bold;">金額</th>
+              <th style="width: 5%; border: 1px solid #000; padding: 0;"></th>
+              <th style="width: 20%; border: 1px solid #000; text-align: center; font-size: 10.5pt; font-weight: bold;">品名</th>
+              <th style="width: 16%; border: 1px solid #000; text-align: center; font-size: 10.5pt; font-weight: bold;">數量</th>
+              <th style="width: 9%; border: 1px solid #000; text-align: center; font-size: 10.5pt; font-weight: bold;">金額</th>
+            </tr>
+          </thead>
+        ` : `
+          <thead>
+            <tr style="height: 6.2mm; max-height: 6.2mm; background-color: #ffffff;">
+              <th style="width: 6%; border: 1px solid #000; padding: 0;"></th>
+              <th style="width: 22%; border: 1px solid #000; text-align: center; font-size: 10.5pt; font-weight: bold;">品名</th>
+              <th style="width: 22%; border: 1px solid #000; text-align: center; font-size: 10.5pt; font-weight: bold;">數量</th>
+              <th style="width: 6%; border: 1px solid #000; padding: 0;"></th>
+              <th style="width: 22%; border: 1px solid #000; text-align: center; font-size: 10.5pt; font-weight: bold;">品名</th>
+              <th style="width: 22%; border: 1px solid #000; text-align: center; font-size: 10.5pt; font-weight: bold;">數量</th>
+            </tr>
+          </thead>
+        `;
+
+        const headerMetaRight = isPrice ? `
+          <div style="font-size: 8.5pt; color: #000; line-height: 1.35; text-align: left; padding-right: 5mm;">
+            <div>統一編號：${taxId}</div>
+            <div>食藥署登錄字號：D-200013583-000002</div>
           </div>
-          <div style="display: flex; justify-content: space-between; align-items: flex-end; width: 100%; font-size: 8.5pt; line-height: 1.35;">
-            <div>
-              <div>地址：${addr}</div>
-              <div style="display: flex; gap: 15px;">
-                <span>聯絡人：${c1Name} &nbsp; 電話:${c1Phone}</span>
-                <span>聯絡人：${c2Name} &nbsp; 電話:${c2Phone}</span>
-              </div>
+        ` : ``;
+
+        const pageSubtitle = (numPages > 1) ? `${subTitle} (第 ${pageIdx + 1} 頁)` : subTitle;
+
+        const pageEl = document.createElement("div");
+        pageEl.className = "catalog-print-sheet-page bg-white text-black shadow-2xl mx-auto html2pdf__page-break";
+        pageEl.style.cssText = "width: 297mm; min-height: 209mm; max-height: 209mm; padding: 4.5mm 9mm; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; font-family: 'Noto Sans TC', system-ui, -apple-system, sans-serif; background: #ffffff;";
+
+        pageEl.innerHTML = `
+          <!-- Title & Header Area -->
+          <div style="width: 100%; box-sizing: border-box; margin-bottom: 2mm;">
+            <div style="text-align: center; margin-bottom: 1.5mm;">
+              <div style="font-size: 20pt; font-weight: 900; letter-spacing: 2px; line-height: 1.15; font-family: 'Noto Serif TC', serif, 'Noto Sans TC';">${titleMain}</div>
+              <div style="font-size: 15pt; font-weight: bold; letter-spacing: 4px; line-height: 1.2;">${pageSubtitle}</div>
             </div>
-            ${headerMetaRight}
+            <div style="display: flex; justify-content: space-between; align-items: flex-end; width: 100%; font-size: 8.5pt; line-height: 1.35;">
+              <div>
+                <div>地址：${addr}</div>
+                <div style="display: flex; gap: 15px;">
+                  <span>聯絡人：${c1Name} &nbsp; 電話:${c1Phone}</span>
+                  <span>聯絡人：${c2Name} &nbsp; 電話:${c2Phone}</span>
+                </div>
+              </div>
+              ${headerMetaRight}
+            </div>
           </div>
-        </div>
 
-        <!-- Master Table -->
-        <div style="width: 100%; flex: 1; box-sizing: border-box;">
-          <table style="width: 100%; border-collapse: collapse; table-layout: fixed; border: 1px solid #000;">
-            ${theadHtml}
-            <tbody>
-              ${leftRowsHtml}
-            </tbody>
-          </table>
-        </div>
-      `;
+          <!-- Master Table -->
+          <div style="width: 100%; flex: 1; box-sizing: border-box;">
+            <table style="width: 100%; border-collapse: collapse; table-layout: fixed; border: 1px solid #000;">
+              ${theadHtml}
+              <tbody>
+                ${rowsHtml}
+              </tbody>
+            </table>
+          </div>
+        `;
 
-      document.body.appendChild(wrapper);
+        container.appendChild(pageEl);
+      }
+
+      // Attach row-level remove listeners
+      container.querySelectorAll(".btn-remove-catalog-row").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const itemName = btn.getAttribute("data-name");
+          if (itemName) {
+            catalogExcludedItems.add(itemName);
+            renderCatalogSheets();
+            renderCatalogDrawerChecklist(document.getElementById("catalogFilterSearchInput") ? document.getElementById("catalogFilterSearchInput").value : "");
+            showToast(`已自本表中移除「${itemName}」 (剩餘 ${currentPriceList.length - catalogExcludedItems.size} 項)`);
+          }
+        });
+      });
+    }
+
+    function renderCatalogDrawerChecklist(searchKeyword = "") {
+      const container = document.getElementById("catalogChecklistContainer");
+      if (!container) return;
+      container.innerHTML = "";
+
+      const normalized = searchKeyword.toLowerCase().trim();
+      const allItems = [...currentPriceList];
+
+      allItems.forEach(item => {
+        if (normalized && !item.name.toLowerCase().includes(normalized)) {
+          return;
+        }
+
+        const isChecked = !catalogExcludedItems.has(item.name);
+        const label = document.createElement("label");
+        label.className = `inline-flex items-center gap-1.5 p-1.5 rounded-lg border text-xs cursor-pointer transition select-none ${isChecked ? 'bg-amber-50/70 border-amber-300 text-slate-800' : 'bg-slate-100 border-slate-200 text-slate-400 line-through'}`;
+
+        label.innerHTML = `
+          <input type="checkbox" class="catalog-item-checkbox rounded text-amber-600 focus:ring-amber-500 cursor-pointer" data-name="${item.name}" ${isChecked ? 'checked' : ''}>
+          <span class="truncate font-medium">${item.name}</span>
+        `;
+
+        const checkbox = label.querySelector(".catalog-item-checkbox");
+        checkbox.addEventListener("change", (e) => {
+          if (e.target.checked) {
+            catalogExcludedItems.delete(item.name);
+          } else {
+            catalogExcludedItems.add(item.name);
+          }
+          renderCatalogSheets();
+          renderCatalogDrawerChecklist(searchKeyword);
+        });
+
+        container.appendChild(label);
+      });
+    }
+
+    async function downloadCatalogPdfFromDOM() {
+      const container = document.getElementById("catalogPrintContainer");
+      if (!container) return;
+
+      const pages = container.querySelectorAll(".catalog-print-sheet-page");
+      if (pages.length === 0) {
+        showToast("無可匯出的商品資料！", false);
+        return;
+      }
+
+      showToast(`📄 正在為您輸出 ${currentCatalogFilename} (共 ${pages.length} 頁)，請稍候...`);
+
+      // Temporarily hide action buttons during capture
+      container.querySelectorAll(".no-print-action").forEach(el => el.style.setProperty("display", "none", "important"));
 
       try {
         const opt = {
           margin: 0,
-          filename: defaultFilename,
+          filename: currentCatalogFilename,
           image: { type: 'jpeg', quality: 0.98 },
           html2canvas: { 
             scale: 2, 
-            useCORS: true, 
-            letterRendering: true,
-            scrollY: 0,
-            scrollX: 0
+            useCORS: true,
+            backgroundColor: '#ffffff',
+            scrollX: 0,
+            scrollY: 0
           },
-          jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
+          jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' },
+          pagebreak: { mode: ['avoid-all', 'css'] }
         };
 
-        await html2pdf()
-          .set(opt)
-          .from(wrapper)
-          .toPdf()
-          .get('pdf')
-          .then(function(pdf) {
-            while (pdf.internal.getNumberOfPages() > 1) {
-              pdf.deletePage(pdf.internal.getNumberOfPages());
-            }
-          })
-          .save();
+        if (pages.length === 1) {
+          // Single-page exact full-bleed render
+          await html2pdf()
+            .set(opt)
+            .from(pages[0])
+            .toPdf()
+            .get('pdf')
+            .then(function(pdf) {
+              while (pdf.internal.getNumberOfPages() > 1) {
+                pdf.deletePage(pdf.internal.getNumberOfPages());
+              }
+            })
+            .save();
+        } else {
+          // Multi-page render
+          await html2pdf()
+            .set(opt)
+            .from(container)
+            .save();
+        }
 
-        showToast(`✅ 已成功下載 ${subTitle} A4 橫向單頁 PDF！`);
+        showToast(`✅ 已成功下載 ${currentCatalogFilename}！`);
       } catch (err) {
         console.error("PDF generation error:", err);
-        showToast("PDF 產生失敗，請確認瀏覽器支援 html2pdf", false);
+        showToast("下載失敗，改以直接列印模式輸出", false);
+        printCatalogDirect();
       } finally {
-        if (wrapper.parentNode) {
-          wrapper.parentNode.removeChild(wrapper);
-        }
+        container.querySelectorAll(".no-print-action").forEach(el => el.style.removeProperty("display"));
       }
     }
+
+    function printCatalogDirect() {
+      const styleEl = document.createElement("style");
+      styleEl.id = "catalogLandscapePrintStyle";
+      styleEl.textContent = "@page { size: A4 landscape !important; margin: 0 !important; }";
+      document.head.appendChild(styleEl);
+
+      document.body.classList.add("print-catalog-mode");
+
+      setTimeout(() => {
+        window.print();
+      }, 100);
+
+      window.addEventListener("afterprint", () => {
+        document.body.classList.remove("print-catalog-mode");
+        if (styleEl.parentNode) styleEl.parentNode.removeChild(styleEl);
+      }, { once: true });
+    }
+
+    async function exportCatalogPDF() {
+      openCatalogPreview('catalog');
+    }
+
+    async function exportPriceListPDF() {
+      openCatalogPreview('price');
+    }
+
     async function exportCleanPDF() {
       syncQuoteToCopy(parseFloat(document.getElementById("quoteTotalDisplay").textContent.replace(/,/g, '')) || 0);
 
@@ -6593,6 +6837,67 @@ const firebaseConfig = {
 
       const btnExpPrice = document.getElementById("btnExportPriceListPDF");
       if (btnExpPrice) btnExpPrice.addEventListener("click", exportPriceListPDF);
+
+      // Catalog Preview Modal Action Buttons
+      const btnDlCatPdf = document.getElementById("btnDownloadCatalogPdfAction");
+      if (btnDlCatPdf) btnDlCatPdf.addEventListener("click", downloadCatalogPdfFromDOM);
+
+      const btnPrintCat = document.getElementById("btnPrintCatalogAction");
+      if (btnPrintCat) btnPrintCat.addEventListener("click", printCatalogDirect);
+
+      const btnCloseCatModal = document.getElementById("btnCatalogModalClose");
+      if (btnCloseCatModal) {
+        btnCloseCatModal.addEventListener("click", () => {
+          document.getElementById("catalogPreviewModal").classList.add("hidden");
+        });
+      }
+
+      // Catalog Filter Drawer Toggles
+      const btnToggleCatFilter = document.getElementById("btnToggleCatalogFilter");
+      if (btnToggleCatFilter) {
+        btnToggleCatFilter.addEventListener("click", () => {
+          const drawer = document.getElementById("catalogFilterDrawer");
+          if (drawer) drawer.classList.toggle("hidden");
+        });
+      }
+
+      // Reset to Default Show All (全選顯示)
+      const btnResetAllVisible = document.getElementById("btnResetCatalogAllVisible");
+      if (btnResetAllVisible) {
+        btnResetAllVisible.addEventListener("click", () => {
+          catalogExcludedItems.clear();
+          renderCatalogSheets();
+          renderCatalogDrawerChecklist();
+          showToast(`已還原為預設全部顯示 (共 ${currentPriceList.length} 項)`);
+        });
+      }
+
+      const btnDrawerSelectAll = document.getElementById("btnCatalogDrawerSelectAll");
+      if (btnDrawerSelectAll) {
+        btnDrawerSelectAll.addEventListener("click", () => {
+          catalogExcludedItems.clear();
+          renderCatalogSheets();
+          renderCatalogDrawerChecklist(document.getElementById("catalogFilterSearchInput") ? document.getElementById("catalogFilterSearchInput").value : "");
+          showToast(`已全選顯示所有商品 (共 ${currentPriceList.length} 項)`);
+        });
+      }
+
+      const btnDrawerClearAll = document.getElementById("btnCatalogDrawerClearAll");
+      if (btnDrawerClearAll) {
+        btnDrawerClearAll.addEventListener("click", () => {
+          currentPriceList.forEach(item => catalogExcludedItems.add(item.name));
+          renderCatalogSheets();
+          renderCatalogDrawerChecklist(document.getElementById("catalogFilterSearchInput") ? document.getElementById("catalogFilterSearchInput").value : "");
+          showToast("已清空所有品項顯示");
+        });
+      }
+
+      const catFilterSearch = document.getElementById("catalogFilterSearchInput");
+      if (catFilterSearch) {
+        catFilterSearch.addEventListener("input", (e) => {
+          renderCatalogDrawerChecklist(e.target.value);
+        });
+      }
 
       // Price Search
       document.getElementById("priceSearchInput").addEventListener("input", (e) => {
