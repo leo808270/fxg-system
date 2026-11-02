@@ -1656,81 +1656,86 @@ const firebaseConfig = {
     </div>
   </div>
 
-  <!-- Modal for Adding/Editing Customer -->
-  <div id="customerModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200">
-      <div class="flex items-center justify-between mb-4">
-        <h3 id="customerModalTitle" class="text-lg font-bold text-slate-800 flex items-center gap-2">
+    <!-- Modal for Adding/Editing Customer -->
+  <div id="customerModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto hidden">
+    <div class="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] shadow-2xl border border-slate-200 flex flex-col overflow-hidden my-auto animate-fade-in">
+      <!-- Fixed Header -->
+      <div class="flex items-center justify-between p-4 sm:p-5 border-b border-slate-100 flex-shrink-0 bg-white">
+        <h3 id="customerModalTitle" class="text-base sm:text-lg font-bold text-slate-800 flex items-center gap-2">
           <span>👥</span> 新增客戶資料
         </h3>
-        <button type="button" id="btnCustomerModalCloseTop" class="text-slate-400 hover:text-slate-600 text-lg">✕</button>
+        <button type="button" id="btnCustomerModalCloseTop" class="text-slate-400 hover:text-slate-600 text-lg w-8 h-8 rounded-lg hover:bg-slate-100 flex items-center justify-center transition cursor-pointer">✕</button>
       </div>
 
-      <form id="customerItemForm" class="space-y-4">
+      <!-- Scrollable Form Body -->
+      <form id="customerItemForm" class="flex flex-col flex-1 min-h-0 overflow-hidden">
         <input type="hidden" id="editCustomerIndex" value="-1">
         
-        <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">客戶 / 門市名稱 <span class="text-rose-500">*</span></label>
-          <input type="text" id="modalCustName" required placeholder="例如：早安美而美（安平店）" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:border-amber-600 outline-none">
-        </div>
+        <div class="p-4 sm:p-5 overflow-y-auto custom-scrollbar flex-1 space-y-3.5">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">客戶 / 門市名稱 <span class="text-rose-500">*</span></label>
+            <input type="text" id="modalCustName" required placeholder="例如：早安美而美（安平店）" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:border-amber-600 outline-none">
+          </div>
 
-        <!-- NEW FIELD: 星期 (可複選 星期一到日) -->
-        <div class="bg-amber-50/60 border border-amber-200/90 rounded-2xl p-3 sm:p-3.5 space-y-2.5">
-          <div class="flex flex-wrap items-center justify-between gap-1.5">
-            <label class="block text-xs font-bold text-slate-800 flex items-center gap-1">
-              <span>📅</span> 星期（配送/叫貨固定星期，可複選）：
-            </label>
-            <div class="flex items-center gap-1 text-[11px]">
-              <button type="button" id="btnCustWeekdaysWeekday" class="px-2 py-0.5 rounded-lg bg-white hover:bg-amber-100 text-amber-900 border border-amber-300 font-semibold transition cursor-pointer">平日(一至五)</button>
-              <button type="button" id="btnCustWeekdaysWeekend" class="px-2 py-0.5 rounded-lg bg-white hover:bg-rose-100 text-rose-900 border border-rose-300 font-semibold transition cursor-pointer">週末(六日)</button>
-              <button type="button" id="btnCustWeekdaysAll" class="px-2 py-0.5 rounded-lg bg-white hover:bg-slate-200 text-slate-700 border border-slate-300 font-medium transition cursor-pointer">全選</button>
-              <button type="button" id="btnCustWeekdaysClear" class="px-2 py-0.5 rounded-lg bg-white hover:bg-slate-200 text-slate-500 border border-slate-300 font-medium transition cursor-pointer">清除</button>
+          <!-- NEW FIELD: 星期 (可複選 星期一到日) -->
+          <div class="bg-amber-50/60 border border-amber-200/90 rounded-2xl p-3 sm:p-3.5 space-y-2">
+            <div class="flex flex-wrap items-center justify-between gap-1.5">
+              <label class="block text-xs font-bold text-slate-800 flex items-center gap-1">
+                <span>📅</span> 星期（配送/叫貨固定星期，可複選）：
+              </label>
+              <div class="flex items-center gap-1 text-[11px]">
+                <button type="button" id="btnCustWeekdaysWeekday" class="px-2 py-0.5 rounded-lg bg-white hover:bg-amber-100 text-amber-900 border border-amber-300 font-semibold transition cursor-pointer">平日(一至五)</button>
+                <button type="button" id="btnCustWeekdaysWeekend" class="px-2 py-0.5 rounded-lg bg-white hover:bg-rose-100 text-rose-900 border border-rose-300 font-semibold transition cursor-pointer">週末(六日)</button>
+                <button type="button" id="btnCustWeekdaysAll" class="px-2 py-0.5 rounded-lg bg-white hover:bg-slate-200 text-slate-700 border border-slate-300 font-medium transition cursor-pointer">全選</button>
+                <button type="button" id="btnCustWeekdaysClear" class="px-2 py-0.5 rounded-lg bg-white hover:bg-slate-200 text-slate-500 border border-slate-300 font-medium transition cursor-pointer">清除</button>
+              </div>
+            </div>
+            <div id="modalCustWeekdayContainer" class="grid grid-cols-7 gap-1 sm:gap-1.5">
+              <!-- 7 weekday toggle buttons dynamically rendered -->
+            </div>
+            <p class="text-[11px] text-amber-900/70">💡 點選星期按鈕即可切換選取或取消，支援多選；亦可點擊快捷鍵一鍵選取</p>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">統一編號 / 代碼</label>
+              <input type="text" id="modalCustTaxId" placeholder="例如：88812345" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:border-amber-600 outline-none font-mono">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">聯絡人姓名</label>
+              <input type="text" id="modalCustContact" placeholder="例如：林店長" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:border-amber-600 outline-none">
             </div>
           </div>
-          <div id="modalCustWeekdayContainer" class="grid grid-cols-7 gap-1 sm:gap-1.5">
-            <!-- 7 weekday toggle buttons dynamically rendered -->
-          </div>
-          <p class="text-[11px] text-amber-900/70">💡 點選星期按鈕即可切換選取或取消，支援多選；亦可點擊快捷鍵一鍵選取</p>
-        </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">聯絡電話 / 手機</label>
+              <input type="text" id="modalCustPhone" placeholder="例如：0912-345-678" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:border-amber-600 outline-none">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">建立日期</label>
+              <input type="date" id="modalCustDate" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:border-amber-600 outline-none">
+            </div>
+          </div>
+
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">統一編號 / 代碼</label>
-            <input type="text" id="modalCustTaxId" placeholder="例如：88812345" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:border-amber-600 outline-none font-mono">
+            <label class="block text-xs font-bold text-slate-700 mb-1">送貨營業地址</label>
+            <input type="text" id="modalCustAddress" placeholder="例如：台南市安平區華平路123號" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:border-amber-600 outline-none">
           </div>
+
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">聯絡人姓名</label>
-            <input type="text" id="modalCustContact" placeholder="例如：林店長" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:border-amber-600 outline-none">
+            <label class="block text-xs font-bold text-slate-700 mb-1">常用配送備註 / 款項備註</label>
+            <input type="text" id="modalCustRemark" placeholder="例如：固定每週二、五早上八點前送達，匯入安平分行帳戶" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:border-amber-600 outline-none">
+            <p class="text-[11px] text-slate-400 mt-1">💡 開立估價單選取該客戶時，可自動載入此備註</p>
           </div>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">聯絡電話 / 手機</label>
-            <input type="text" id="modalCustPhone" placeholder="例如：0912-345-678" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:border-amber-600 outline-none">
-          </div>
-          <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">建立日期</label>
-            <input type="date" id="modalCustDate" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:border-amber-600 outline-none">
-          </div>
-        </div>
-
-        <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">送貨營業地址</label>
-          <input type="text" id="modalCustAddress" placeholder="例如：台南市安平區華平路123號" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:border-amber-600 outline-none">
-        </div>
-
-        <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">常用配送備註 / 款項備註</label>
-          <input type="text" id="modalCustRemark" placeholder="例如：固定每週二、五早上八點前送達，匯入安平分行帳戶" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:border-amber-600 outline-none">
-          <p class="text-[11px] text-slate-400 mt-1">💡 開立估價單選取該客戶時，可自動載入此備註</p>
-        </div>
-
-        <div class="flex justify-end gap-3 pt-3 border-t border-slate-100">
-          <button type="button" id="btnCustomerModalClose" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl border border-slate-300">
+        <!-- Fixed Footer Actions -->
+        <div class="flex justify-end gap-3 p-4 border-t border-slate-100 flex-shrink-0 bg-slate-50/80">
+          <button type="button" id="btnCustomerModalClose" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-200 rounded-xl border border-slate-300 transition cursor-pointer">
             取消
           </button>
-          <button type="submit" class="px-5 py-2 text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 rounded-xl shadow">
+          <button type="submit" class="px-5 py-2 text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 rounded-xl shadow transition cursor-pointer">
             確認儲存客戶
           </button>
         </div>
@@ -1738,54 +1743,58 @@ const firebaseConfig = {
     </div>
   </div>
 
-  <!-- Modal for Managing Quick Pick Favorite Tags -->
-  <div id="quickTagModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-5">
-      <div class="flex items-center justify-between pb-2 border-b border-slate-100">
-        <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+    <!-- Modal for Managing Quick Pick Favorite Tags -->
+  <div id="quickTagModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto hidden">
+    <div class="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] shadow-2xl border border-slate-200 flex flex-col overflow-hidden my-auto animate-fade-in">
+      <div class="flex items-center justify-between p-4 sm:p-5 border-b border-slate-100 flex-shrink-0 bg-white">
+        <h3 class="text-base sm:text-lg font-bold text-slate-800 flex items-center gap-2">
           <span>⚡</span> 常用商品快速點選管理
         </h3>
-        <button type="button" id="btnQuickTagModalCloseTop" class="text-slate-400 hover:text-slate-600 text-lg">✕</button>
+        <button type="button" id="btnQuickTagModalCloseTop" class="text-slate-400 hover:text-slate-600 text-lg w-8 h-8 rounded-lg hover:bg-slate-100 flex items-center justify-center transition cursor-pointer">✕</button>
       </div>
 
-      <!-- Add New Quick Tag Section -->
-      <div class="bg-amber-50/70 border border-amber-200 p-3.5 rounded-xl space-y-2">
-        <label class="block text-xs font-bold text-amber-950">
-          ➕ 從商品價目庫加入常用標籤：
-        </label>
-        <div class="flex items-center gap-2">
-          <select id="quickTagAddSelect" class="flex-1 px-3 py-2 bg-white border border-amber-300 rounded-xl text-xs font-medium outline-none focus:border-amber-600">
-            <!-- Dynamically populated with items not yet in quick tags -->
-          </select>
-          <button type="button" id="btnConfirmAddQuickTag" class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold shadow transition shrink-0">
-            加入常用
-          </button>
+      <div class="p-4 sm:p-5 overflow-y-auto custom-scrollbar flex-1 space-y-4">
+        <!-- Add New Quick Tag Section -->
+        <div class="bg-amber-50/70 border border-amber-200 p-3.5 rounded-xl space-y-2">
+          <label class="block text-xs font-bold text-amber-950">
+            ➕ 從商品價目庫加入常用標籤：
+          </label>
+          <div class="flex items-center gap-2">
+            <select id="quickTagAddSelect" class="flex-1 px-3 py-2 bg-white border border-amber-300 rounded-xl text-xs font-medium outline-none focus:border-amber-600">
+              <option value="">-- 請選擇欲加入常用清單的品名 --</option>
+            </select>
+            <button type="button" id="btnConfirmAddQuickTag" class="px-3.5 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold shadow transition cursor-pointer">
+              加入常用
+            </button>
+          </div>
+          <p class="text-[11px] text-amber-800">
+            💡 加為常用的商品會出現在估價單頂部快速點選區，點擊可直接加到表格中。
+          </p>
         </div>
-        <p class="text-[11px] text-amber-800/80">加入後將立即顯示於估價單常用區，點擊即可一秒填入品名與單價。</p>
+
+        <!-- Current Quick Tags Chips Section -->
+        <div class="space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-slate-700">
+              目前常用標籤清單（點擊標籤旁的 ✕ 即可移除）：
+            </span>
+            <span id="modalQuickTagCount" class="text-xs text-slate-500 font-semibold">
+              共 0 項
+            </span>
+          </div>
+          <div id="modalQuickTagsContainer" class="p-3 bg-slate-50 rounded-xl border border-slate-200 max-h-52 overflow-y-auto custom-scrollbar flex flex-wrap gap-1.5">
+            <!-- Populated by JS -->
+          </div>
+        </div>
       </div>
 
-      <!-- Current Quick Tags Chips Section -->
-      <div class="space-y-2">
-        <div class="flex items-center justify-between">
-          <span class="text-xs font-bold text-slate-700">
-            目前常用標籤清單（點擊標籤旁的 ✕ 即可移除）：
-          </span>
-          <span id="modalQuickTagCount" class="text-xs text-slate-500 font-semibold">
-            共 0 項
-          </span>
-        </div>
-        <div id="modalQuickTagsContainer" class="p-3 bg-slate-50 rounded-xl border border-slate-200 max-h-52 overflow-y-auto custom-scrollbar flex flex-wrap gap-1.5">
-          <!-- Populated by JS -->
-        </div>
-      </div>
-
-      <!-- Footer Actions -->
-      <div class="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-100">
-        <button type="button" id="btnResetQuickTags" class="px-3.5 py-1.5 text-xs text-slate-600 hover:text-slate-900 border border-slate-300 rounded-xl font-medium transition hover:bg-slate-100">
+      <!-- Fixed Footer Actions -->
+      <div class="flex flex-wrap items-center justify-between gap-3 p-4 border-t border-slate-100 flex-shrink-0 bg-slate-50/80">
+        <button type="button" id="btnResetQuickTags" class="px-3.5 py-1.5 text-xs text-slate-600 hover:text-slate-900 border border-slate-300 rounded-xl font-medium transition hover:bg-slate-200 cursor-pointer">
           🔄 回復預設標籤 (21項)
         </button>
-        <button type="button" id="btnQuickTagModalClose" class="px-5 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-bold shadow transition">
-          完成關閉
+        <button type="button" id="btnQuickTagModalClose" class="px-5 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-bold shadow transition cursor-pointer">
+          完成設定
         </button>
       </div>
     </div>
@@ -1816,33 +1825,38 @@ const firebaseConfig = {
     </div>
   </div>
 
-  <!-- Modal for Adding/Editing Price Item -->
-  <div id="priceModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200">
-      <h3 id="priceModalTitle" class="text-lg font-bold text-slate-800 mb-4">新增商品品項</h3>
-      <form id="priceItemForm" class="space-y-4">
+    <!-- Modal for Adding/Editing Price Item -->
+  <div id="priceModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto hidden">
+    <div class="bg-white rounded-2xl max-w-md w-full max-h-[90vh] shadow-2xl border border-slate-200 flex flex-col overflow-hidden my-auto animate-fade-in">
+      <div class="flex items-center justify-between p-4 sm:p-5 border-b border-slate-100 flex-shrink-0 bg-white">
+        <h3 id="priceModalTitle" class="text-base sm:text-lg font-bold text-slate-800">新增商品品項</h3>
+        <button type="button" onclick="document.getElementById('priceModal').classList.add('hidden')" class="text-slate-400 hover:text-slate-600 text-lg w-8 h-8 rounded-lg hover:bg-slate-100 flex items-center justify-center transition cursor-pointer">✕</button>
+      </div>
+      <form id="priceItemForm" class="flex flex-col flex-1 min-h-0 overflow-hidden">
         <input type="hidden" id="editPriceIndex" value="-1">
-        <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">品名 *</label>
-          <input type="text" id="modalItemName" required placeholder="例如：里肌肉排" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:border-amber-600 outline-none">
+        <div class="p-4 sm:p-5 overflow-y-auto custom-scrollbar flex-1 space-y-4">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">品名 *</label>
+            <input type="text" id="modalItemName" required placeholder="例如：里肌肉排" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:border-amber-600 outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">單價 (NT$) *</label>
+            <input type="number" id="modalItemPrice" required min="0" placeholder="例如：200" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:border-amber-600 outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">商品編號 / 代碼</label>
+            <input type="text" id="modalItemCode" placeholder="例如：999" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:border-amber-600 outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">規格 / 重量說明</label>
+            <input type="text" id="modalItemSpec" placeholder="例如：1300克、一箱(26片)" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:border-amber-600 outline-none">
+          </div>
         </div>
-        <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">單價 (NT$) *</label>
-          <input type="number" id="modalItemPrice" required min="0" placeholder="例如：200" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:border-amber-600 outline-none">
-        </div>
-        <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">商品編號 / 代碼</label>
-          <input type="text" id="modalItemCode" placeholder="例如：999" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:border-amber-600 outline-none">
-        </div>
-        <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">規格 / 重量說明</label>
-          <input type="text" id="modalItemSpec" placeholder="例如：1300克、一箱(26片)" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:border-amber-600 outline-none">
-        </div>
-        <div class="flex justify-end gap-3 pt-3">
-          <button type="button" id="btnPriceModalClose" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl border border-slate-300">
+        <div class="flex justify-end gap-3 p-4 border-t border-slate-100 flex-shrink-0 bg-slate-50/80">
+          <button type="button" id="btnPriceModalClose" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-200 rounded-xl border border-slate-300 transition cursor-pointer">
             取消
           </button>
-          <button type="submit" class="px-5 py-2 text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 rounded-xl shadow">
+          <button type="submit" class="px-5 py-2 text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 rounded-xl shadow transition cursor-pointer">
             確認儲存
           </button>
         </div>
@@ -1855,43 +1869,45 @@ const firebaseConfig = {
     <!-- Populated by JS -->
   </datalist>
 
-  <!-- Modal: 登記進貨 -->
-  <div id="modalInvIn" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200">
-      <div class="flex items-center justify-between mb-4">
-        <h3 class="text-lg font-bold text-emerald-800 flex items-center gap-2">
+    <!-- Modal: 登記進貨 -->
+  <div id="modalInvIn" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto hidden">
+    <div class="bg-white rounded-2xl max-w-md w-full max-h-[90vh] shadow-2xl border border-slate-200 flex flex-col overflow-hidden my-auto animate-fade-in">
+      <div class="flex items-center justify-between p-4 sm:p-5 border-b border-slate-100 flex-shrink-0 bg-white">
+        <h3 class="text-base sm:text-lg font-bold text-emerald-800 flex items-center gap-2">
           <span>📥</span> 登記進貨入庫
         </h3>
-        <button type="button" id="btnModalInvInClose" class="text-slate-400 hover:text-slate-600 text-lg">✕</button>
+        <button type="button" id="btnModalInvInClose" class="text-slate-400 hover:text-slate-600 text-lg w-8 h-8 rounded-lg hover:bg-slate-100 flex items-center justify-center transition cursor-pointer">✕</button>
       </div>
-      <form id="formInvIn" class="space-y-4">
-        <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">進貨商品品名 *</label>
-          <input type="text" list="productListDatalist" id="invInName" required placeholder="請選擇或輸入品名" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:border-emerald-600 outline-none">
-        </div>
-        <div class="grid grid-cols-2 gap-3">
+      <form id="formInvIn" class="flex flex-col flex-1 min-h-0 overflow-hidden">
+        <div class="p-4 sm:p-5 overflow-y-auto custom-scrollbar flex-1 space-y-4">
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">進貨數量 *</label>
-            <input type="number" id="invInQty" required min="1" step="any" placeholder="例如：20" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:border-emerald-600 outline-none font-bold">
+            <label class="block text-xs font-bold text-slate-700 mb-1">進貨商品品名 *</label>
+            <input type="text" list="productListDatalist" id="invInName" required placeholder="請選擇或輸入品名" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:border-emerald-600 outline-none">
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">進貨數量 *</label>
+              <input type="number" id="invInQty" required min="1" step="any" placeholder="例如：20" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:border-emerald-600 outline-none font-bold">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">進貨日期 *</label>
+              <input type="date" id="invInDate" required class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:border-emerald-600 outline-none">
+            </div>
           </div>
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">進貨日期 *</label>
-            <input type="date" id="invInDate" required class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:border-emerald-600 outline-none">
+            <label class="block text-xs font-bold text-slate-700 mb-1">供應商 / 進貨來源</label>
+            <input type="text" id="invInSupplier" placeholder="例如：大昌食品、肉品批發" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:border-emerald-600 outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">備註說明</label>
+            <input type="text" id="invInRemark" placeholder="如批號、效期或備註" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:border-emerald-600 outline-none">
           </div>
         </div>
-        <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">供應商 / 進貨來源</label>
-          <input type="text" id="invInSupplier" placeholder="例如：大昌食品、肉品批發" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:border-emerald-600 outline-none">
-        </div>
-        <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">備註說明</label>
-          <input type="text" id="invInRemark" placeholder="如批號、效期或備註" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:border-emerald-600 outline-none">
-        </div>
-        <div class="flex justify-end gap-3 pt-3">
-          <button type="button" id="btnModalInvInCancel" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl border border-slate-300">
+        <div class="flex justify-end gap-3 p-4 border-t border-slate-100 flex-shrink-0 bg-slate-50/80">
+          <button type="button" id="btnModalInvInCancel" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-200 rounded-xl border border-slate-300 transition cursor-pointer">
             取消
           </button>
-          <button type="submit" class="px-5 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow">
+          <button type="submit" class="px-5 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow transition cursor-pointer">
             確認入庫
           </button>
         </div>
@@ -1899,46 +1915,48 @@ const firebaseConfig = {
     </div>
   </div>
 
-  <!-- Modal: 登記出貨 -->
-  <div id="modalInvOut" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200">
-      <div class="flex items-center justify-between mb-4">
-        <h3 class="text-lg font-bold text-rose-800 flex items-center gap-2">
+    <!-- Modal: 登記出貨 -->
+  <div id="modalInvOut" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto hidden">
+    <div class="bg-white rounded-2xl max-w-md w-full max-h-[90vh] shadow-2xl border border-slate-200 flex flex-col overflow-hidden my-auto animate-fade-in">
+      <div class="flex items-center justify-between p-4 sm:p-5 border-b border-slate-100 flex-shrink-0 bg-white">
+        <h3 class="text-base sm:text-lg font-bold text-rose-800 flex items-center gap-2">
           <span>📤</span> 登記出貨出庫
         </h3>
-        <button type="button" id="btnModalInvOutClose" class="text-slate-400 hover:text-slate-600 text-lg">✕</button>
+        <button type="button" id="btnModalInvOutClose" class="text-slate-400 hover:text-slate-600 text-lg w-8 h-8 rounded-lg hover:bg-slate-100 flex items-center justify-center transition cursor-pointer">✕</button>
       </div>
-      <form id="formInvOut" class="space-y-4">
-        <div>
-          <div class="flex justify-between items-center mb-1">
-            <label class="text-xs font-bold text-slate-700">出貨商品品名 *</label>
-            <span id="invOutCurStockLabel" class="text-xs text-slate-500 font-medium">現有庫存：-</span>
-          </div>
-          <input type="text" list="productListDatalist" id="invOutName" required placeholder="請選擇或輸入品名" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:border-rose-600 outline-none">
-        </div>
-        <div class="grid grid-cols-2 gap-3">
+      <form id="formInvOut" class="flex flex-col flex-1 min-h-0 overflow-hidden">
+        <div class="p-4 sm:p-5 overflow-y-auto custom-scrollbar flex-1 space-y-4">
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">出貨數量 *</label>
-            <input type="number" id="invOutQty" required min="1" step="any" placeholder="例如：5" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:border-rose-600 outline-none font-bold">
+            <div class="flex justify-between items-center mb-1">
+              <label class="text-xs font-bold text-slate-700">出貨商品品名 *</label>
+              <span id="invOutCurStockLabel" class="text-xs text-slate-500 font-medium">現有庫存：-</span>
+            </div>
+            <input type="text" list="productListDatalist" id="invOutName" required placeholder="請選擇或輸入品名" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:border-rose-600 outline-none">
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">出貨數量 *</label>
+              <input type="number" id="invOutQty" required min="1" step="any" placeholder="例如：5" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:border-rose-600 outline-none font-bold">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">出貨日期 *</label>
+              <input type="date" id="invOutDate" required class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:border-rose-600 outline-none">
+            </div>
           </div>
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">出貨日期 *</label>
-            <input type="date" id="invOutDate" required class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:border-rose-600 outline-none">
+            <label class="block text-xs font-bold text-slate-700 mb-1">客戶名稱 / 出貨對象</label>
+            <input type="text" id="invOutCustomer" placeholder="例如：早安美而美、門市零售" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:border-rose-600 outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">出貨備註</label>
+            <input type="text" id="invOutRemark" placeholder="如單據編號或配送備註" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:border-rose-600 outline-none">
           </div>
         </div>
-        <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">客戶名稱 / 出貨對象</label>
-          <input type="text" id="invOutCustomer" placeholder="例如：早安美而美、門市零售" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:border-rose-600 outline-none">
-        </div>
-        <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">出貨備註</label>
-          <input type="text" id="invOutRemark" placeholder="如單據編號或配送備註" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:border-rose-600 outline-none">
-        </div>
-        <div class="flex justify-end gap-3 pt-3">
-          <button type="button" id="btnModalInvOutCancel" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl border border-slate-300">
+        <div class="flex justify-end gap-3 p-4 border-t border-slate-100 flex-shrink-0 bg-slate-50/80">
+          <button type="button" id="btnModalInvOutCancel" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-200 rounded-xl border border-slate-300 transition cursor-pointer">
             取消
           </button>
-          <button type="submit" class="px-5 py-2 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-xl shadow">
+          <button type="submit" class="px-5 py-2 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-xl shadow transition cursor-pointer">
             確認出庫
           </button>
         </div>
@@ -1946,40 +1964,42 @@ const firebaseConfig = {
     </div>
   </div>
 
-  <!-- Modal: 盤點校正 -->
-  <div id="modalInvAdjust" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200">
-      <div class="flex items-center justify-between mb-4">
-        <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+    <!-- Modal: 盤點校正 -->
+  <div id="modalInvAdjust" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto hidden">
+    <div class="bg-white rounded-2xl max-w-md w-full max-h-[90vh] shadow-2xl border border-slate-200 flex flex-col overflow-hidden my-auto animate-fade-in">
+      <div class="flex items-center justify-between p-4 sm:p-5 border-b border-slate-100 flex-shrink-0 bg-white">
+        <h3 class="text-base sm:text-lg font-bold text-slate-800 flex items-center gap-2">
           <span>⚖️</span> 庫存盤點與校正
         </h3>
-        <button type="button" id="btnModalInvAdjustClose" class="text-slate-400 hover:text-slate-600 text-lg">✕</button>
+        <button type="button" id="btnModalInvAdjustClose" class="text-slate-400 hover:text-slate-600 text-lg w-8 h-8 rounded-lg hover:bg-slate-100 flex items-center justify-center transition cursor-pointer">✕</button>
       </div>
-      <form id="formInvAdjust" class="space-y-4">
-        <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">盤點品項 *</label>
-          <input type="text" list="productListDatalist" id="invAdjName" required placeholder="請選擇或輸入品名" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:border-slate-800 outline-none">
-        </div>
-        <div class="grid grid-cols-2 gap-3">
+      <form id="formInvAdjust" class="flex flex-col flex-1 min-h-0 overflow-hidden">
+        <div class="p-4 sm:p-5 overflow-y-auto custom-scrollbar flex-1 space-y-4">
           <div>
-            <label class="block text-xs text-slate-500 mb-1">帳面現有庫存</label>
-            <input type="text" id="invAdjOldStock" readonly value="-" class="w-full px-3 py-2 bg-slate-100 border border-slate-200 rounded-xl text-sm font-semibold text-slate-600 outline-none">
+            <label class="block text-xs font-bold text-slate-700 mb-1">盤點品項 *</label>
+            <input type="text" list="productListDatalist" id="invAdjName" required placeholder="請選擇盤點品項" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:border-slate-600 outline-none">
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">系統現有庫存</label>
+              <input type="text" id="invAdjCurStock" readonly class="w-full px-3 py-2 bg-slate-100 border border-slate-300 rounded-xl text-sm font-bold text-slate-600 outline-none" value="-">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">實際盤點實存 *</label>
+              <input type="number" id="invAdjRealQty" required step="any" placeholder="輸入實際盤點量" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:border-amber-600 outline-none font-black text-amber-900">
+            </div>
           </div>
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">實際盤點數量 *</label>
-            <input type="number" id="invAdjNewStock" required min="0" step="any" placeholder="輸入實盤數" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:border-slate-800 outline-none font-bold">
+            <label class="block text-xs font-bold text-slate-700 mb-1">校正原因 / 備註</label>
+            <input type="text" id="invAdjReason" placeholder="例如：月底例行盤點、效期報廢、樣品贈送" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:border-slate-600 outline-none">
           </div>
         </div>
-        <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">校正原因 / 說明</label>
-          <input type="text" id="invAdjRemark" placeholder="例如：月末例行實體盤點、報損校正" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:border-slate-800 outline-none">
-        </div>
-        <div class="flex justify-end gap-3 pt-3">
-          <button type="button" id="btnModalInvAdjustCancel" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl border border-slate-300">
+        <div class="flex justify-end gap-3 p-4 border-t border-slate-100 flex-shrink-0 bg-slate-50/80">
+          <button type="button" id="btnModalInvAdjustCancel" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-200 rounded-xl border border-slate-300 transition cursor-pointer">
             取消
           </button>
-          <button type="submit" class="px-5 py-2 text-xs font-bold text-white bg-slate-800 hover:bg-slate-900 rounded-xl shadow">
-            確認校正
+          <button type="submit" class="px-5 py-2 text-xs font-bold text-white bg-slate-800 hover:bg-slate-900 rounded-xl shadow transition cursor-pointer">
+            儲存盤點結果
           </button>
         </div>
       </form>
