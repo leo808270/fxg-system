@@ -156,7 +156,7 @@
         font-size: 6.8pt !important;
         color: #555 !important;
       }
-      /* Print Table Styling - 9.6pt larger, unified typography across Slip 1 and Slip 2 */
+      /* Print Table Styling - Significantly enlarged typography (11.5pt~12.5pt) for high print legibility */
       table.print-table {
         border-collapse: collapse !important;
         width: 100% !important;
@@ -165,40 +165,55 @@
       table.print-table th, 
       table.print-table td {
         border: 1px solid #000 !important;
-        padding: 0.5px 2px !important;
+        padding: 0 2px !important;
         height: 5.8mm !important;
         max-height: 5.8mm !important;
-        font-size: 10.2pt !important;
-        line-height: 1.15 !important;
+        font-size: 11.5pt !important;
+        line-height: 1.1 !important;
         color: #000 !important;
         background: transparent !important;
         box-sizing: border-box !important;
+        vertical-align: middle !important;
       }
       table.print-table th {
-        font-size: 8.6pt !important;
-        font-weight: bold !important;
+        font-size: 9.6pt !important;
+        font-weight: 800 !important;
         height: 5.8mm !important;
         background-color: #f3f4f6 !important;
       }
       table.print-table td span,
       table.print-table td input,
-      table.print-table td select {
-        font-size: 10.2pt !important;
+      table.print-table td select,
+      table.print-table td[id^="copy_q_name_"],
+      table.print-table td[id^="copy_q_price_"] {
+        font-size: 11.5pt !important;
+        font-weight: 600 !important;
+        line-height: 1.1 !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
       }
       table.print-table td span.font-bold,
       table.print-table td [id^="q_print_qty_"],
       table.print-table td [id^="copy_q_qty_"] {
-        font-size: 10.5pt !important;
+        font-size: 12.5pt !important;
+        font-weight: 900 !important;
+        letter-spacing: -0.2px !important;
+      }
+      table.print-table td[id^="q_subtotal_"],
+      table.print-table td[id^="copy_q_subtotal_"] {
+        font-size: 11.8pt !important;
         font-weight: 800 !important;
       }
       table.print-table tfoot td {
         height: 6.2mm !important;
-        font-size: 9.2pt !important;
-        padding: 0.5px 2px !important;
+        font-size: 10.5pt !important;
+        padding: 0 3px !important;
+        vertical-align: middle !important;
       }
       table.print-table tfoot td span#quoteTotalDisplay,
       table.print-table tfoot td span#quoteTotalCopyDisplay {
-        font-size: 10.5pt !important;
+        font-size: 12.5pt !important;
         font-weight: 900 !important;
       }
       .quote-half-sheet .header-store-title {
@@ -215,7 +230,8 @@
         line-height: 1.25 !important;
       }
       .quote-half-sheet .customer-date-row {
-        font-size: 8.5pt !important;
+        font-size: 9.6pt !important;
+        font-weight: 600 !important;
         padding: 1px 0 !important;
         margin-top: 1px !important;
       }
@@ -335,40 +351,55 @@
     .pdf-export-mode table.print-table th,
     .pdf-export-mode table.print-table td {
       border: 1px solid #000 !important;
-      padding: 0.5px 2px !important;
+      padding: 0 2px !important;
       height: 5.8mm !important;
       max-height: 5.8mm !important;
-      font-size: 10.2pt !important;
-      line-height: 1.15 !important;
+      font-size: 11.5pt !important;
+      line-height: 1.1 !important;
       color: #000 !important;
       background: transparent !important;
       box-sizing: border-box !important;
+      vertical-align: middle !important;
     }
     .pdf-export-mode table.print-table th {
-      font-size: 8.6pt !important;
-      font-weight: bold !important;
+      font-size: 9.6pt !important;
+      font-weight: 800 !important;
       height: 5.8mm !important;
       background-color: #f3f4f6 !important;
     }
     .pdf-export-mode table.print-table td span,
     .pdf-export-mode table.print-table td input,
-    .pdf-export-mode table.print-table td select {
-      font-size: 10.2pt !important;
+    .pdf-export-mode table.print-table td select,
+    .pdf-export-mode table.print-table td[id^="copy_q_name_"],
+    .pdf-export-mode table.print-table td[id^="copy_q_price_"] {
+      font-size: 11.5pt !important;
+      font-weight: 600 !important;
+      line-height: 1.1 !important;
+      white-space: nowrap !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
     }
     .pdf-export-mode table.print-table td span.font-bold,
     .pdf-export-mode table.print-table td [id^="q_print_qty_"],
     .pdf-export-mode table.print-table td [id^="copy_q_qty_"] {
-      font-size: 10.5pt !important;
+      font-size: 12.5pt !important;
+      font-weight: 900 !important;
+      letter-spacing: -0.2px !important;
+    }
+    .pdf-export-mode table.print-table td[id^="q_subtotal_"],
+    .pdf-export-mode table.print-table td[id^="copy_q_subtotal_"] {
+      font-size: 11.8pt !important;
       font-weight: 800 !important;
     }
     .pdf-export-mode table.print-table tfoot td {
       height: 6.2mm !important;
-      font-size: 9.2pt !important;
-      padding: 0.5px 2px !important;
+      font-size: 10.5pt !important;
+      padding: 0 3px !important;
+      vertical-align: middle !important;
     }
     .pdf-export-mode table.print-table tfoot td span#quoteTotalDisplay,
     .pdf-export-mode table.print-table tfoot td span#quoteTotalCopyDisplay {
-      font-size: 10.5pt !important;
+      font-size: 12.5pt !important;
       font-weight: 900 !important;
     }
     .pdf-export-mode .quote-half-sheet .header-store-title {
