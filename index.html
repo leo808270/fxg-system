@@ -16,9 +16,39 @@
       display: none !important;
     }
 
-    /* Screen mode table styling: comfortable 14px text and clean input fields */
-    .quote-item-select, .quote-item-custom-name, .quote-item-qty, .quote-item-price {
-      font-size: 13.5px !important;
+    /* Screen mode table styling: enlarged, highly-legible text for Product, Quantity, Price & Subtotal */
+    .quote-item-select, 
+    .quote-item-custom-name, 
+    .quote-item-qty, 
+    .quote-item-price,
+    [id^="q_subtotal_"],
+    [id^="copy_q_name_"],
+    [id^="copy_q_qty_"],
+    [id^="copy_q_price_"],
+    [id^="copy_q_subtotal_"] {
+      font-size: 15.5px !important;
+    }
+
+    .quote-item-select, .quote-item-custom-name {
+      font-weight: 500;
+    }
+
+    .quote-item-qty, [id^="copy_q_qty_"] {
+      font-weight: 800 !important;
+      font-size: 16px !important;
+      color: #0f172a;
+    }
+
+    .quote-item-price, [id^="copy_q_price_"] {
+      font-weight: 600 !important;
+      font-size: 15.5px !important;
+      color: #1e293b;
+    }
+
+    [id^="q_subtotal_"], [id^="copy_q_subtotal_"] {
+      font-weight: 800 !important;
+      font-size: 15.5px !important;
+      color: #0f172a !important;
     }
 
     /* Hide browser default spin buttons for cleaner numeric inputs */
@@ -138,14 +168,14 @@
         padding: 0.5px 2px !important;
         height: 5.8mm !important;
         max-height: 5.8mm !important;
-        font-size: 9.6pt !important;
-        line-height: 1.2 !important;
+        font-size: 10.2pt !important;
+        line-height: 1.15 !important;
         color: #000 !important;
         background: transparent !important;
         box-sizing: border-box !important;
       }
       table.print-table th {
-        font-size: 8.5pt !important;
+        font-size: 8.6pt !important;
         font-weight: bold !important;
         height: 5.8mm !important;
         background-color: #f3f4f6 !important;
@@ -153,7 +183,13 @@
       table.print-table td span,
       table.print-table td input,
       table.print-table td select {
-        font-size: 9.6pt !important;
+        font-size: 10.2pt !important;
+      }
+      table.print-table td span.font-bold,
+      table.print-table td [id^="q_print_qty_"],
+      table.print-table td [id^="copy_q_qty_"] {
+        font-size: 10.5pt !important;
+        font-weight: 800 !important;
       }
       table.print-table tfoot td {
         height: 6.2mm !important;
@@ -302,14 +338,14 @@
       padding: 0.5px 2px !important;
       height: 5.8mm !important;
       max-height: 5.8mm !important;
-      font-size: 9.6pt !important;
-      line-height: 1.2 !important;
+      font-size: 10.2pt !important;
+      line-height: 1.15 !important;
       color: #000 !important;
       background: transparent !important;
       box-sizing: border-box !important;
     }
     .pdf-export-mode table.print-table th {
-      font-size: 8.5pt !important;
+      font-size: 8.6pt !important;
       font-weight: bold !important;
       height: 5.8mm !important;
       background-color: #f3f4f6 !important;
@@ -317,7 +353,13 @@
     .pdf-export-mode table.print-table td span,
     .pdf-export-mode table.print-table td input,
     .pdf-export-mode table.print-table td select {
-      font-size: 9.6pt !important;
+      font-size: 10.2pt !important;
+    }
+    .pdf-export-mode table.print-table td span.font-bold,
+    .pdf-export-mode table.print-table td [id^="q_print_qty_"],
+    .pdf-export-mode table.print-table td [id^="copy_q_qty_"] {
+      font-size: 10.5pt !important;
+      font-weight: 800 !important;
     }
     .pdf-export-mode table.print-table tfoot td {
       height: 6.2mm !important;
