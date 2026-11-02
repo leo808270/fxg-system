@@ -1032,15 +1032,32 @@
           </div>
         </div>
 
-        <!-- Search Bar -->
-        <div class="flex flex-wrap items-center gap-3">
-          <div class="relative flex-1 min-w-[220px]">
-            <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">🔍</span>
-            <input type="text" id="customerSearchInput" placeholder="搜尋客戶名稱、電話、地址、統一編號、聯絡人..." class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:bg-white focus:border-amber-600 outline-none transition">
+        <!-- Search & Filter Bar -->
+        <div class="space-y-3">
+          <div class="flex flex-wrap items-center gap-3">
+            <div class="relative flex-1 min-w-[220px]">
+              <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">🔍</span>
+              <input type="text" id="customerSearchInput" placeholder="搜尋客戶名稱、電話、地址、統一編號、聯絡人、配送星期..." class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:bg-white focus:border-amber-600 outline-none transition">
+            </div>
+            <span id="customerCountBadge" class="text-xs bg-slate-100 text-slate-600 px-3 py-2 rounded-xl font-medium border border-slate-200 whitespace-nowrap">
+              共 0 位客戶
+            </span>
           </div>
-          <span id="customerCountBadge" class="text-xs bg-slate-100 text-slate-600 px-3 py-2 rounded-xl font-medium border border-slate-200 whitespace-nowrap">
-            共 0 位客戶
-          </span>
+
+          <!-- Weekday Filter Quick Pills -->
+          <div class="flex flex-wrap items-center gap-1.5 text-xs bg-slate-50/80 p-2.5 rounded-xl border border-slate-200">
+            <span class="text-slate-600 font-bold flex items-center gap-1 mr-1">
+              <span>📅</span> 星期篩選：
+            </span>
+            <button type="button" class="btn-cust-day-filter px-2.5 py-1 rounded-lg font-bold transition border bg-amber-600 text-white border-amber-600 shadow-xs cursor-pointer" data-day="all">全部</button>
+            <button type="button" class="btn-cust-day-filter px-2 py-1 rounded-lg font-semibold transition border bg-white text-slate-700 border-slate-200 hover:bg-amber-50 cursor-pointer" data-day="星期一">週一</button>
+            <button type="button" class="btn-cust-day-filter px-2 py-1 rounded-lg font-semibold transition border bg-white text-slate-700 border-slate-200 hover:bg-amber-50 cursor-pointer" data-day="星期二">週二</button>
+            <button type="button" class="btn-cust-day-filter px-2 py-1 rounded-lg font-semibold transition border bg-white text-slate-700 border-slate-200 hover:bg-amber-50 cursor-pointer" data-day="星期三">週三</button>
+            <button type="button" class="btn-cust-day-filter px-2 py-1 rounded-lg font-semibold transition border bg-white text-slate-700 border-slate-200 hover:bg-amber-50 cursor-pointer" data-day="星期四">週四</button>
+            <button type="button" class="btn-cust-day-filter px-2 py-1 rounded-lg font-semibold transition border bg-white text-slate-700 border-slate-200 hover:bg-amber-50 cursor-pointer" data-day="星期五">週五</button>
+            <button type="button" class="btn-cust-day-filter px-2 py-1 rounded-lg font-semibold transition border bg-white text-rose-700 border-rose-200 hover:bg-rose-50 cursor-pointer" data-day="星期六">週六</button>
+            <button type="button" class="btn-cust-day-filter px-2 py-1 rounded-lg font-semibold transition border bg-white text-rose-700 border-rose-200 hover:bg-rose-50 cursor-pointer" data-day="星期日">週日</button>
+          </div>
         </div>
 
         <!-- Customer Table -->
@@ -1049,13 +1066,14 @@
             <table class="w-full text-left text-sm">
               <thead class="bg-slate-100 text-slate-700 font-bold sticky top-0 border-b border-slate-200 text-xs">
                 <tr>
-                  <th class="py-3 px-4 w-48">客戶名稱</th>
-                  <th class="py-3 px-3 w-28">統一編號</th>
-                  <th class="py-3 px-4 w-40">聯絡人 / 電話</th>
+                  <th class="py-3 px-4 w-44">客戶名稱</th>
+                  <th class="py-3 px-2.5 w-24">統一編號</th>
+                  <th class="py-3 px-3 w-32">星期</th>
+                  <th class="py-3 px-3 w-36">聯絡人 / 電話</th>
                   <th class="py-3 px-4">送貨營業地址</th>
                   <th class="py-3 px-4">常用配送備註</th>
-                  <th class="py-3 px-3 w-24 text-center">歷史單據</th>
-                  <th class="py-3 px-4 w-44 text-center">操作</th>
+                  <th class="py-3 px-2.5 w-20 text-center">歷史單據</th>
+                  <th class="py-3 px-3 w-40 text-center">操作</th>
                 </tr>
               </thead>
               <tbody id="customerListTableBody" class="divide-y divide-slate-100">
@@ -1656,6 +1674,25 @@ const firebaseConfig = {
           <input type="text" id="modalCustName" required placeholder="例如：早安美而美（安平店）" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:border-amber-600 outline-none">
         </div>
 
+        <!-- NEW FIELD: 星期 (可複選 星期一到日) -->
+        <div class="bg-amber-50/60 border border-amber-200/90 rounded-2xl p-3 sm:p-3.5 space-y-2.5">
+          <div class="flex flex-wrap items-center justify-between gap-1.5">
+            <label class="block text-xs font-bold text-slate-800 flex items-center gap-1">
+              <span>📅</span> 星期（配送/叫貨固定星期，可複選）：
+            </label>
+            <div class="flex items-center gap-1 text-[11px]">
+              <button type="button" id="btnCustWeekdaysWeekday" class="px-2 py-0.5 rounded-lg bg-white hover:bg-amber-100 text-amber-900 border border-amber-300 font-semibold transition cursor-pointer">平日(一至五)</button>
+              <button type="button" id="btnCustWeekdaysWeekend" class="px-2 py-0.5 rounded-lg bg-white hover:bg-rose-100 text-rose-900 border border-rose-300 font-semibold transition cursor-pointer">週末(六日)</button>
+              <button type="button" id="btnCustWeekdaysAll" class="px-2 py-0.5 rounded-lg bg-white hover:bg-slate-200 text-slate-700 border border-slate-300 font-medium transition cursor-pointer">全選</button>
+              <button type="button" id="btnCustWeekdaysClear" class="px-2 py-0.5 rounded-lg bg-white hover:bg-slate-200 text-slate-500 border border-slate-300 font-medium transition cursor-pointer">清除</button>
+            </div>
+          </div>
+          <div id="modalCustWeekdayContainer" class="grid grid-cols-7 gap-1 sm:gap-1.5">
+            <!-- 7 weekday toggle buttons dynamically rendered -->
+          </div>
+          <p class="text-[11px] text-amber-900/70">💡 點選星期按鈕即可切換選取或取消，支援多選；亦可點擊快捷鍵一鍵選取</p>
+        </div>
+
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label class="block text-xs font-bold text-slate-700 mb-1">統一編號 / 代碼</label>
@@ -2032,11 +2069,11 @@ const firebaseConfig = {
     let isTagEditMode = false;
 
     const DEFAULT_CUSTOMER_LIST = [
-      { name: "早安美而美（安平店）", taxId: "88812345", contact: "林志豪", phone: "0912-345-678", address: "台南市安平區華平路123號", remark: "每週二、五早上 07:30 前送達", createdAt: "2026-10-01" },
-      { name: "弘爺漢堡（健康店）", taxId: "77765432", contact: "陳店長", phone: "0928-111-222", address: "台南市中西區健康路二段45號", remark: "固定週三進貨，款項月底結清", createdAt: "2026-10-05" },
-      { name: "美芝城早午餐（永華店）", taxId: "66698765", contact: "張小姐", phone: "0933-888-999", address: "台南市安平區永華路二段88號", remark: "假日生意好，週五需加量出貨", createdAt: "2026-10-10" },
-      { name: "拉亞漢堡（文平店）", taxId: "55543210", contact: "郭店長", phone: "0975-666-777", address: "台南市安平區文平路200號", remark: "送貨前請先電話聯絡", createdAt: "2026-10-15" },
-      { name: "麥味登早午餐（慶平店）", taxId: "44432198", contact: "謝老闆", phone: "0955-444-333", address: "台南市安平區慶平路350號", remark: "漢堡肉與蛋餅皮固定每週補貨", createdAt: "2026-10-20" }
+      { name: "早安美而美（安平店）", taxId: "88812345", contact: "林志豪", phone: "0912-345-678", address: "台南市安平區華平路123號", remark: "每週二、五早上 07:30 前送達", createdAt: "2026-10-01", weekdays: ["星期二", "星期五"] },
+      { name: "弘爺漢堡（健康店）", taxId: "77765432", contact: "陳店長", phone: "0928-111-222", address: "台南市中西區健康路二段45號", remark: "固定週三進貨，款項月底結清", createdAt: "2026-10-05", weekdays: ["星期三"] },
+      { name: "美芝城早午餐（永華店）", taxId: "66698765", contact: "張小姐", phone: "0933-888-999", address: "台南市安平區永華路二段88號", remark: "假日生意好，週五需加量出貨", createdAt: "2026-10-10", weekdays: ["星期五", "星期六", "星期日"] },
+      { name: "拉亞漢堡（文平店）", taxId: "55543210", contact: "郭店長", phone: "0975-666-777", address: "台南市安平區文平路200號", remark: "送貨前請先電話聯絡", createdAt: "2026-10-15", weekdays: ["星期一", "星期三", "星期五"] },
+      { name: "麥味登早午餐（慶平店）", taxId: "44432198", contact: "謝老闆", phone: "0955-444-333", address: "台南市安平區慶平路350號", remark: "漢堡肉與蛋餅皮固定每週補貨", createdAt: "2026-10-20", weekdays: ["星期二", "星期四", "星期六"] }
     ];
 
     const DEFAULT_STORE_CONFIG = {
@@ -2530,6 +2567,14 @@ const firebaseConfig = {
       } catch (e) {
         currentCustomerList = [...DEFAULT_CUSTOMER_LIST];
       }
+      // Backfill weekdays if not present
+      currentCustomerList.forEach(c => {
+        if (!c.weekdays) {
+          const matchDefault = DEFAULT_CUSTOMER_LIST.find(d => d.name === c.name);
+          c.weekdays = matchDefault ? [...matchDefault.weekdays] : [];
+        }
+      });
+      renderModalWeekdayButtons();
 
       try {
         const savedTags = localStorage.getItem("fxg_favorite_products");
@@ -4095,6 +4140,126 @@ const firebaseConfig = {
       }
     }
 
+    // --- Weekday Constants & Helpers for Customer Management ---
+    const ALL_WEEKDAYS = ["星期一", "星期二", "星期三", "星期四", "星期五", "星期六", "星期日"];
+    const SHORT_WEEKDAYS = {
+      "星期一": "一",
+      "星期二": "二",
+      "星期三": "三",
+      "星期四": "四",
+      "星期五": "五",
+      "星期六": "六",
+      "星期日": "日"
+    };
+    let currentCustomerDayFilter = "all";
+
+    function formatCustomerWeekdaysBadge(weekdays) {
+      if (!weekdays || !Array.isArray(weekdays) || weekdays.length === 0) {
+        return `<span class="text-slate-400 text-xs font-normal">未指定</span>`;
+      }
+
+      const all7 = ["星期一", "星期二", "星期三", "星期四", "星期五", "星期六", "星期日"];
+      const weekdays5 = ["星期一", "星期二", "星期三", "星期四", "星期五"];
+      const weekend2 = ["星期六", "星期日"];
+
+      const normalized = weekdays.map(d => d.startsWith("星期") ? d : "星期" + d);
+
+      if (all7.every(d => normalized.includes(d))) {
+        return `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-900 border border-amber-300">天天 (一至日)</span>`;
+      }
+      if (weekdays5.every(d => normalized.includes(d)) && normalized.length === 5) {
+        return `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-900 border border-blue-300">平日 (一至五)</span>`;
+      }
+      if (weekend2.every(d => normalized.includes(d)) && normalized.length === 2) {
+        return `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-purple-100 text-purple-900 border border-purple-300">週末 (六日)</span>`;
+      }
+
+      const dayOrder = { "星期一": 1, "星期二": 2, "星期三": 3, "星期四": 4, "星期五": 5, "星期六": 6, "星期日": 7 };
+      const sorted = [...normalized].sort((a, b) => (dayOrder[a] || 99) - (dayOrder[b] || 99));
+
+      return `<div class="flex flex-wrap gap-1">` +
+        sorted.map(d => {
+          const short = d.replace("星期", "");
+          const isWeekend = short === "六" || short === "日";
+          const colorCls = isWeekend 
+            ? "bg-rose-50 text-rose-700 border-rose-200" 
+            : "bg-amber-50 text-amber-800 border-amber-200";
+          return `<span class="px-1.5 py-0.5 rounded text-[11px] font-bold border ${colorCls}">${short}</span>`;
+        }).join("") +
+        `</div>`;
+    }
+
+    function renderModalWeekdayButtons() {
+      const container = document.getElementById("modalCustWeekdayContainer");
+      if (!container) return;
+      container.innerHTML = "";
+      ALL_WEEKDAYS.forEach(day => {
+        const isWeekend = day === "星期六" || day === "星期日";
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "btn-modal-weekday py-2 px-1 rounded-xl text-xs font-semibold border transition text-center flex flex-col items-center justify-center gap-0.5 bg-white border-slate-300 text-slate-700 hover:bg-slate-50 cursor-pointer";
+        btn.dataset.day = day;
+        btn.innerHTML = `
+          <span class="text-[10px] text-slate-400 font-normal hidden sm:inline">星期</span>
+          <span class="text-xs sm:text-sm font-bold ${isWeekend ? 'text-rose-600' : 'text-slate-800'}">${SHORT_WEEKDAYS[day]}</span>
+        `;
+        btn.addEventListener("click", () => {
+          btn.classList.toggle("selected");
+          updateModalWeekdayBtnStyle(btn);
+        });
+        container.appendChild(btn);
+      });
+    }
+
+    function updateModalWeekdayBtnStyle(btn) {
+      const isSelected = btn.classList.contains("selected");
+      const isWeekend = btn.dataset.day === "星期六" || btn.dataset.day === "星期日";
+      if (isSelected) {
+        if (isWeekend) {
+          btn.className = "btn-modal-weekday selected py-2 px-1 rounded-xl text-xs font-bold border transition text-center flex flex-col items-center justify-center gap-0.5 bg-rose-600 text-white border-rose-600 shadow-xs cursor-pointer";
+          btn.innerHTML = `
+            <span class="text-[10px] text-rose-200 font-normal hidden sm:inline">星期</span>
+            <span class="text-xs sm:text-sm font-black text-white">✓ ${SHORT_WEEKDAYS[btn.dataset.day]}</span>
+          `;
+        } else {
+          btn.className = "btn-modal-weekday selected py-2 px-1 rounded-xl text-xs font-bold border transition text-center flex flex-col items-center justify-center gap-0.5 bg-amber-600 text-white border-amber-600 shadow-xs cursor-pointer";
+          btn.innerHTML = `
+            <span class="text-[10px] text-amber-200 font-normal hidden sm:inline">星期</span>
+            <span class="text-xs sm:text-sm font-black text-white">✓ ${SHORT_WEEKDAYS[btn.dataset.day]}</span>
+          `;
+        }
+      } else {
+        btn.className = "btn-modal-weekday py-2 px-1 rounded-xl text-xs font-semibold border transition text-center flex flex-col items-center justify-center gap-0.5 bg-white border-slate-300 text-slate-700 hover:bg-slate-50 cursor-pointer";
+        btn.innerHTML = `
+          <span class="text-[10px] text-slate-400 font-normal hidden sm:inline">星期</span>
+          <span class="text-xs sm:text-sm font-bold ${isWeekend ? 'text-rose-600' : 'text-slate-800'}">${SHORT_WEEKDAYS[btn.dataset.day]}</span>
+        `;
+      }
+    }
+
+    function setModalSelectedWeekdays(days = []) {
+      const normalized = (days || []).map(d => d.startsWith("星期") ? d : "星期" + d);
+      document.querySelectorAll(".btn-modal-weekday").forEach(btn => {
+        if (normalized.includes(btn.dataset.day)) {
+          btn.classList.add("selected");
+        } else {
+          btn.classList.remove("selected");
+        }
+        updateModalWeekdayBtnStyle(btn);
+      });
+    }
+
+    function getModalSelectedWeekdays() {
+      const selected = [];
+      ALL_WEEKDAYS.forEach(day => {
+        const btn = document.querySelector(`.btn-modal-weekday[data-day="${day}"]`);
+        if (btn && btn.classList.contains("selected")) {
+          selected.push(day);
+        }
+      });
+      return selected;
+    }
+
     function renderCustomerDropdown() {
       const sel = document.getElementById("quoteCustomerSelect");
       if (!sel) return;
@@ -4132,13 +4297,23 @@ const firebaseConfig = {
 
       const normalizedFilter = filterText.toLowerCase().trim();
       const filtered = currentCustomerList.filter(c => {
+        // Weekday quick filter check
+        if (currentCustomerDayFilter && currentCustomerDayFilter !== "all") {
+          const days = (c.weekdays || []).map(d => d.startsWith("星期") ? d : "星期" + d);
+          if (!days.includes(currentCustomerDayFilter)) {
+            return false;
+          }
+        }
+
         if (!normalizedFilter) return true;
+        const weekdaysStr = (c.weekdays || []).join(" ");
         return (c.name && c.name.toLowerCase().includes(normalizedFilter)) ||
                (c.taxId && c.taxId.toLowerCase().includes(normalizedFilter)) ||
                (c.contact && c.contact.toLowerCase().includes(normalizedFilter)) ||
                (c.phone && c.phone.toLowerCase().includes(normalizedFilter)) ||
                (c.address && c.address.toLowerCase().includes(normalizedFilter)) ||
-               (c.remark && c.remark.toLowerCase().includes(normalizedFilter));
+               (c.remark && c.remark.toLowerCase().includes(normalizedFilter)) ||
+               weekdaysStr.toLowerCase().includes(normalizedFilter);
       });
 
       // Update KPI metrics
@@ -4157,7 +4332,7 @@ const firebaseConfig = {
       if (countBadge) countBadge.textContent = `顯示 ${filtered.length} / 共 ${currentCustomerList.length} 位客戶`;
 
       if (filtered.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-slate-400">查無符合條件的客戶資料</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8" class="py-8 text-center text-slate-400">查無符合條件的客戶資料</td></tr>`;
         return;
       }
 
@@ -4174,25 +4349,28 @@ const firebaseConfig = {
               <span>${cust.name}</span>
             </div>
           </td>
-          <td class="py-3 px-3 font-mono text-xs text-slate-500 font-semibold">${cust.taxId || '-'}</td>
-          <td class="py-3 px-4 text-xs">
+          <td class="py-3 px-2.5 font-mono text-xs text-slate-500 font-semibold">${cust.taxId || '-'}</td>
+          <td class="py-3 px-3">
+            ${formatCustomerWeekdaysBadge(cust.weekdays)}
+          </td>
+          <td class="py-3 px-3 text-xs">
             <div class="font-bold text-slate-700">${cust.contact || '-'}</div>
             <div class="text-slate-500 font-mono">${cust.phone || '-'}</div>
           </td>
-          <td class="py-3 px-4 text-xs text-slate-600 max-w-[200px] truncate" title="${cust.address || ''}">
+          <td class="py-3 px-4 text-xs text-slate-600 max-w-[180px] truncate" title="${cust.address || ''}">
             ${cust.address || '-'}
           </td>
-          <td class="py-3 px-4 text-xs text-amber-900 bg-amber-50/40 max-w-[200px] truncate" title="${cust.remark || ''}">
+          <td class="py-3 px-4 text-xs text-amber-900 bg-amber-50/40 max-w-[180px] truncate" title="${cust.remark || ''}">
             ${cust.remark || '-'}
           </td>
-          <td class="py-3 px-3 text-center">
+          <td class="py-3 px-2.5 text-center">
             <span class="px-2 py-0.5 rounded text-xs font-bold ${quotesCount > 0 ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-400'}">
               ${quotesCount} 張
             </span>
           </td>
-          <td class="py-3 px-4 text-center space-x-1.5 whitespace-nowrap">
+          <td class="py-3 px-3 text-center space-x-1 whitespace-nowrap">
             <button class="btn-cust-quote text-xs bg-amber-50 hover:bg-amber-100 text-amber-800 px-2 py-1 rounded font-bold border border-amber-300 transition" data-name="${cust.name}">
-              📑 開估價單
+              📑 開單
             </button>
             <button class="btn-cust-edit text-xs text-blue-600 hover:text-blue-800 font-semibold px-1.5 py-1" data-index="${realIndex}">
               編輯
@@ -4253,11 +4431,13 @@ const firebaseConfig = {
         document.getElementById("modalCustDate").value = cust.createdAt || new Date().toISOString().split('T')[0];
         document.getElementById("modalCustAddress").value = cust.address || "";
         document.getElementById("modalCustRemark").value = cust.remark || "";
+        setModalSelectedWeekdays(cust.weekdays || []);
       } else {
         title.innerHTML = `<span>👥</span> 新增客戶資料`;
         idxInput.value = -1;
         document.getElementById("customerItemForm").reset();
         document.getElementById("modalCustDate").value = new Date().toISOString().split('T')[0];
+        setModalSelectedWeekdays([]);
       }
 
       modal.classList.remove("hidden");
@@ -4284,10 +4464,11 @@ const firebaseConfig = {
     function exportCustomerCSV() {
       let csv = "\uFEFF";
       csv += `${storeConfig.storeName || "芳喜蓁站手工坊"},合作客戶名冊資料庫,匯出日期:,${new Date().toISOString().split('T')[0]}\n\n`;
-      csv += `客戶名稱,統一編號,聯絡人,聯絡電話,送貨營業地址,常用配送備註,建立日期\n`;
+      csv += `客戶名稱,統一編號,星期,聯絡人,聯絡電話,送貨營業地址,常用配送備註,建立日期\n`;
 
       currentCustomerList.forEach(c => {
-        csv += `"${c.name}","${c.taxId || ''}","${c.contact || ''}","${c.phone || ''}","${c.address || ''}","${c.remark || ''}","${c.createdAt || ''}"\n`;
+        const weekdaysStr = (c.weekdays && c.weekdays.length > 0) ? c.weekdays.join("、") : "-";
+        csv += `"${c.name}","${c.taxId || ''}","${weekdaysStr}","${c.contact || ''}","${c.phone || ''}","${c.address || ''}","${c.remark || ''}","${c.createdAt || ''}"\n`;
       });
 
       downloadBlob(csv, `芳喜蓁站手工坊_客戶名冊_${new Date().toISOString().split('T')[0]}.csv`, "text/csv;charset=utf-8;");
@@ -5807,13 +5988,14 @@ const firebaseConfig = {
           const address = document.getElementById("modalCustAddress").value.trim();
           const remark = document.getElementById("modalCustRemark").value.trim();
           const createdAt = document.getElementById("modalCustDate").value || new Date().toISOString().split('T')[0];
+          const weekdays = getModalSelectedWeekdays();
 
           if (!name) {
             showToast("請輸入客戶名稱！", false);
             return;
           }
 
-          const customerObj = { name, taxId, contact, phone, address, remark, createdAt };
+          const customerObj = { name, taxId, contact, phone, address, remark, createdAt, weekdays };
 
           if (editIdx >= 0) {
             currentCustomerList[editIdx] = customerObj;
@@ -5837,6 +6019,49 @@ const firebaseConfig = {
           renderCustomerTable(e.target.value);
         });
       }
+
+      // Weekday Modal Quick Selection Buttons
+      const btnWkWeekday = document.getElementById("btnCustWeekdaysWeekday");
+      if (btnWkWeekday) {
+        btnWkWeekday.addEventListener("click", () => {
+          setModalSelectedWeekdays(["星期一", "星期二", "星期三", "星期四", "星期五"]);
+        });
+      }
+      const btnWkWeekend = document.getElementById("btnCustWeekdaysWeekend");
+      if (btnWkWeekend) {
+        btnWkWeekend.addEventListener("click", () => {
+          setModalSelectedWeekdays(["星期六", "星期日"]);
+        });
+      }
+      const btnWkAll = document.getElementById("btnCustWeekdaysAll");
+      if (btnWkAll) {
+        btnWkAll.addEventListener("click", () => {
+          setModalSelectedWeekdays(ALL_WEEKDAYS);
+        });
+      }
+      const btnWkClear = document.getElementById("btnCustWeekdaysClear");
+      if (btnWkClear) {
+        btnWkClear.addEventListener("click", () => {
+          setModalSelectedWeekdays([]);
+        });
+      }
+
+      // Customer Table Weekday Filter Buttons
+      document.querySelectorAll(".btn-cust-day-filter").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const day = btn.getAttribute("data-day");
+          currentCustomerDayFilter = day;
+          document.querySelectorAll(".btn-cust-day-filter").forEach(b => {
+            if (b === btn) {
+              b.className = "btn-cust-day-filter px-2.5 py-1 rounded-lg font-bold transition border bg-amber-600 text-white border-amber-600 shadow-xs cursor-pointer";
+            } else {
+              const isWknd = b.getAttribute("data-day") === "星期六" || b.getAttribute("data-day") === "星期日";
+              b.className = `btn-cust-day-filter px-2 py-1 rounded-lg font-semibold transition border bg-white ${isWknd ? 'text-rose-700 border-rose-200 hover:bg-rose-50' : 'text-slate-700 border-slate-200 hover:bg-amber-50'} cursor-pointer`;
+            }
+          });
+          renderCustomerTable(custSearchInput ? custSearchInput.value : "");
+        });
+      });
 
       const btnCustReset = document.getElementById("btnCustomerReset");
       if (btnCustReset) {
