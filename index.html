@@ -202,6 +202,9 @@
     .sheet-table th, .sheet-table td {
       border: 1px solid #94a3b8;
     }
+    .custom-scrollbar {
+      -webkit-overflow-scrolling: touch;
+    }
     .custom-scrollbar::-webkit-scrollbar {
       width: 6px;
       height: 6px;
@@ -924,8 +927,8 @@
 
         <!-- Sub-View 1: Instant Stock Table -->
         <div id="invTableWrapper" class="border border-slate-200 rounded-xl overflow-hidden shadow-inner">
-          <div class="max-h-[550px] overflow-y-auto custom-scrollbar">
-            <table class="w-full text-left text-sm">
+          <div class="max-h-[550px] overflow-x-auto overflow-y-auto custom-scrollbar">
+            <table class="min-w-[700px] w-full text-left text-sm whitespace-nowrap">
               <thead class="bg-slate-100 text-slate-700 font-bold sticky top-0 border-b border-slate-200 text-xs">
                 <tr>
                   <th class="py-3 px-3 w-16 text-center">編號</th>
@@ -948,8 +951,8 @@
 
         <!-- Sub-View 2: Transaction History Log -->
         <div id="invLogWrapper" class="hidden border border-slate-200 rounded-xl overflow-hidden shadow-inner">
-          <div class="max-h-[550px] overflow-y-auto custom-scrollbar">
-            <table class="w-full text-left text-sm">
+          <div class="max-h-[550px] overflow-x-auto overflow-y-auto custom-scrollbar">
+            <table class="min-w-[780px] w-full text-left text-sm whitespace-nowrap">
               <thead class="bg-slate-100 text-slate-700 font-bold sticky top-0 border-b border-slate-200 text-xs">
                 <tr>
                   <th class="py-3 px-3 w-28">異動類別</th>
@@ -1062,8 +1065,8 @@
 
         <!-- Customer Table -->
         <div class="border border-slate-200 rounded-xl overflow-hidden shadow-inner">
-          <div class="max-h-[550px] overflow-y-auto custom-scrollbar">
-            <table class="w-full text-left text-sm">
+          <div class="max-h-[550px] overflow-x-auto overflow-y-auto custom-scrollbar">
+            <table class="min-w-[850px] w-full text-left text-sm whitespace-nowrap">
               <thead class="bg-slate-100 text-slate-700 font-bold sticky top-0 border-b border-slate-200 text-xs">
                 <tr>
                   <th class="py-3 px-4 w-44">客戶名稱</th>
@@ -1250,8 +1253,8 @@
             <span class="text-slate-400">依總出貨數量由多到少排序</span>
           </div>
 
-          <div class="border border-slate-200 rounded-xl overflow-hidden shadow-inner">
-            <table class="w-full text-left text-sm">
+          <div class="border border-slate-200 rounded-xl overflow-x-auto custom-scrollbar shadow-inner">
+            <table class="min-w-[680px] w-full text-left text-sm whitespace-nowrap">
               <thead class="bg-slate-100 text-slate-700 font-bold border-b border-slate-200 text-xs">
                 <tr>
                   <th class="py-3 px-4 w-16 text-center">排名</th>
@@ -1309,8 +1312,8 @@
 
         <!-- Product Table -->
         <div class="border border-slate-200 rounded-xl overflow-hidden shadow-inner">
-          <div class="max-h-[550px] overflow-y-auto custom-scrollbar">
-            <table class="w-full text-left text-sm">
+          <div class="max-h-[550px] overflow-x-auto overflow-y-auto custom-scrollbar">
+            <table class="min-w-[620px] w-full text-left text-sm whitespace-nowrap">
               <thead class="bg-slate-100 text-slate-700 font-bold sticky top-0 border-b border-slate-200">
                 <tr>
                   <th class="py-3 px-4 w-20">編號</th>
@@ -1351,14 +1354,18 @@
           <p class="text-xs mt-1">請在估價單或收款單頁面點擊「儲存單據」按鈕即可在此存檔</p>
         </div>
 
-        <div id="historyTableContainer" class="hidden border border-slate-200 rounded-xl overflow-hidden">
-          <table class="w-full text-left text-sm">
-            <thead class="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
+        <!-- History Table with Mobile Horizontal Scroll Support -->
+        <div class="mb-2 sm:hidden flex items-center justify-between text-xs text-amber-800 bg-amber-50/80 px-3 py-1.5 rounded-lg border border-amber-200">
+          <span class="flex items-center gap-1 font-medium"><span>👈👉</span> 表格可左右滑動查看右側「操作」按鈕</span>
+        </div>
+        <div id="historyTableContainer" class="hidden border border-slate-200 rounded-xl overflow-x-auto custom-scrollbar shadow-inner">
+          <table class="min-w-[680px] w-full text-left text-sm whitespace-nowrap">
+            <thead class="bg-slate-100 text-slate-700 font-bold border-b border-slate-200 text-xs">
               <tr>
                 <th class="py-3 px-4 w-28">單據種類</th>
                 <th class="py-3 px-4 w-32">開單日期</th>
                 <th class="py-3 px-4">客戶名稱</th>
-                <th class="py-3 px-4 w-28 text-center">品項數</th>
+                <th class="py-3 px-4 w-24 text-center">品項數</th>
                 <th class="py-3 px-4 w-32 text-right">總金額</th>
                 <th class="py-3 px-4 w-36 text-center">操作</th>
               </tr>
