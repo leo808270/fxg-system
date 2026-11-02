@@ -1347,12 +1347,18 @@
             <p class="text-xs text-slate-500 mt-1">內建 1001 估價單價目表資料庫，支援即時搜尋、新增自訂商品、修改價格</p>
           </div>
 
-          <div class="flex flex-wrap gap-2">
+          <div class="flex flex-wrap items-center gap-2">
             <button id="btnPriceAddModal" class="px-3.5 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1 shadow cursor-pointer">
               <span>➕</span> 新增品項
             </button>
+            <button type="button" id="btnExportCatalogPDF" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow cursor-pointer" title="匯出不含金額的產品目錄 A4 橫向 PDF">
+              <span>📄</span> 匯出產品目錄 PDF (無價格)
+            </button>
+            <button type="button" id="btnExportPriceListPDF" class="px-3.5 py-2 bg-amber-700 hover:bg-amber-800 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow cursor-pointer" title="匯出完整含金額的價目表 A4 橫向 PDF">
+              <span>📋</span> 匯出價目表 PDF (含價格)
+            </button>
             <button id="btnPriceExport" class="px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-xl text-xs font-medium transition border border-blue-200 cursor-pointer">
-              <span>📥</span> 匯出價目表 JSON
+              <span>📥</span> 匯出 JSON
             </button>
           </div>
         </div>
@@ -6262,6 +6268,205 @@ const firebaseConfig = {
       document.getElementById("btnQuoteClear").addEventListener("click", clearQuote);
       document.getElementById("btnQuoteSave").addEventListener("click", saveCurrentQuote);
       document.getElementById("btnQuoteExportExcel").addEventListener("click", exportQuoteToCSV);
+
+    // =========================================================
+    // --- EXPORT PRODUCT CATALOG & PRICE LIST A4 LANDSCAPE PDF ---
+    // =========================================================
+    async function exportCatalogPDF() {
+      await generatePriceOrCatalogPDF('catalog');
+    }
+
+    async function exportPriceListPDF() {
+      await generatePriceOrCatalogPDF('price');
+    }
+
+    async function generatePriceOrCatalogPDF(type = 'catalog') {
+      const isPrice = (type === 'price');
+      const titleMain = storeConfig.storeName || "芳喜蓁站手工坊";
+      const subTitle = isPrice ? "價目表" : "產品目錄";
+      const defaultFilename = isPrice ? "芳喜蓁站手工坊_價目表.pdf" : "芳喜蓁站手工坊_產品目錄.pdf";
+
+      showToast(`📄 正在為您產生${subTitle} A4 橫向 PDF，請稍候...`);
+
+      // Prepare items up to 48 rows (24 per column)
+      const items = [...currentPriceList];
+      const maxRows = 24;
+
+      let leftRowsHtml = "";
+
+      for (let i = 0; i < maxRows; i++) {
+        const leftIdx = i + 1;
+        const rightIdx = i + 1 + maxRows;
+
+        const leftItem = items[leftIdx - 1] || null;
+        const rightItem = items[rightIdx - 1] || null;
+
+        // Left Row
+        const lName = leftItem ? leftItem.name : "";
+        const lSpec = leftItem ? (leftItem.spec || "") : "";
+        const lPrice = leftItem ? (typeof leftItem.price === 'number' ? leftItem.price : (leftItem.price || '')) : "";
+
+        // Right Row
+        const rName = rightItem ? rightItem.name : "";
+        const rSpec = rightItem ? (rightItem.spec || "") : "";
+        const rPrice = rightItem ? (typeof rightItem.price === 'number' ? rightItem.price : (rightItem.price || '')) : "";
+
+        if (isPrice) {
+          leftRowsHtml += `
+            <tr style="height: 6.2mm; max-height: 6.2mm;">
+              <td style="width: 5%; border: 1px solid #000; text-align: center; font-size: 10pt; font-weight: bold; padding: 0;">${leftIdx}</td>
+              <td style="width: 20%; border: 1px solid #000; text-align: left; padding: 0 4px; font-size: 10pt; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${lName}</td>
+              <td style="width: 16%; border: 1px solid #000; text-align: left; padding: 0 4px; font-size: 9.5pt; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${lSpec}</td>
+              <td style="width: 9%; border: 1px solid #000; text-align: right; padding: 0 4px; font-size: 10pt; font-weight: bold;">${lPrice !== '' ? lPrice : ''}</td>
+              <td style="width: 5%; border: 1px solid #000; text-align: center; font-size: 10pt; font-weight: bold; padding: 0;">${rightIdx}</td>
+              <td style="width: 20%; border: 1px solid #000; text-align: left; padding: 0 4px; font-size: 10pt; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${rName}</td>
+              <td style="width: 16%; border: 1px solid #000; text-align: left; padding: 0 4px; font-size: 9.5pt; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${rSpec}</td>
+              <td style="width: 9%; border: 1px solid #000; text-align: right; padding: 0 4px; font-size: 10pt; font-weight: bold;">${rPrice !== '' ? rPrice : ''}</td>
+            </tr>
+          `;
+        } else {
+          leftRowsHtml += `
+            <tr style="height: 6.2mm; max-height: 6.2mm;">
+              <td style="width: 6%; border: 1px solid #000; text-align: center; font-size: 10pt; font-weight: bold; padding: 0;">${leftIdx}</td>
+              <td style="width: 22%; border: 1px solid #000; text-align: left; padding: 0 5px; font-size: 10.5pt; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${lName}</td>
+              <td style="width: 22%; border: 1px solid #000; text-align: left; padding: 0 5px; font-size: 10pt; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${lSpec}</td>
+              <td style="width: 6%; border: 1px solid #000; text-align: center; font-size: 10pt; font-weight: bold; padding: 0;">${rightIdx}</td>
+              <td style="width: 22%; border: 1px solid #000; text-align: left; padding: 0 5px; font-size: 10.5pt; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${rName}</td>
+              <td style="width: 22%; border: 1px solid #000; text-align: left; padding: 0 5px; font-size: 10pt; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${rSpec}</td>
+            </tr>
+          `;
+        }
+      }
+
+      const theadHtml = isPrice ? `
+        <thead>
+          <tr style="height: 6.2mm; max-height: 6.2mm; background-color: #ffffff;">
+            <th style="width: 5%; border: 1px solid #000; padding: 0;"></th>
+            <th style="width: 20%; border: 1px solid #000; text-align: center; font-size: 10.5pt; font-weight: bold;">品名</th>
+            <th style="width: 16%; border: 1px solid #000; text-align: center; font-size: 10.5pt; font-weight: bold;">數量</th>
+            <th style="width: 9%; border: 1px solid #000; text-align: center; font-size: 10.5pt; font-weight: bold;">金額</th>
+            <th style="width: 5%; border: 1px solid #000; padding: 0;"></th>
+            <th style="width: 20%; border: 1px solid #000; text-align: center; font-size: 10.5pt; font-weight: bold;">品名</th>
+            <th style="width: 16%; border: 1px solid #000; text-align: center; font-size: 10.5pt; font-weight: bold;">數量</th>
+            <th style="width: 9%; border: 1px solid #000; text-align: center; font-size: 10.5pt; font-weight: bold;">金額</th>
+          </tr>
+        </thead>
+      ` : `
+        <thead>
+          <tr style="height: 6.2mm; max-height: 6.2mm; background-color: #ffffff;">
+            <th style="width: 6%; border: 1px solid #000; padding: 0;"></th>
+            <th style="width: 22%; border: 1px solid #000; text-align: center; font-size: 10.5pt; font-weight: bold;">品名</th>
+            <th style="width: 22%; border: 1px solid #000; text-align: center; font-size: 10.5pt; font-weight: bold;">數量</th>
+            <th style="width: 6%; border: 1px solid #000; padding: 0;"></th>
+            <th style="width: 22%; border: 1px solid #000; text-align: center; font-size: 10.5pt; font-weight: bold;">品名</th>
+            <th style="width: 22%; border: 1px solid #000; text-align: center; font-size: 10.5pt; font-weight: bold;">數量</th>
+          </tr>
+        </thead>
+      `;
+
+      // Header top metadata
+      const addr = storeConfig.address || "台南市安平區安平路446巷27弄23號1樓";
+      const c1Name = storeConfig.contact1Name || "許芳瑜";
+      const c1Phone = storeConfig.contact1Phone || "0931-310-660";
+      const c2Name = storeConfig.contact2Name || "許銥庭";
+      const c2Phone = storeConfig.contact2Phone || "0989-730-103";
+      const taxId = storeConfig.taxId || "40713530";
+
+      const headerMetaRight = isPrice ? `
+        <div style="font-size: 8.5pt; color: #000; line-height: 1.35; text-align: left; padding-right: 5mm;">
+          <div>統一編號：${taxId}</div>
+          <div>食藥署登錄字號：D-200013583-000002</div>
+        </div>
+      ` : ``;
+
+      // Wrapper element for PDF generation (A4 landscape: 297mm x 210mm)
+      const wrapper = document.createElement("div");
+      wrapper.id = "tempPdfExportWrapper";
+      wrapper.style.cssText = `
+        position: fixed;
+        left: -9999px;
+        top: 0;
+        width: 297mm;
+        height: 210mm;
+        box-sizing: border-box;
+        background: #ffffff;
+        color: #000000;
+        padding: 5mm 9mm;
+        font-family: 'Noto Sans TC', system-ui, sans-serif;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      `;
+
+      wrapper.innerHTML = `
+        <!-- Title & Header Area -->
+        <div style="width: 100%; box-sizing: border-box; margin-bottom: 2mm;">
+          <div style="text-align: center; margin-bottom: 1.5mm;">
+            <div style="font-size: 20pt; font-weight: 900; letter-spacing: 2px; line-height: 1.15; font-family: 'Noto Serif TC', serif, 'Noto Sans TC';">${titleMain}</div>
+            <div style="font-size: 15pt; font-weight: bold; letter-spacing: 4px; line-height: 1.2;">${subTitle}</div>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: flex-end; width: 100%; font-size: 8.5pt; line-height: 1.35;">
+            <div>
+              <div>地址：${addr}</div>
+              <div style="display: flex; gap: 15px;">
+                <span>聯絡人：${c1Name} &nbsp; 電話:${c1Phone}</span>
+                <span>聯絡人：${c2Name} &nbsp; 電話:${c2Phone}</span>
+              </div>
+            </div>
+            ${headerMetaRight}
+          </div>
+        </div>
+
+        <!-- Master Table -->
+        <div style="width: 100%; flex: 1; box-sizing: border-box;">
+          <table style="width: 100%; border-collapse: collapse; table-layout: fixed; border: 1px solid #000;">
+            ${theadHtml}
+            <tbody>
+              ${leftRowsHtml}
+            </tbody>
+          </table>
+        </div>
+      `;
+
+      document.body.appendChild(wrapper);
+
+      try {
+        const opt = {
+          margin: 0,
+          filename: defaultFilename,
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { 
+            scale: 2, 
+            useCORS: true, 
+            letterRendering: true,
+            scrollY: 0,
+            scrollX: 0
+          },
+          jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
+        };
+
+        await html2pdf()
+          .set(opt)
+          .from(wrapper)
+          .toPdf()
+          .get('pdf')
+          .then(function(pdf) {
+            while (pdf.internal.getNumberOfPages() > 1) {
+              pdf.deletePage(pdf.internal.getNumberOfPages());
+            }
+          })
+          .save();
+
+        showToast(`✅ 已成功下載 ${subTitle} A4 橫向單頁 PDF！`);
+      } catch (err) {
+        console.error("PDF generation error:", err);
+        showToast("PDF 產生失敗，請確認瀏覽器支援 html2pdf", false);
+      } finally {
+        if (wrapper.parentNode) {
+          wrapper.parentNode.removeChild(wrapper);
+        }
+      }
+    }
     async function exportCleanPDF() {
       syncQuoteToCopy(parseFloat(document.getElementById("quoteTotalDisplay").textContent.replace(/,/g, '')) || 0);
 
@@ -6381,6 +6586,13 @@ const firebaseConfig = {
       });
 
 
+
+      // Product Catalog & Price List PDF Export Buttons
+      const btnExpCatalog = document.getElementById("btnExportCatalogPDF");
+      if (btnExpCatalog) btnExpCatalog.addEventListener("click", exportCatalogPDF);
+
+      const btnExpPrice = document.getElementById("btnExportPriceListPDF");
+      if (btnExpPrice) btnExpPrice.addEventListener("click", exportPriceListPDF);
 
       // Price Search
       document.getElementById("priceSearchInput").addEventListener("input", (e) => {
