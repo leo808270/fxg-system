@@ -230,10 +230,50 @@
         line-height: 1.25 !important;
       }
       .quote-half-sheet .customer-date-row {
-        font-size: 9.6pt !important;
+        font-size: 10pt !important;
         font-weight: 600 !important;
         padding: 1px 0 !important;
         margin-top: 1px !important;
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: flex-end !important;
+      }
+      .quote-half-sheet .customer-name-label {
+        font-size: 12.5pt !important;
+        font-weight: 800 !important;
+        letter-spacing: 0.5px !important;
+        line-height: 1.2 !important;
+        vertical-align: bottom !important;
+      }
+      .quote-half-sheet #quoteCustomerPrintDisplay,
+      .quote-half-sheet #quoteCustomerCopy {
+        font-size: 14.5pt !important;
+        font-weight: 900 !important;
+        letter-spacing: 0.5px !important;
+        border-bottom: 1.5px solid #000 !important;
+        padding: 0 4px !important;
+        min-width: 55mm !important;
+        display: inline-block !important;
+        vertical-align: bottom !important;
+        line-height: 1.2 !important;
+      }
+      .quote-half-sheet .date-label {
+        font-size: 10.5pt !important;
+        font-weight: 700 !important;
+        line-height: 1.2 !important;
+        vertical-align: bottom !important;
+      }
+      .quote-half-sheet #quoteDatePrintDisplay,
+      .quote-half-sheet #quoteDateCopy {
+        font-size: 11pt !important;
+        font-weight: 700 !important;
+        border-bottom: 1px solid #000 !important;
+        padding: 0 4px !important;
+        min-width: 26mm !important;
+        display: inline-block !important;
+        text-align: center !important;
+        vertical-align: bottom !important;
+        line-height: 1.2 !important;
       }
       .quote-half-sheet .footer-summary-row {
         font-size: 8pt !important;
@@ -416,9 +456,50 @@
       line-height: 1.25 !important;
     }
     .pdf-export-mode .quote-half-sheet .customer-date-row {
-      font-size: 8.5pt !important;
+      font-size: 10pt !important;
+      font-weight: 600 !important;
       padding: 1px 0 !important;
       margin-top: 1px !important;
+      display: flex !important;
+      justify-content: space-between !important;
+      align-items: flex-end !important;
+    }
+    .pdf-export-mode .quote-half-sheet .customer-name-label {
+      font-size: 12.5pt !important;
+      font-weight: 800 !important;
+      letter-spacing: 0.5px !important;
+      line-height: 1.2 !important;
+      vertical-align: bottom !important;
+    }
+    .pdf-export-mode .quote-half-sheet #quoteCustomerPrintDisplay,
+    .pdf-export-mode .quote-half-sheet #quoteCustomerCopy {
+      font-size: 14.5pt !important;
+      font-weight: 900 !important;
+      letter-spacing: 0.5px !important;
+      border-bottom: 1.5px solid #000 !important;
+      padding: 0 4px !important;
+      min-width: 55mm !important;
+      display: inline-block !important;
+      vertical-align: bottom !important;
+      line-height: 1.2 !important;
+    }
+    .pdf-export-mode .quote-half-sheet .date-label {
+      font-size: 10.5pt !important;
+      font-weight: 700 !important;
+      line-height: 1.2 !important;
+      vertical-align: bottom !important;
+    }
+    .pdf-export-mode .quote-half-sheet #quoteDatePrintDisplay,
+    .pdf-export-mode .quote-half-sheet #quoteDateCopy {
+      font-size: 11pt !important;
+      font-weight: 700 !important;
+      border-bottom: 1px solid #000 !important;
+      padding: 0 4px !important;
+      min-width: 26mm !important;
+      display: inline-block !important;
+      text-align: center !important;
+      vertical-align: bottom !important;
+      line-height: 1.2 !important;
     }
     .pdf-export-mode .quote-half-sheet .footer-summary-row {
       font-size: 8pt !important;
@@ -756,18 +837,18 @@
             <!-- Customer & Date Row -->
             <div class="mt-1 pt-1 border-t border-black flex justify-between items-center text-xs sm:text-sm font-semibold customer-date-row">
               <div class="flex items-center gap-1.5 flex-wrap">
-                <span class="font-bold">客戶名稱：</span>
-                <select id="quoteCustomerSelect" class="no-print border-b border-black outline-none px-2 py-0.5 min-w-[210px] max-w-[290px] bg-transparent font-bold text-xs sm:text-sm cursor-pointer hover:bg-amber-50/50 transition">
+                <span class="font-bold customer-name-label">客戶名稱：</span>
+                <select id="quoteCustomerSelect" class="no-print border-b border-black outline-none px-2 py-0.5 min-w-[210px] max-w-[290px] bg-transparent font-bold text-sm sm:text-base cursor-pointer hover:bg-amber-50/50 transition">
                   <!-- Dynamically populated from Customer Database -->
                 </select>
-                <input type="text" id="quoteCustomerCustomInput" placeholder="請輸入自訂客戶名稱" class="hidden no-print border-b border-black outline-none px-2 py-0.5 w-48 bg-transparent font-bold text-xs sm:text-sm">
+                <input type="text" id="quoteCustomerCustomInput" placeholder="請輸入自訂客戶名稱" class="hidden no-print border-b border-black outline-none px-2 py-0.5 w-48 bg-transparent font-bold text-sm sm:text-base">
                 <button type="button" id="btnQuickAddCustomerModal" title="快速新增客戶資料" class="no-print text-xs bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 px-2 py-0.5 rounded font-bold transition">
                   +新增客戶
                 </button>
                 <span id="quoteCustomerPrintDisplay" class="hidden print-only-inline font-bold"></span>
               </div>
               <div class="flex items-center gap-2">
-                <span>日期：</span>
+                <span class="date-label">日期：</span>
                 <input type="date" id="quoteDate" class="border-b border-black outline-none px-2 py-0.5 bg-transparent font-bold no-print">
                 <span id="quoteDatePrintDisplay" class="hidden print-only-inline font-bold"></span>
               </div>
@@ -864,11 +945,11 @@
               <!-- Customer & Date Row -->
               <div class="mt-1 pt-1 border-t border-black flex justify-between items-center text-xs sm:text-sm font-semibold customer-date-row">
                 <div class="flex items-center gap-2">
-                  <span>客戶名稱：</span>
+                  <span class="customer-name-label">客戶名稱：</span>
                   <span id="quoteCustomerCopy" class="border-b border-black px-2 py-0.5 w-60 inline-block font-bold"></span>
                 </div>
                 <div class="flex items-center gap-2">
-                  <span>日期：</span>
+                  <span class="date-label">日期：</span>
                   <span id="quoteDateCopy" class="border-b border-black px-2 py-0.5 inline-block font-bold"></span>
                 </div>
               </div>
