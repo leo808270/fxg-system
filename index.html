@@ -637,6 +637,12 @@
           <span>登入系統</span>
           <span>➔</span>
         </button>
+
+        <div class="pt-2 text-center">
+          <button type="button" id="btnGoToPublicStockView" class="text-xs text-amber-800 hover:text-amber-950 font-bold bg-amber-50 hover:bg-amber-100 border border-amber-300 px-3.5 py-2.5 rounded-xl transition flex items-center justify-center gap-1.5 w-full cursor-pointer shadow-2xs">
+            <span>📦</span> 免登入查看即時庫存看板 (唯讀)
+          </button>
+        </div>
       </form>
 
       <!-- Security Footer Note (No password leakage) -->
@@ -644,6 +650,180 @@
         芳喜蓁站手工坊內部授權使用 ｜ 統編：40713530
       </div>
 
+    </div>
+  </div>
+
+  <!-- Public Read-Only Stock Dashboard View (Shown when ?view=stock without login) -->
+  <div id="publicStockView" class="no-print min-h-screen flex flex-col bg-slate-100 hidden">
+    <!-- Top Header -->
+    <header class="bg-gradient-to-r from-amber-700 via-amber-800 to-amber-900 text-white shadow-lg sticky top-0 z-40">
+      <div class="max-w-5xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-amber-500 flex items-center justify-center text-amber-950 font-black text-xl shadow border border-white/50">
+            芳
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h1 class="text-base sm:text-lg font-black tracking-wide font-serif">芳喜蓁站手工坊</h1>
+              <span class="text-[11px] bg-amber-600/60 border border-amber-400/40 px-2 py-0.5 rounded-full font-bold">即時庫存看板</span>
+            </div>
+            <p class="text-[11px] text-amber-200 flex items-center gap-1.5 pt-0.5">
+              <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span id="publicStockSyncStatus">即時連線中</span>
+              <span class="text-amber-300/60">｜</span>
+              <span id="publicStockLastUpdateTime">更新時間: --:--:--</span>
+            </p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button type="button" id="btnPublicRefreshStock" class="px-2.5 py-1.5 bg-amber-600/50 hover:bg-amber-600 border border-amber-400/40 rounded-xl text-xs font-bold transition flex items-center gap-1 text-white cursor-pointer" title="重新整理庫存數據">
+            <span>🔄</span> 重新整理
+          </button>
+          <button type="button" id="btnPublicSwitchToAdminLogin" class="px-3 py-1.5 bg-white hover:bg-amber-50 text-amber-950 border border-amber-300 rounded-xl text-xs font-bold shadow-sm transition flex items-center gap-1.5 cursor-pointer">
+            <span>🔐</span> 管理者登入
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="max-w-5xl mx-auto px-4 sm:px-6 py-5 flex-1 w-full space-y-4">
+      <!-- Top 4 Summary Metric Cards -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+        <div class="bg-white p-3.5 sm:p-4 rounded-2xl shadow-xs border border-slate-200">
+          <span class="text-xs font-bold text-slate-500 flex items-center gap-1"><span>📦</span> 總品項數</span>
+          <div class="mt-1.5 flex items-baseline justify-between">
+            <span id="pubStatTotalItems" class="text-xl sm:text-2xl font-black text-slate-800">0</span>
+            <span class="text-xs text-slate-400">種原料</span>
+          </div>
+        </div>
+
+        <div class="bg-white p-3.5 sm:p-4 rounded-2xl shadow-xs border border-slate-200">
+          <span class="text-xs font-bold text-slate-500 flex items-center gap-1"><span>📊</span> 在庫總數量</span>
+          <div class="mt-1.5 flex items-baseline justify-between">
+            <span id="pubStatTotalStock" class="text-xl sm:text-2xl font-black text-amber-700">0</span>
+            <span class="text-xs text-slate-400">件/包/箱</span>
+          </div>
+        </div>
+
+        <div class="bg-white p-3.5 sm:p-4 rounded-2xl shadow-xs border border-slate-200">
+          <span class="text-xs font-bold text-amber-600 flex items-center gap-1"><span>⚠️</span> 低庫存警戒</span>
+          <div class="mt-1.5 flex items-baseline justify-between">
+            <span id="pubStatLowStock" class="text-xl sm:text-2xl font-black text-amber-600">0</span>
+            <span class="text-xs text-amber-500">品項 (≤5)</span>
+          </div>
+        </div>
+
+        <div class="bg-white p-3.5 sm:p-4 rounded-2xl shadow-xs border border-slate-200">
+          <span class="text-xs font-bold text-rose-600 flex items-center gap-1"><span>❌</span> 目前缺貨</span>
+          <div class="mt-1.5 flex items-baseline justify-between">
+            <span id="pubStatOutStock" class="text-xl sm:text-2xl font-black text-rose-600">0</span>
+            <span class="text-xs text-rose-500">品項 (≤0)</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Search & Status Filter Controls -->
+      <div class="bg-white p-4 rounded-2xl shadow-xs border border-slate-200 space-y-3">
+        <div class="flex flex-wrap items-center gap-2.5">
+          <div class="relative flex-1 min-w-[220px]">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400 text-sm">🔍</span>
+            <input type="text" id="pubStockSearchInput" placeholder="快速搜尋品名、編號或規格..." class="w-full pl-10 pr-9 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:bg-white focus:border-amber-600 outline-none transition font-medium">
+            <button type="button" id="btnPubClearSearch" class="hidden absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 text-sm">✕</button>
+          </div>
+
+          <!-- Filter buttons -->
+          <div class="inline-flex rounded-xl border border-slate-200 p-1 bg-slate-100 text-xs font-bold gap-1 flex-wrap">
+            <button type="button" class="pub-filter-btn px-3 py-1.5 rounded-lg bg-white text-slate-800 shadow-xs transition cursor-pointer" data-filter="all">全部商品</button>
+            <button type="button" class="pub-filter-btn px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition cursor-pointer" data-filter="low">⚠️ 僅看低庫存</button>
+            <button type="button" class="pub-filter-btn px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition cursor-pointer" data-filter="out">❌ 僅看缺貨</button>
+            <button type="button" class="pub-filter-btn px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition cursor-pointer" data-filter="normal">✅ 正常充足</button>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between text-xs text-slate-500 pt-1 border-t border-slate-100">
+          <span id="pubStockCountBadge">顯示 0 / 0 項商品</span>
+          <span class="text-[11px] text-slate-400">🔒 純唯讀模式・無編輯功能・無單價與商業機密</span>
+        </div>
+      </div>
+
+      <!-- Live Stock Item List -->
+      <div class="bg-white rounded-2xl shadow-xs border border-slate-200 overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-500">
+                <th class="py-3 px-4 w-16 text-center">編號</th>
+                <th class="py-3 px-4 min-w-[180px]">商品品名</th>
+                <th class="py-3 px-4 w-32">包裝規格</th>
+                <th class="py-3 px-4 w-32 text-right">目前庫存</th>
+                <th class="py-3 px-4 w-28 text-center">狀態標籤</th>
+              </tr>
+            </thead>
+            <tbody id="pubStockTableBody" class="divide-y divide-slate-100 text-sm">
+              <!-- Dynamically populated rows -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+
+    <!-- Public Footer -->
+    <footer class="py-4 text-center text-xs text-slate-400 border-t border-slate-200 bg-white">
+      芳喜蓁站手工坊 ｜ 統一編號：40713530 ｜ 台南市安平區安平路446巷27弄23號1樓 ｜ 庫存資料即時同步
+    </footer>
+  </div>
+
+  <!-- QR Code & Public URL Modal for Read-Only Stock View -->
+  <div id="stockQrModal" class="no-print hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 space-y-5 shadow-2xl border border-slate-200 text-slate-800 animate-fade-in">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div class="flex items-center gap-2">
+          <span class="text-2xl">📱</span>
+          <div>
+            <h3 class="text-base font-bold text-slate-800">免登入查庫存 QR Code</h3>
+            <p class="text-xs text-slate-500">掃描後即可直接在手機查看即時庫存（純唯讀、無單價）</p>
+          </div>
+        </div>
+        <button type="button" id="btnCloseStockQrModal" class="text-slate-400 hover:text-slate-700 text-lg w-8 h-8 rounded-lg hover:bg-slate-100 flex items-center justify-center transition cursor-pointer">✕</button>
+      </div>
+
+      <!-- QR Code Preview Card -->
+      <div id="stockQrPrintArea" class="bg-amber-50/50 border-2 border-dashed border-amber-300 rounded-2xl p-5 text-center space-y-3">
+        <div class="font-serif font-black text-lg text-slate-900 tracking-wide">芳喜蓁站手工坊</div>
+        <div class="text-xs font-bold text-amber-800 bg-amber-100 inline-block px-3 py-1 rounded-full">
+          即時庫存查詢專用碼
+        </div>
+
+        <!-- Canvas for QR Code -->
+        <div class="flex justify-center py-2">
+          <canvas id="stockQrCanvas" class="bg-white p-2 rounded-xl shadow-md border border-slate-200"></canvas>
+        </div>
+
+        <p class="text-[11px] text-slate-500">用手機相機直接掃描上方 QR Code 即可隨時查庫存</p>
+      </div>
+
+      <!-- URL Box & Copy Button -->
+      <div class="space-y-1.5">
+        <label class="block text-xs font-bold text-slate-700">專屬查詢網址：</label>
+        <div class="flex items-center gap-2">
+          <input type="text" id="stockQrUrlInput" readonly class="flex-1 px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-mono text-slate-600 select-all outline-none">
+          <button type="button" id="btnCopyStockQrUrl" class="px-3 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1 cursor-pointer">
+            <span>📋</span> 複製
+          </button>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center justify-between gap-2 pt-2 border-t border-slate-100">
+        <button type="button" id="btnPreviewStockPublicView" class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer">
+          <span>🔗</span> 前往看板預覽
+        </button>
+        <button type="button" id="btnPrintStockQrSign" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow cursor-pointer">
+          <span>🖨️</span> 列印掃描告示立牌
+        </button>
+      </div>
     </div>
   </div>
 
@@ -1080,6 +1260,9 @@
 
           <!-- Right: Action Buttons -->
           <div class="flex flex-wrap items-center gap-2">
+            <button type="button" id="btnOpenStockQrModal" class="px-3.5 py-2 bg-amber-50 hover:bg-amber-100 text-amber-900 rounded-xl text-xs font-bold transition border border-amber-300 flex items-center gap-1.5 shadow-2xs cursor-pointer">
+              <span>📱</span> 免登入查庫存 QR Code
+            </button>
             <button id="btnInvAddIn" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow">
               <span>📥</span> 登記進貨
             </button>
@@ -2623,6 +2806,9 @@ const firebaseConfig = {
     }
 
     function renderInventoryDashboard() {
+      if (typeof renderPublicStockDashboard === "function") {
+        renderPublicStockDashboard();
+      }
       // 1. Calculate Top 5 Stat Metrics
       let totalStock = 0;
       let totalIn = 0;
@@ -4307,13 +4493,13 @@ const firebaseConfig = {
               ${rowsHtml}
             </tbody>
           </table>
-          <script>
-            window.onload = function() { window.print(); };
-          <\/script>
-        </body>
+          
+
+</body>
         </html>
       `);
       printWin.document.close();
+      setTimeout(function() { try { printWin.focus(); printWin.print(); } catch(e){} }, 400);
     }
 
     function fillSampleShipmentData() {
@@ -5711,6 +5897,7 @@ const firebaseConfig = {
     }
 
     function recordUserActivity() {
+      if (typeof isPublicStockViewMode === "function" && isPublicStockViewMode()) return;
       if (!isUserAuthenticated()) return;
       const now = Date.now();
       if (now - lastUserActivityTime > 3000) {
@@ -5725,6 +5912,7 @@ const firebaseConfig = {
     }
 
     function checkInactivityExpiration() {
+      if (typeof isPublicStockViewMode === "function" && isPublicStockViewMode()) return;
       if (!isUserAuthenticated()) return;
       const stored = sessionStorage.getItem("fxg_last_activity_time");
       const lastActive = stored ? Math.max(Number(stored), lastUserActivityTime) : lastUserActivityTime;
@@ -5834,14 +6022,39 @@ const firebaseConfig = {
       return { username: u.trim(), password: p.trim() };
     }
 
+    function isPublicStockViewMode() {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get("view") === "stock" || params.get("stock") === "1" || params.get("view") === "inventory") return true;
+        if (window.location.hash === "#stock" || window.location.hash === "#inventory") return true;
+      } catch (e) {}
+      return false;
+    }
+
     function checkAuth() {
+      const loginView = document.getElementById("loginView");
+      const appView = document.getElementById("appView");
+      const publicStockView = document.getElementById("publicStockView");
+
+      if (isPublicStockViewMode()) {
+        if (loginView) loginView.classList.add("hidden");
+        if (appView) appView.classList.add("hidden");
+        if (publicStockView) {
+          publicStockView.classList.remove("hidden");
+          setTimeout(() => {
+            renderPublicStockDashboard();
+          }, 50);
+        }
+        return false;
+      }
+
+      if (publicStockView) publicStockView.classList.add("hidden");
+
       const isRemembered = localStorage.getItem(AUTH_CONFIG.rememberKey) === "true";
       const isSessionAuth = sessionStorage.getItem(AUTH_CONFIG.sessionTokenKey) === "true";
       const isLocalAuth = localStorage.getItem(AUTH_CONFIG.sessionTokenKey) === "true";
 
       const authenticated = isRemembered ? isLocalAuth : isSessionAuth;
-      const loginView = document.getElementById("loginView");
-      const appView = document.getElementById("appView");
 
       if (authenticated) {
         if (loginView) loginView.classList.add("hidden");
@@ -6012,6 +6225,236 @@ const firebaseConfig = {
       // Check current auth status immediately
       checkAuth();
       initInactivityWatcher();
+    }
+
+
+    // ==========================================
+    // --- 免登入即時庫存看板 (Public Read-Only Stock View) ---
+    // ==========================================
+    let pubCurrentStatusFilter = "all";
+
+    function renderPublicStockDashboard() {
+      const tbody = document.getElementById("pubStockTableBody");
+      if (!tbody) return;
+
+      const searchInput = document.getElementById("pubStockSearchInput");
+      const filterText = (searchInput ? searchInput.value : "").toLowerCase().trim();
+
+      // Metrics calculation
+      let totalStock = 0;
+      let lowStockCount = 0;
+      let outStockCount = 0;
+
+      currentPriceList.forEach(item => {
+        const stats = getItemStockStats(item.name);
+        totalStock += stats.stock;
+        if (stats.stock <= 0) {
+          outStockCount++;
+        } else if (stats.stock <= 5) {
+          lowStockCount++;
+        }
+      });
+
+      const elTotalItems = document.getElementById("pubStatTotalItems");
+      const elTotalStock = document.getElementById("pubStatTotalStock");
+      const elLowStock = document.getElementById("pubStatLowStock");
+      const elOutStock = document.getElementById("pubStatOutStock");
+
+      if (elTotalItems) elTotalItems.textContent = currentPriceList.length.toLocaleString();
+      if (elTotalStock) elTotalStock.textContent = totalStock.toLocaleString();
+      if (elLowStock) elLowStock.textContent = lowStockCount.toLocaleString();
+      if (elOutStock) elOutStock.textContent = outStockCount.toLocaleString();
+
+      // Filter items
+      const filtered = currentPriceList.filter(item => {
+        const stats = getItemStockStats(item.name);
+        const matchSearch = !filterText ||
+          (item.name && item.name.toLowerCase().includes(filterText)) ||
+          (item.code && item.code.toLowerCase().includes(filterText)) ||
+          (item.spec && item.spec.toLowerCase().includes(filterText));
+
+        if (!matchSearch) return false;
+
+        if (pubCurrentStatusFilter === "low") return stats.stock > 0 && stats.stock <= 5;
+        if (pubCurrentStatusFilter === "out") return stats.stock <= 0;
+        if (pubCurrentStatusFilter === "normal") return stats.stock > 5;
+        return true;
+      });
+
+      const countBadge = document.getElementById("pubStockCountBadge");
+      if (countBadge) {
+        countBadge.textContent = "顯示 " + filtered.length + " / 共 " + currentPriceList.length + " 項商品";
+      }
+
+      tbody.innerHTML = "";
+      if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="py-12 text-center text-slate-400 font-medium">查無符合條件的庫存商品</td></tr>';
+        return;
+      }
+
+      filtered.forEach((item, idx) => {
+        const stats = getItemStockStats(item.name);
+        const tr = document.createElement("tr");
+        tr.className = "hover:bg-amber-50/40 transition";
+
+        let statusBadge = "";
+        let stockColorClass = "text-emerald-700 font-black";
+
+        if (stats.stock <= 0) {
+          statusBadge = '<span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-rose-100 text-rose-700 border border-rose-200">❌ 缺貨中</span>';
+          stockColorClass = "text-rose-600 font-black";
+        } else if (stats.stock <= 5) {
+          statusBadge = '<span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-100 text-amber-800 border border-amber-200">⚠️ 低庫存</span>';
+          stockColorClass = "text-amber-600 font-black";
+        } else {
+          statusBadge = '<span class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">✅ 正常充足</span>';
+        }
+
+        tr.innerHTML = `
+          <td class="py-3.5 px-4 text-center font-mono text-xs text-slate-400 font-bold">${item.code || (idx + 1)}</td>
+          <td class="py-3.5 px-4">
+            <div class="font-bold text-slate-900 text-base sm:text-lg">${item.name}</div>
+          </td>
+          <td class="py-3.5 px-4 text-xs font-medium text-slate-600">${item.spec || '-'}</td>
+          <td class="py-3.5 px-4 text-right">
+            <span class="text-xl sm:text-2xl ${stockColorClass}">${stats.stock.toLocaleString()}</span>
+          </td>
+          <td class="py-3.5 px-4 text-center">${statusBadge}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      const lastUpdateEl = document.getElementById("publicStockLastUpdateTime");
+      if (lastUpdateEl) {
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString('zh-TW', { hour12: false });
+        lastUpdateEl.textContent = "更新時間: " + timeStr;
+      }
+    }
+
+    function printStockQrSign() {
+      const qrCanvas = document.getElementById("stockQrCanvas");
+      if (!qrCanvas) return;
+      const qrDataUrl = qrCanvas.toDataURL("image/png");
+      const fullUrl = (document.getElementById("stockQrUrlInput") ? document.getElementById("stockQrUrlInput").value : "") || "https://leo808270.github.io/fxg-system/?view=stock";
+
+      const printWin = window.open("", "_blank", "width=800,height=900");
+      if (!printWin) {
+        showToast("請允許彈跳視窗以列印 QR Code 告示牌", false);
+        return;
+      }
+      printWin.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <title>芳喜蓁站手工坊 - 即時庫存查詢 QR Code 告示牌</title>
+          <style>
+            @page { size: A4 portrait; margin: 15mm; }
+            body {
+              font-family: 'Noto Sans TC', system-ui, sans-serif;
+              color: #1e293b;
+              text-align: center;
+              padding: 20px;
+              margin: 0;
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              justify-content: center;
+              min-height: 90vh;
+            }
+            .sign-card {
+              border: 4px solid #b45309;
+              border-radius: 28px;
+              padding: 40px 30px;
+              max-width: 550px;
+              width: 100%;
+              box-sizing: border-box;
+              background: #ffffff;
+            }
+            .brand-title {
+              font-size: 32px;
+              font-weight: 900;
+              color: #78350f;
+              margin: 0 0 10px 0;
+              letter-spacing: 2px;
+            }
+            .badge {
+              display: inline-block;
+              background: #fef3c7;
+              color: #92400e;
+              padding: 6px 18px;
+              border-radius: 20px;
+              font-size: 16px;
+              font-weight: 800;
+              margin-bottom: 25px;
+              border: 1px solid #fde68a;
+            }
+            .qr-box {
+              margin: 20px auto;
+              padding: 15px;
+              background: #fff;
+              border-radius: 20px;
+              box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+              display: inline-block;
+              border: 2px solid #e2e8f0;
+            }
+            .qr-img {
+              width: 260px;
+              height: 260px;
+              display: block;
+            }
+            .instruction {
+              font-size: 20px;
+              font-weight: 900;
+              color: #0f172a;
+              margin-top: 25px;
+            }
+            .sub-desc {
+              font-size: 14px;
+              color: #64748b;
+              margin-top: 8px;
+              line-height: 1.5;
+            }
+            .url-text {
+              font-family: monospace;
+              font-size: 12px;
+              color: #94a3b8;
+              margin-top: 15px;
+              word-break: break-all;
+            }
+            .footer-note {
+              margin-top: 30px;
+              font-size: 12px;
+              color: #94a3b8;
+              border-top: 1px dashed #cbd5e1;
+              padding-top: 15px;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="sign-card">
+            <h1 class="brand-title">芳喜蓁站手工坊</h1>
+            <div class="badge">📦 即時商品庫存查詢專用碼</div>
+            <div class="qr-box">
+              <img src="${qrDataUrl}" class="qr-img" alt="庫存查詢 QR Code">
+            </div>
+            <div class="instruction">📱 手機相機掃描 立即查詢在庫數量</div>
+            <div class="sub-desc">免輸入帳號密碼 ｜ 資料與雲端即時同步 ｜ 隨時掌握最新庫存</div>
+            <div class="url-text">${fullUrl}</div>
+            <div class="footer-note">芳喜蓁站手工坊 ｜ 統一編號：40713530 ｜ 內部與合作夥伴專用</div>
+          </div>
+          <script>
+            window.onload = function() {
+              setTimeout(function() {
+                window.print();
+              }, 300);
+            };
+          <\/script>
+        </body>
+        </html>
+      `);
+      printWin.document.close();
     }
 
     // --- Setup Listeners ---
@@ -7304,6 +7747,154 @@ const firebaseConfig = {
       // Check URL Sync params & initialize Firebase on load
       checkUrlSyncParams();
       initFirebaseSync();
+
+
+      // --- Public Read-Only Stock Dashboard Events ---
+      const pubSearchInput = document.getElementById("pubStockSearchInput");
+      const pubClearBtn = document.getElementById("btnPubClearSearch");
+      if (pubSearchInput) {
+        pubSearchInput.addEventListener("input", () => {
+          if (pubClearBtn) {
+            if (pubSearchInput.value.trim()) {
+              pubClearBtn.classList.remove("hidden");
+            } else {
+              pubClearBtn.classList.add("hidden");
+            }
+          }
+          renderPublicStockDashboard();
+        });
+      }
+
+      if (pubClearBtn) {
+        pubClearBtn.addEventListener("click", () => {
+          if (pubSearchInput) pubSearchInput.value = "";
+          pubClearBtn.classList.add("hidden");
+          renderPublicStockDashboard();
+        });
+      }
+
+      document.querySelectorAll(".pub-filter-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          pubCurrentStatusFilter = btn.getAttribute("data-filter") || "all";
+          document.querySelectorAll(".pub-filter-btn").forEach(b => {
+            b.className = "pub-filter-btn px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition cursor-pointer";
+          });
+          btn.className = "pub-filter-btn px-3 py-1.5 rounded-lg bg-white text-slate-800 shadow-xs transition cursor-pointer font-bold";
+          renderPublicStockDashboard();
+        });
+      });
+
+      const btnPubRefresh = document.getElementById("btnPublicRefreshStock");
+      if (btnPubRefresh) {
+        btnPubRefresh.addEventListener("click", () => {
+          renderPublicStockDashboard();
+          showToast("🔄 已重新同步最新庫存數據！");
+        });
+      }
+
+      const btnPubAdmin = document.getElementById("btnPublicSwitchToAdminLogin");
+      if (btnPubAdmin) {
+        btnPubAdmin.addEventListener("click", () => {
+          const pubView = document.getElementById("publicStockView");
+          const loginView = document.getElementById("loginView");
+          if (pubView) pubView.classList.add("hidden");
+          if (loginView) {
+            loginView.classList.remove("hidden");
+            const pInput = document.getElementById("loginPassword");
+            if (pInput) setTimeout(() => pInput.focus(), 100);
+          }
+        });
+      }
+
+      const btnGoPublic = document.getElementById("btnGoToPublicStockView");
+      if (btnGoPublic) {
+        btnGoPublic.addEventListener("click", () => {
+          const pubView = document.getElementById("publicStockView");
+          const loginView = document.getElementById("loginView");
+          if (loginView) loginView.classList.add("hidden");
+          if (pubView) {
+            pubView.classList.remove("hidden");
+            renderPublicStockDashboard();
+          }
+        });
+      }
+
+      // --- QR Code Modal Events ---
+      const btnOpenStockQr = document.getElementById("btnOpenStockQrModal");
+      const stockQrModal = document.getElementById("stockQrModal");
+      const btnCloseStockQr = document.getElementById("btnCloseStockQrModal");
+      const stockQrUrlInput = document.getElementById("stockQrUrlInput");
+      const stockQrCanvas = document.getElementById("stockQrCanvas");
+
+      function getPublicStockUrl() {
+        let origin = window.location.origin;
+        let pathname = window.location.pathname;
+        if (!origin || origin === "null" || origin.startsWith("file")) {
+          return "https://leo808270.github.io/fxg-system/?view=stock";
+        }
+        return `${origin}${pathname}?view=stock`;
+      }
+
+      if (btnOpenStockQr) {
+        btnOpenStockQr.addEventListener("click", () => {
+          const publicUrl = getPublicStockUrl();
+          if (stockQrUrlInput) stockQrUrlInput.value = publicUrl;
+          if (stockQrCanvas && typeof SimpleQRCode !== "undefined") {
+            try {
+              SimpleQRCode.drawCanvas(publicUrl, stockQrCanvas, 220);
+            } catch (err) {
+              console.error("QR Code generation error:", err);
+            }
+          }
+          if (stockQrModal) stockQrModal.classList.remove("hidden");
+        });
+      }
+
+      if (btnCloseStockQr) {
+        btnCloseStockQr.addEventListener("click", () => {
+          if (stockQrModal) stockQrModal.classList.add("hidden");
+        });
+      }
+
+      const btnCopyStockQr = document.getElementById("btnCopyStockQrUrl");
+      if (btnCopyStockQr) {
+        btnCopyStockQr.addEventListener("click", () => {
+          const url = stockQrUrlInput ? stockQrUrlInput.value : getPublicStockUrl();
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(url).then(() => {
+              showToast("✅ 已複製免登入查庫存專屬網址！");
+            }).catch(() => {
+              showToast("網址已選取，請按 Ctrl+C 複製");
+            });
+          } else {
+            if (stockQrUrlInput) {
+              stockQrUrlInput.select();
+              document.execCommand("copy");
+              showToast("✅ 已複製免登入查庫存專屬網址！");
+            }
+          }
+        });
+      }
+
+      const btnPreviewStock = document.getElementById("btnPreviewStockPublicView");
+      if (btnPreviewStock) {
+        btnPreviewStock.addEventListener("click", () => {
+          const url = stockQrUrlInput ? stockQrUrlInput.value : getPublicStockUrl();
+          window.open(url, "_blank");
+        });
+      }
+
+      const btnPrintStockQr = document.getElementById("btnPrintStockQrSign");
+      if (btnPrintStockQr) {
+        btnPrintStockQr.addEventListener("click", () => {
+          printStockQrSign();
+        });
+      }
+
+      // Initial check for public stock view
+      if (typeof isPublicStockViewMode === "function" && isPublicStockViewMode()) {
+        checkAuth();
+      }
 
       // 預設以乾淨空白的估價單開始，隨時可按「填入範例資料」示範
       clearQuote(false);
