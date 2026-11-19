@@ -570,6 +570,7 @@
   <!-- Google Firebase Realtime Database SDK (Compat build for cross-device cloud sync) -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <!-- Client-side Pure PDF Generator (html2pdf.js) for clean zero-URL mobile PDF export -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
@@ -589,7 +590,7 @@
         <p class="text-xs font-semibold text-amber-800 bg-amber-50 border border-amber-200/60 inline-block px-3 py-1 rounded-full">
           估價單與庫存管理系統
         </p>
-        <p class="text-xs text-slate-500 pt-1">請輸入帳號與密碼登入系統</p>
+        <p class="text-xs text-slate-500 pt-1">請使用 Firebase 管理者帳號登入（已啟用雲端權限驗證）</p>
       </div>
 
       <!-- Login Form -->
@@ -608,9 +609,9 @@
 
         <div>
           <label class="block text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1">
-            <span>👤</span> 系統帳號
+            <span>📧</span> 管理者 Email 帳號
           </label>
-          <input type="text" id="loginUsername" required autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="請輸入帳號" value="admin" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:border-amber-600 focus:ring-2 focus:ring-amber-500/20 text-sm outline-none transition bg-slate-50/50 font-medium">
+          <input type="email" id="loginUsername" required autocomplete="email" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="請輸入 Firebase 管理者 Email" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:border-amber-600 focus:ring-2 focus:ring-amber-500/20 text-sm outline-none transition bg-slate-50/50 font-medium">
         </div>
 
         <div>
@@ -633,8 +634,8 @@
           </label>
         </div>
 
-        <button type="submit" id="btnLoginSubmit" onclick="handleLogin(event)" class="w-full py-3 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white rounded-xl font-bold text-sm shadow-lg shadow-amber-600/30 transition transform active:scale-98 flex items-center justify-center gap-2 cursor-pointer">
-          <span>登入系統</span>
+        <button type="submit" id="btnLoginSubmit" class="w-full py-3 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white rounded-xl font-bold text-sm shadow-lg shadow-amber-600/30 transition transform active:scale-98 flex items-center justify-center gap-2 cursor-pointer">
+          <span id="loginSubmitLabel">登入系統</span>
           <span>➔</span>
         </button>
 
@@ -1804,40 +1805,53 @@
         </form>
       </div>
 
-      <!-- Account & Password Management Card -->
-      <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 max-w-2xl mx-auto">
-        <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2 mb-2">
-          <span>🔐</span> 系統登入帳號與密碼修改
-        </h2>
-        <p class="text-xs text-slate-500 mb-4">修改進入系統所需的帳號與密碼，修改後將自動保存（支援多裝置雲端同步）</p>
+      <!-- Firebase Auth Account & Security Card -->
+      <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 max-w-2xl mx-auto space-y-4">
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2 mb-1">
+              <span>🔐</span> Firebase 管理者驗證與安全狀態
+            </h2>
+            <p class="text-xs text-slate-500">已升級為 Firebase Authentication 雲端安全驗證，前端與資料庫不再儲存任何明文帳密</p>
+          </div>
+          <span class="shrink-0 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">🛡️ 高安全模式</span>
+        </div>
 
-        <form id="authSettingsForm" class="space-y-4">
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-xs font-bold text-slate-700 mb-1">系統登入帳號</label>
-              <input type="text" id="setAuthUsername" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:border-amber-600 outline-none font-medium" placeholder="預設: admin">
-            </div>
-            <div>
-              <label class="block text-xs font-bold text-slate-700 mb-1">系統登入密碼</label>
-              <input type="text" id="setAuthPassword" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:border-amber-600 outline-none font-medium" placeholder="預設: 8888">
+        <div class="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-2 text-xs">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <span class="text-slate-500 font-semibold">目前登入帳號：</span>
+            <span id="authCurrentUserEmail" class="font-bold text-slate-800">尚未登入</span>
+          </div>
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <span class="text-slate-500 font-semibold">管理者 UID（供鎖定安全規則使用）：</span>
+            <div class="flex items-center gap-1.5">
+              <code id="authCurrentUserUid" class="px-2 py-0.5 bg-white border border-slate-200 rounded font-mono text-[11px] text-slate-700 select-all">--</code>
+              <button type="button" id="btnCopyAdminUid" class="px-2 py-0.5 bg-amber-100 hover:bg-amber-200 text-amber-900 rounded font-bold text-[11px] transition cursor-pointer">複製 UID</button>
             </div>
           </div>
-          <div class="flex justify-between items-center pt-2">
-            <span class="text-xs text-slate-400">※ 請妥善保管密碼，若遺忘可清除瀏覽器快取恢復預設值 (admin / 8888)</span>
-          </div>
+        </div>
 
-          <!-- Inactivity Protection Indicator -->
-          <div class="mt-4 p-3.5 bg-amber-50/70 border border-amber-200/90 rounded-xl text-xs text-amber-950 flex items-start gap-2.5">
-            <span class="text-lg leading-none">🛡️</span>
-            <div class="space-y-0.5">
-              <span class="font-bold text-amber-900">自動安全鎖定保護（已啟用）：</span>
-              <p class="text-slate-600 leading-relaxed">系統已啟用「閒置 10 分鐘自動登出」防護機制。當裝置超過 10 分鐘無任何滑鼠、鍵盤或觸控操作時，系統將自動返回登入鎖定畫面，防止離開座位時單據與庫存資料外流。</p>
+        <form id="authSettingsForm" class="space-y-3 pt-1">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">變更管理者登入密碼（需至少 6 碼）</label>
+            <div class="flex flex-col sm:flex-row gap-2">
+              <input type="password" id="setAuthNewPassword" minlength="6" autocomplete="new-password" class="flex-1 px-3 py-2 border border-slate-300 rounded-xl text-sm focus:border-amber-600 outline-none font-medium" placeholder="請輸入新密碼（至少 6 個字元）">
+              <button type="submit" class="px-5 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-bold text-xs sm:text-sm shadow transition flex items-center justify-center gap-1.5 cursor-pointer shrink-0">
+                <span>🔑</span> 更新登入密碼
+              </button>
             </div>
-            <button type="submit" class="px-5 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-bold text-sm shadow transition flex items-center gap-1.5 cursor-pointer">
-              <span>💾</span> 保存帳密設定
-            </button>
+            <p class="text-[11px] text-slate-400 mt-1">※ 若距離上次登入時間較久，Firebase 會要求重新登入一次後方可修改密碼。</p>
           </div>
         </form>
+
+        <!-- Inactivity Protection Indicator -->
+        <div class="p-3.5 bg-amber-50/70 border border-amber-200/90 rounded-xl text-xs text-amber-950 flex items-start gap-2.5">
+          <span class="text-lg leading-none">🛡️</span>
+          <div class="space-y-0.5">
+            <span class="font-bold text-amber-900">自動安全鎖定保護（已啟用）：</span>
+            <p class="text-slate-600 leading-relaxed">系統已啟用「閒置 10 分鐘自動登出」防護機制。當裝置超過 10 分鐘無任何滑鼠、鍵盤或觸控操作時，系統將自動執行 Firebase 登出並返回鎖定畫面，防止離開座位時單據與商業資料外流。</p>
+          </div>
+        </div>
       </div>
 
       <!-- TAB 5 - Card 2: ☁️ Google Firebase 跨裝置雲端同步 -->
@@ -1978,9 +1992,29 @@ const firebaseConfig = {
             </div>
             <div class="flex items-start gap-2.5">
               <span class="w-5 h-5 rounded-full bg-amber-600 text-white flex items-center justify-center font-bold text-[10px] shrink-0 mt-0.5">3</span>
-              <div>
-                <span class="font-bold text-slate-800">啟用 Realtime Database (即時資料庫)：</span>
-                進入專案後，在左側功能表點「建構 (Build)」➔「Realtime Database」➔ 點「建立資料庫 (Create Database)」➔ 地點選預設或新加坡，在安全規則頁面勾選「以測試模式啟動 (Test mode)」並按啟用。
+              <div class="space-y-2 flex-1">
+                <div>
+                  <span class="font-bold text-slate-800">啟用 Authentication 登入驗證與安全規則（高資安防護）：</span>
+                  <ol class="list-decimal list-inside space-y-1 mt-1 text-slate-600">
+                    <li>左側「建構」➔「<strong>Authentication</strong>」➔「開始使用」➔ 啟用「<strong>電子郵件/密碼 (Email/Password)</strong>」➔ 在「Users」分頁點「新增使用者」，建立您的管理者 Email 與密碼。</li>
+                    <li>左側「建構」➔「<strong>Realtime Database</strong>」➔「規則 (Rules)」分頁，貼上以下雙節點隔離規則並按發布（若要更嚴格，可將 <code class="bg-slate-200 px-1 rounded">auth != null</code> 改為 <code class="bg-slate-200 px-1 rounded">auth.uid === '您的UID'</code>）：</li>
+                  </ol>
+                </div>
+                <div class="relative">
+                  <pre id="firebaseSecurityRulesCode" class="p-3 bg-slate-900 text-emerald-300 rounded-xl font-mono text-[11px] overflow-x-auto leading-relaxed">{
+  "rules": {
+    "public_stock": {
+      ".read": true,
+      ".write": "auth != null"
+    },
+    "private_data": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    }
+  }
+}</pre>
+                  <button type="button" id="btnCopyFirebaseRules" class="absolute top-2 right-2 px-2.5 py-1 bg-slate-700 hover:bg-slate-600 text-white rounded-lg text-[10px] font-bold transition cursor-pointer">📋 複製規則</button>
+                </div>
               </div>
             </div>
             <div class="flex items-start gap-2.5">
@@ -5563,8 +5597,167 @@ const firebaseConfig = {
       appId: "1:281708586563:web:c5c5712bfd7a213db656f6"
     };
 
+    let firebaseAuthInstance = null;
+    let currentFirebaseUser = null;
+    let privateDataRef = null;
+    let publicStockRef = null;
+    let publicStockItems = [];
+
+    function buildPublicStockPayloadList() {
+      return toSafeArray(currentPriceList).map((item, idx) => {
+        const stats = getItemStockStats(item.name);
+        return {
+          code: item.code || String(idx + 1).padStart(2, "0"),
+          name: item.name || "",
+          spec: item.spec || "-",
+          stock: stats.stock
+        };
+      });
+    }
+
+    function detachPrivateDataListener() {
+      if (privateDataRef) {
+        try { privateDataRef.off(); } catch (e) {}
+        privateDataRef = null;
+      }
+    }
+
+    function attachPublicStockListener() {
+      if (!firebaseDbInstance) return;
+      if (publicStockRef) {
+        try { publicStockRef.off(); } catch (e) {}
+      }
+      publicStockRef = firebaseDbInstance.ref("public_stock");
+      publicStockRef.on("value", (snapshot) => {
+        const val = snapshot.val();
+        if (val && Array.isArray(val.items || toSafeArray(val.items))) {
+          publicStockItems = toSafeArray(val.items);
+          try {
+            localStorage.setItem("fxg_public_stock", JSON.stringify(publicStockItems));
+          } catch (e) {}
+        } else if (val && val.items) {
+          publicStockItems = toSafeArray(val.items);
+          try {
+            localStorage.setItem("fxg_public_stock", JSON.stringify(publicStockItems));
+          } catch (e) {}
+        }
+        const statusEl = document.getElementById("publicStockSyncStatus");
+        if (statusEl) statusEl.textContent = "即時連線中 (唯讀)";
+        if (isPublicStockViewMode() || (document.getElementById("publicStockView") && !document.getElementById("publicStockView").classList.contains("hidden"))) {
+          renderPublicStockDashboard();
+        }
+      }, (error) => {
+        console.error("Public stock read error:", error);
+        const statusEl = document.getElementById("publicStockSyncStatus");
+        if (statusEl) statusEl.textContent = "離線 / 權限受限";
+      });
+    }
+
+    function applyCloudPrivateDataToLocal(cloudData) {
+      if (!cloudData) return;
+      isRemoteSyncUpdate = true;
+      try {
+        if (cloudData.favoriteProducts !== undefined) {
+          quickTagNames = toSafeArray(cloudData.favoriteProducts);
+          localStorage.setItem("fxg_favorite_products", JSON.stringify(quickTagNames));
+        }
+        if (cloudData.customerList !== undefined) {
+          currentCustomerList = toSafeArray(cloudData.customerList);
+          localStorage.setItem("fxg_customer_list", JSON.stringify(currentCustomerList));
+        }
+        if (cloudData.hasEmptyInventory || cloudData.inventoryTransactions === null || cloudData.inventoryTransactions === undefined) {
+          inventoryTransactions = [];
+          localStorage.setItem("fxg_inventory_tx", JSON.stringify(inventoryTransactions));
+        } else {
+          inventoryTransactions = toSafeArray(cloudData.inventoryTransactions);
+          localStorage.setItem("fxg_inventory_tx", JSON.stringify(inventoryTransactions));
+        }
+        if (cloudData.currentPriceList !== undefined) {
+          currentPriceList = toSafeArray(cloudData.currentPriceList);
+          localStorage.setItem("fxg_price_list", JSON.stringify(currentPriceList));
+        }
+        if (cloudData.hasEmptyDocuments || cloudData.savedDocuments === null || cloudData.savedDocuments === undefined) {
+          savedDocuments = [];
+          localStorage.setItem("fxg_documents", JSON.stringify(savedDocuments));
+        } else {
+          savedDocuments = toSafeArray(cloudData.savedDocuments);
+          localStorage.setItem("fxg_documents", JSON.stringify(savedDocuments));
+        }
+        if (cloudData.storeConfig && typeof cloudData.storeConfig === "object") {
+          storeConfig = cloudData.storeConfig;
+          localStorage.setItem("fxg_store_config", JSON.stringify(storeConfig));
+        }
+
+        // Re-render UI
+        applyStoreConfigToUI();
+        renderQuickTags();
+        renderCustomerDropdown();
+        renderCustomerTable(document.getElementById("customerSearchInput") ? document.getElementById("customerSearchInput").value : "");
+        renderPriceDatalist();
+        renderPriceTable(document.getElementById("priceSearchInput") ? document.getElementById("priceSearchInput").value : "");
+        renderQuickTags();
+        renderHistoryTable();
+        renderInventoryDashboard();
+
+        const timeStr = cloudData.updatedAtStr || new Date().toLocaleTimeString("zh-TW");
+        const lastTimeEl = document.getElementById("syncLastTime");
+        if (lastTimeEl) lastTimeEl.textContent = "資料最後異動：" + timeStr;
+        updateCloudUI("connected", "已同步最新狀態 (" + timeStr + ")");
+      } catch (err) {
+        console.error("Error applying cloud data:", err);
+      } finally {
+        isRemoteSyncUpdate = false;
+      }
+    }
+
+    function attachPrivateDataListener() {
+      if (!firebaseDbInstance || !currentFirebaseUser) return;
+      detachPrivateDataListener();
+      privateDataRef = firebaseDbInstance.ref("private_data");
+      privateDataRef.on("value", (snapshot) => {
+        const cloudData = snapshot.val();
+        if (!cloudData) {
+          // Attempt one-time migration from legacy node if it exists, otherwise upload local state
+          firebaseDbInstance.ref("fxg_system_data").once("value").then((legacySnap) => {
+            const legacyData = legacySnap.val();
+            if (legacyData) {
+              applyCloudPrivateDataToLocal(legacyData);
+              pushLocalDataToCloud(false);
+              showToast("🛡️ 已自動將舊版資料安全遷移至加密隔離節點 (/private_data & /public_stock)");
+            } else {
+              pushLocalDataToCloud(false);
+              showToast("🎉 連線成功！已將本機商品與庫存安全備份至雲端");
+            }
+          }).catch(() => {
+            pushLocalDataToCloud(false);
+          });
+          updateCloudUI("connected", "已連線即時資料庫 (同步中)");
+          return;
+        }
+
+        if (cloudData.deviceId === getLocalDeviceId() && (Date.now() - (cloudData.updatedAt || 0) < 3000)) {
+          const timeStr = cloudData.updatedAtStr || new Date().toLocaleTimeString("zh-TW");
+          const lastTimeEl = document.getElementById("syncLastTime");
+          if (lastTimeEl) lastTimeEl.textContent = "資料最後異動：" + timeStr;
+          updateCloudUI("connected", "已同步最新狀態");
+          return;
+        }
+
+        applyCloudPrivateDataToLocal(cloudData);
+        showToast("🔄 已自動同步來自手機/其他電腦的最新資料！");
+      }, (error) => {
+        console.error("Firebase private read error:", error);
+        if (error.message && error.message.toLowerCase().includes("permission_denied")) {
+          updateCloudUI("error", "存取被拒：請確認 Firebase 安全規則與管理者 UID 權限");
+          showToast("⚠️ 存取被拒：請確認已設定 /private_data 僅限管理者 UID 讀寫", false);
+        } else {
+          updateCloudUI("error", "連線異常：" + error.message);
+          showToast("⚠️ Firebase 連線異常：" + error.message, false);
+        }
+      });
+    }
+
     function initFirebaseSync() {
-      // 優先使用內建的專屬 Firebase 設定，亦允許由 localStorage 覆蓋
       let config = { ...BUILTIN_FIREBASE_CONFIG };
       const savedConfigStr = localStorage.getItem("fxg_firebase_config");
       if (savedConfigStr) {
@@ -5576,7 +5769,6 @@ const firebaseConfig = {
         } catch (e) {}
       }
 
-      // Populate inputs in settings UI
       const configInput = document.getElementById("firebaseConfigInput");
       if (configInput && !configInput.value) {
         configInput.value = JSON.stringify(config, null, 2);
@@ -5587,7 +5779,6 @@ const firebaseConfig = {
         document.getElementById("manualProjectId").value = config.projectId || "";
       }
 
-      // Initialize Firebase App
       try {
         if (typeof firebase === "undefined") {
           console.warn("Firebase SDK not loaded");
@@ -5596,7 +5787,6 @@ const firebaseConfig = {
           return;
         }
 
-        // Clean previous apps if re-initializing
         if (firebase.apps && firebase.apps.length > 0) {
           firebase.apps.forEach(app => {
             try { app.delete(); } catch(e){}
@@ -5605,112 +5795,30 @@ const firebaseConfig = {
 
         firebaseAppInstance = firebase.initializeApp(config);
         firebaseDbInstance = firebase.database();
-        updateCloudUI("syncing", "正在連線 Firebase 即時資料庫...");
+        firebaseAuthInstance = firebase.auth();
+        updateCloudUI("syncing", "正在連線 Firebase 安全驗證...");
 
-        // Connection state listener
         const connectedRef = firebaseDbInstance.ref(".info/connected");
         connectedRef.on("value", (snap) => {
           if (snap.val() === true) {
-            updateCloudUI("connected", "已連線即時資料庫 (同步中)");
+            updateCloudUI("connected", currentFirebaseUser ? "已連線即時資料庫 (已驗證)" : "已連線 (等待登入驗證)");
           }
         });
 
-        // Test read and setup realtime listener
-        const dataRef = firebaseDbInstance.ref("fxg_system_data");
-        dataRef.on("value", (snapshot) => {
-          const cloudData = snapshot.val();
-          if (!cloudData) {
-            console.log("Cloud database is empty, auto-uploading local state...");
-            pushLocalDataToCloud(false);
-            showToast("🎉 連線成功！已將本機商品與庫存備份至雲端");
-            updateCloudUI("connected", "已連線即時資料庫 (同步中)");
-            return;
-          }
+        // Always listen to /public_stock (read-only, zero sensitive data)
+        attachPublicStockListener();
 
-          // If update came from this device very recently, skip UI re-rendering
-          if (cloudData.deviceId === getLocalDeviceId() && (Date.now() - (cloudData.updatedAt || 0) < 3000)) {
-            const timeStr = cloudData.updatedAtStr || new Date().toLocaleTimeString("zh-TW");
-            const lastTimeEl = document.getElementById("syncLastTime");
-            if (lastTimeEl) lastTimeEl.textContent = "資料最後異動：" + timeStr;
-            updateCloudUI("connected", "已同步最新狀態");
-            return;
-          }
+        // Listen to Firebase Auth state changes
+        firebaseAuthInstance.onAuthStateChanged((user) => {
+          currentFirebaseUser = user;
+          updateAuthUserInfoUI(user);
+          checkAuth();
 
-          // Apply cloud updates to local state (using toSafeArray to handle Firebase object-converted arrays)
-          isRemoteSyncUpdate = true;
-          try {
-            if (cloudData.favoriteProducts !== undefined) {
-              quickTagNames = toSafeArray(cloudData.favoriteProducts);
-              localStorage.setItem("fxg_favorite_products", JSON.stringify(quickTagNames));
-            }
-            if (cloudData.customerList !== undefined) {
-              currentCustomerList = toSafeArray(cloudData.customerList);
-              localStorage.setItem("fxg_customer_list", JSON.stringify(currentCustomerList));
-            }
-            if (cloudData.hasEmptyInventory || cloudData.inventoryTransactions === null || cloudData.inventoryTransactions === undefined) {
-              inventoryTransactions = [];
-              localStorage.setItem("fxg_inventory_tx", JSON.stringify(inventoryTransactions));
-            } else {
-              inventoryTransactions = toSafeArray(cloudData.inventoryTransactions);
-              localStorage.setItem("fxg_inventory_tx", JSON.stringify(inventoryTransactions));
-            }
-            if (cloudData.currentPriceList !== undefined) {
-              currentPriceList = toSafeArray(cloudData.currentPriceList);
-              localStorage.setItem("fxg_price_list", JSON.stringify(currentPriceList));
-            }
-            if (cloudData.hasEmptyDocuments || cloudData.savedDocuments === null || cloudData.savedDocuments === undefined) {
-              savedDocuments = [];
-              localStorage.setItem("fxg_documents", JSON.stringify(savedDocuments));
-            } else {
-              savedDocuments = toSafeArray(cloudData.savedDocuments);
-              localStorage.setItem("fxg_documents", JSON.stringify(savedDocuments));
-            }
-            if (cloudData.storeConfig && typeof cloudData.storeConfig === "object") {
-              storeConfig = cloudData.storeConfig;
-              localStorage.setItem("fxg_store_config", JSON.stringify(storeConfig));
-            }
-            if (cloudData.credentials && typeof cloudData.credentials === "object") {
-              if (cloudData.credentials.username) {
-                localStorage.setItem(AUTH_CONFIG.storageKeyUser, cloudData.credentials.username);
-              }
-              if (cloudData.credentials.password) {
-                localStorage.setItem(AUTH_CONFIG.storageKeyPass, cloudData.credentials.password);
-              }
-              const setU = document.getElementById("setAuthUsername");
-              const setP = document.getElementById("setAuthPassword");
-              if (setU) setU.value = cloudData.credentials.username || AUTH_CONFIG.defaultUser;
-              if (setP) setP.value = cloudData.credentials.password || AUTH_CONFIG.defaultPass;
-            }
-
-            // Re-render UI
-            applyStoreConfigToUI();
-            renderQuickTags();
-            renderCustomerDropdown();
-            renderCustomerTable(document.getElementById("customerSearchInput") ? document.getElementById("customerSearchInput").value : "");
-            renderPriceDatalist();
-            renderPriceTable(document.getElementById("priceSearchInput") ? document.getElementById("priceSearchInput").value : "");
-            renderQuickTags();
-            renderHistoryTable();
-            renderInventoryDashboard();
-
-            const timeStr = cloudData.updatedAtStr || new Date().toLocaleTimeString("zh-TW");
-            const lastTimeEl = document.getElementById("syncLastTime");
-            if (lastTimeEl) lastTimeEl.textContent = "資料最後異動：" + timeStr;
-            updateCloudUI("connected", "已同步最新狀態 (" + timeStr + ")");
-            showToast("🔄 已自動同步來自手機/其他電腦的最新資料！");
-          } catch (err) {
-            console.error("Error applying cloud data:", err);
-          } finally {
-            isRemoteSyncUpdate = false;
-          }
-        }, (error) => {
-          console.error("Firebase read error:", error);
-          if (error.message && error.message.toLowerCase().includes("permission_denied")) {
-            updateCloudUI("error", "存取被拒：請將資料庫規則設為可讀寫 (Test mode)");
-            showToast("⚠️ 連線成功但存取被拒！請至 Firebase ➔ Realtime Database ➔ 規則，將 read 與 write 改為 true", false);
+          if (user) {
+            attachPrivateDataListener();
+            recordUserActivity();
           } else {
-            updateCloudUI("error", "連線異常：" + error.message);
-            showToast("⚠️ Firebase 連線異常：" + error.message, false);
+            detachPrivateDataListener();
           }
         });
 
@@ -5722,7 +5830,7 @@ const firebaseConfig = {
     }
 
     function queueCloudSync() {
-      if (isRemoteSyncUpdate || !firebaseDbInstance) return;
+      if (isRemoteSyncUpdate || !firebaseDbInstance || !currentFirebaseUser) return;
       clearTimeout(syncDebounceTimer);
       syncDebounceTimer = setTimeout(() => {
         pushLocalDataToCloud(false);
@@ -5730,15 +5838,19 @@ const firebaseConfig = {
     }
 
     function pushLocalDataToCloud(showNotification = true) {
-      if (!firebaseDbInstance) {
-        if (showNotification) showToast("尚未連線 Firebase，資料已妥善儲存於本機");
+      if (!firebaseDbInstance || !currentFirebaseUser) {
+        if (showNotification) showToast("尚未登入 Firebase 管理者帳號，資料僅暫存本機");
         return;
       }
 
-      const payload = {
-        version: 1,
-        updatedAt: Date.now(),
-        updatedAtStr: new Date().toLocaleString("zh-TW"),
+      const now = Date.now();
+      const nowStr = new Date().toLocaleString("zh-TW");
+
+      // Private node: NO credentials ever stored!
+      const privatePayload = {
+        version: 2,
+        updatedAt: now,
+        updatedAtStr: nowStr,
         deviceId: getLocalDeviceId(),
         favoriteProducts: toSafeArray(quickTagNames),
         customerList: toSafeArray(currentCustomerList),
@@ -5747,94 +5859,53 @@ const firebaseConfig = {
         savedDocuments: toSafeArray(savedDocuments),
         hasEmptyDocuments: (savedDocuments.length === 0),
         currentPriceList: toSafeArray(currentPriceList),
-        storeConfig: storeConfig || {},
-        credentials: getStoredCredentials()
+        storeConfig: storeConfig || {}
       };
 
-      updateCloudUI("syncing", "正在上傳同步至雲端...");
+      // Public node: ONLY code, name, spec, stock (NO prices, NO customers, NO documents, NO logs)
+      const publicPayload = {
+        updatedAt: now,
+        updatedAtStr: nowStr,
+        items: buildPublicStockPayloadList()
+      };
 
-      firebaseDbInstance.ref("fxg_system_data").set(payload)
+      updateCloudUI("syncing", "正在安全同步至雲端...");
+
+      Promise.all([
+        firebaseDbInstance.ref("private_data").set(privatePayload),
+        firebaseDbInstance.ref("public_stock").set(publicPayload)
+      ])
         .then(() => {
           const timeStr = new Date().toLocaleTimeString("zh-TW");
           const lastTimeEl = document.getElementById("syncLastTime");
           if (lastTimeEl) lastTimeEl.textContent = "資料最後異動：" + timeStr;
-          updateCloudUI("connected", "已同步最新狀態 (" + timeStr + ")");
-          if (showNotification) showToast("✅ 本地資料已成功同步上傳至 Firebase 雲端！");
+          updateCloudUI("connected", "已安全同步 (" + timeStr + ")");
+          if (showNotification) showToast("✅ 已安全同步至 /private_data 與 /public_stock！");
         })
         .catch((err) => {
           console.error("Firebase sync error:", err);
           updateCloudUI("error", "上傳失敗：" + (err.message || "權限不足"));
-          showToast("❌ 雲端同步失敗：請確認 Realtime Database 規則設為開放讀寫", false);
+          showToast("❌ 雲端同步失敗：請確認 Firebase 安全規則與登入權限", false);
         });
     }
 
     function pullCloudDataToLocal() {
-      if (!firebaseDbInstance) {
-        showToast("尚未連線 Firebase，無法拉取雲端資料", false);
+      if (!firebaseDbInstance || !currentFirebaseUser) {
+        showToast("請先登入 Firebase 管理者帳號再拉取私有資料", false);
         return;
       }
 
       updateCloudUI("syncing", "正在從雲端載入資料...");
-      firebaseDbInstance.ref("fxg_system_data").once("value")
+      firebaseDbInstance.ref("private_data").once("value")
         .then((snapshot) => {
           const cloudData = snapshot.val();
           if (!cloudData) {
-            showToast("雲端資料庫目前為空，請點擊「手動上傳本機資料至雲端」", false);
+            showToast("雲端 /private_data 目前為空，請點擊「手動上傳本機資料至雲端」", false);
             updateCloudUI("connected", "雲端資料庫目前為空");
             return;
           }
-
-          isRemoteSyncUpdate = true;
-          try {
-            if (cloudData.favoriteProducts !== undefined) {
-              quickTagNames = toSafeArray(cloudData.favoriteProducts);
-              localStorage.setItem("fxg_favorite_products", JSON.stringify(quickTagNames));
-            }
-            if (cloudData.customerList !== undefined) {
-              currentCustomerList = toSafeArray(cloudData.customerList);
-              localStorage.setItem("fxg_customer_list", JSON.stringify(currentCustomerList));
-            }
-            if (cloudData.hasEmptyInventory || cloudData.inventoryTransactions === null || cloudData.inventoryTransactions === undefined) {
-              inventoryTransactions = [];
-              localStorage.setItem("fxg_inventory_tx", JSON.stringify(inventoryTransactions));
-            } else {
-              inventoryTransactions = toSafeArray(cloudData.inventoryTransactions);
-              localStorage.setItem("fxg_inventory_tx", JSON.stringify(inventoryTransactions));
-            }
-            if (cloudData.currentPriceList !== undefined) {
-              currentPriceList = toSafeArray(cloudData.currentPriceList);
-              localStorage.setItem("fxg_price_list", JSON.stringify(currentPriceList));
-            }
-            if (cloudData.hasEmptyDocuments || cloudData.savedDocuments === null || cloudData.savedDocuments === undefined) {
-              savedDocuments = [];
-              localStorage.setItem("fxg_documents", JSON.stringify(savedDocuments));
-            } else {
-              savedDocuments = toSafeArray(cloudData.savedDocuments);
-              localStorage.setItem("fxg_documents", JSON.stringify(savedDocuments));
-            }
-            if (cloudData.storeConfig && typeof cloudData.storeConfig === "object") {
-              storeConfig = cloudData.storeConfig;
-              localStorage.setItem("fxg_store_config", JSON.stringify(storeConfig));
-            }
-
-            applyStoreConfigToUI();
-            renderQuickTags();
-            renderCustomerDropdown();
-            renderCustomerTable(document.getElementById("customerSearchInput") ? document.getElementById("customerSearchInput").value : "");
-            renderPriceDatalist();
-            renderPriceTable(document.getElementById("priceSearchInput") ? document.getElementById("priceSearchInput").value : "");
-            renderQuickTags();
-            renderHistoryTable();
-            renderInventoryDashboard();
-
-            const timeStr = cloudData.updatedAtStr || new Date().toLocaleTimeString("zh-TW");
-            const lastTimeEl = document.getElementById("syncLastTime");
-            if (lastTimeEl) lastTimeEl.textContent = "資料最後異動：" + timeStr;
-            updateCloudUI("connected", "已同步最新狀態 (" + timeStr + ")");
-            showToast("✅ 已成功從雲端同步最新資料至本機！");
-          } finally {
-            isRemoteSyncUpdate = false;
-          }
+          applyCloudPrivateDataToLocal(cloudData);
+          showToast("✅ 已成功從雲端安全同步最新資料至本機！");
         })
         .catch((err) => {
           console.error("Pull failed:", err);
@@ -5851,9 +5922,8 @@ const firebaseConfig = {
           if (cfg && (cfg.databaseURL || cfg.projectId || cfg.apiKey)) {
             localStorage.setItem("fxg_firebase_config", JSON.stringify(cfg));
             history.replaceState(null, "", window.location.pathname + window.location.search);
-            showToast("📱 成功由手機專屬連結匯入雲端設定！正在連線同步...");
+            showToast("📱 成功由手機專屬連結匯入雲端設定！請登入管理者帳號");
             initFirebaseSync();
-      initAuthModule();
           }
         } catch (err) {
           console.error("Failed to parse sync url hash", err);
@@ -5861,39 +5931,13 @@ const firebaseConfig = {
       }
     }
 
-    // --- In-Page Confirmation Modal Logic ---
-    let pendingConfirmCallback = null;
-
-    function showConfirmDialog(title, description, onConfirm, confirmBtnText = "確認執行") {
-      const modal = document.getElementById("confirmModal");
-      const titleEl = document.getElementById("confirmModalTitle");
-      const descEl = document.getElementById("confirmModalDesc");
-      const execBtn = document.getElementById("btnConfirmExecute");
-      
-      if (titleEl) titleEl.textContent = title;
-      if (descEl) descEl.textContent = description;
-      if (execBtn) execBtn.textContent = confirmBtnText;
-      
-      pendingConfirmCallback = onConfirm;
-      if (modal) modal.classList.remove("hidden");
-    }
-    const showConfirmModal = showConfirmDialog;
-
-    
-    // ==========================================
-    // --- 系統登入與權限保護模組 (Authentication) ---
-    // ==========================================
-    // --- 閒置 10 分鐘自動登出防護機制 (Inactivity Auto-Logout) ---
-    // ==========================================
+    // --- 系統登入與權限保護模組 (Firebase Authentication) ---
     let inactivityTimeoutId = null;
     let lastUserActivityTime = Date.now();
     const INACTIVITY_LIMIT_MS = 10 * 60 * 1000; // 10 minutes
 
     function isUserAuthenticated() {
-      const isRemembered = localStorage.getItem(AUTH_CONFIG.rememberKey) === "true";
-      const isSessionAuth = sessionStorage.getItem(AUTH_CONFIG.sessionTokenKey) === "true";
-      const isLocalAuth = localStorage.getItem(AUTH_CONFIG.sessionTokenKey) === "true";
-      return isRemembered ? isLocalAuth : isSessionAuth;
+      return !!(firebaseAuthInstance && firebaseAuthInstance.currentUser) || !!currentFirebaseUser;
     }
 
     function recordUserActivity() {
@@ -5928,10 +5972,18 @@ const firebaseConfig = {
         clearTimeout(inactivityTimeoutId);
       }
       if (!isUserAuthenticated()) return;
-
       inactivityTimeoutId = setTimeout(() => {
         checkInactivityExpiration();
       }, INACTIVITY_LIMIT_MS + 500);
+    }
+
+    function clearLegacyAuthStorage() {
+      try {
+        ["fxg_auth_username", "fxg_auth_password", "fxg_auth_logged_in", "fxg_auth_remember_me"].forEach(k => {
+          localStorage.removeItem(k);
+          sessionStorage.removeItem(k);
+        });
+      } catch (e) {}
     }
 
     function performAutoLogout() {
@@ -5940,29 +5992,28 @@ const firebaseConfig = {
         inactivityTimeoutId = null;
       }
 
-      // Clear session auth tokens
-      localStorage.removeItem(AUTH_CONFIG.sessionTokenKey);
-      localStorage.removeItem(AUTH_CONFIG.rememberKey);
-      sessionStorage.removeItem(AUTH_CONFIG.sessionTokenKey);
+      clearLegacyAuthStorage();
       sessionStorage.removeItem("fxg_last_activity_time");
+      detachPrivateDataListener();
+      currentFirebaseUser = null;
 
-      // Close open modals
+      if (firebaseAuthInstance) {
+        try { firebaseAuthInstance.signOut(); } catch (e) {}
+      }
+
       ['confirmModal', 'customerModal', 'itemEditModal', 'quickPickAddModal', 'inventoryActionModal'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.classList.add('hidden');
       });
 
-      // Clear password field
       const pInput = document.getElementById("loginPassword");
       if (pInput) pInput.value = "";
 
-      // Transition views
       const appView = document.getElementById("appView");
       const loginView = document.getElementById("loginView");
       if (appView) appView.classList.add("hidden");
       if (loginView) loginView.classList.remove("hidden");
 
-      // Show inactivity notice banner
       const notice = document.getElementById("loginInactivityNotice");
       if (notice) notice.classList.remove("hidden");
       const errBanner = document.getElementById("loginErrorMsg");
@@ -5986,7 +6037,6 @@ const firebaseConfig = {
         }
       }, { passive: true });
 
-      // Check on visibilitychange / focus (essential for mobile wake-up & laptop lid open)
       document.addEventListener("visibilitychange", () => {
         if (!document.hidden) {
           checkInactivityExpiration();
@@ -5996,7 +6046,6 @@ const firebaseConfig = {
         checkInactivityExpiration();
       });
 
-      // Regular heartbeat check every 15 seconds
       setInterval(() => {
         checkInactivityExpiration();
       }, 15000);
@@ -6006,22 +6055,6 @@ const firebaseConfig = {
       }
     }
 
-    // ==========================================
-    const AUTH_CONFIG = {
-      defaultUser: "admin",
-      defaultPass: "8888",
-      storageKeyUser: "fxg_auth_username",
-      storageKeyPass: "fxg_auth_password",
-      sessionTokenKey: "fxg_auth_logged_in",
-      rememberKey: "fxg_auth_remember_me"
-    };
-
-    function getStoredCredentials() {
-      const u = localStorage.getItem(AUTH_CONFIG.storageKeyUser) || AUTH_CONFIG.defaultUser;
-      const p = localStorage.getItem(AUTH_CONFIG.storageKeyPass) || AUTH_CONFIG.defaultPass;
-      return { username: u.trim(), password: p.trim() };
-    }
-
     function isPublicStockViewMode() {
       try {
         const params = new URLSearchParams(window.location.search);
@@ -6029,6 +6062,18 @@ const firebaseConfig = {
         if (window.location.hash === "#stock" || window.location.hash === "#inventory") return true;
       } catch (e) {}
       return false;
+    }
+
+    function updateAuthUserInfoUI(user) {
+      const emailEl = document.getElementById("authCurrentUserEmail");
+      const uidEl = document.getElementById("authCurrentUserUid");
+      if (user) {
+        if (emailEl) emailEl.textContent = user.email || "已驗證管理者";
+        if (uidEl) uidEl.textContent = user.uid || "--";
+      } else {
+        if (emailEl) emailEl.textContent = "尚未登入";
+        if (uidEl) uidEl.textContent = "--";
+      }
     }
 
     function checkAuth() {
@@ -6050,94 +6095,102 @@ const firebaseConfig = {
 
       if (publicStockView) publicStockView.classList.add("hidden");
 
-      const isRemembered = localStorage.getItem(AUTH_CONFIG.rememberKey) === "true";
-      const isSessionAuth = sessionStorage.getItem(AUTH_CONFIG.sessionTokenKey) === "true";
-      const isLocalAuth = localStorage.getItem(AUTH_CONFIG.sessionTokenKey) === "true";
-
-      const authenticated = isRemembered ? isLocalAuth : isSessionAuth;
-
+      const authenticated = isUserAuthenticated();
       if (authenticated) {
         if (loginView) loginView.classList.add("hidden");
         if (appView) appView.classList.remove("hidden");
       } else {
         if (loginView) loginView.classList.remove("hidden");
         if (appView) appView.classList.add("hidden");
-        const uInput = document.getElementById("loginUsername");
-        const pInput = document.getElementById("loginPassword");
-        if (uInput && !uInput.value) uInput.value = "admin";
-        if (pInput) setTimeout(() => pInput.focus(), 100);
       }
       return authenticated;
     }
 
-    function handleLogin(e) {
+    let isLoggingIn = false;
+    async function handleLogin(e) {
       if (e) {
         if (typeof e.preventDefault === "function") e.preventDefault();
         if (typeof e.stopPropagation === "function") e.stopPropagation();
       }
+      if (isLoggingIn) return false;
 
-      const uInput = (document.getElementById("loginUsername") ? document.getElementById("loginUsername").value : "").trim();
-      const pInput = (document.getElementById("loginPassword") ? document.getElementById("loginPassword").value : "").trim();
+      const emailInput = (document.getElementById("loginUsername") ? document.getElementById("loginUsername").value : "").trim();
+      const pwdInput = (document.getElementById("loginPassword") ? document.getElementById("loginPassword").value : "").trim();
       const rememberCheckbox = document.getElementById("loginRememberMe");
       const remember = rememberCheckbox ? rememberCheckbox.checked : true;
       const errBanner = document.getElementById("loginErrorMsg");
       const errText = document.getElementById("loginErrorText");
+      const submitBtn = document.getElementById("btnLoginSubmit");
+      const submitLabel = document.getElementById("loginSubmitLabel");
 
-      const creds = getStoredCredentials();
+      if (!firebaseAuthInstance) {
+        if (errBanner) errBanner.classList.remove("hidden");
+        if (errText) errText.textContent = "Firebase 驗證服務尚未就緒，請確認網路連線正常！";
+        return false;
+      }
 
-      // Strict authentication: must match exact stored username (case-insensitive) and exact stored password
-      const isValid = (uInput.toLowerCase() === creds.username.toLowerCase() && pInput === creds.password);
+      if (!emailInput || !pwdInput) {
+        if (errBanner) errBanner.classList.remove("hidden");
+        if (errText) errText.textContent = "請輸入管理者 Email 與密碼！";
+        return false;
+      }
 
-      if (isValid) {
+      isLoggingIn = true;
+      if (submitBtn) submitBtn.disabled = true;
+      if (submitLabel) submitLabel.textContent = "驗證登入中...";
+
+      try {
+        const persistence = remember
+          ? firebase.auth.Auth.Persistence.LOCAL
+          : firebase.auth.Auth.Persistence.SESSION;
+        await firebaseAuthInstance.setPersistence(persistence);
+        const cred = await firebaseAuthInstance.signInWithEmailAndPassword(emailInput, pwdInput);
+        currentFirebaseUser = cred.user;
+        clearLegacyAuthStorage();
+
         if (errBanner) errBanner.classList.add("hidden");
-
-        if (remember) {
-          try {
-            localStorage.setItem(AUTH_CONFIG.rememberKey, "true");
-            localStorage.setItem(AUTH_CONFIG.sessionTokenKey, "true");
-          } catch(err) {}
-        } else {
-          try {
-            localStorage.removeItem(AUTH_CONFIG.rememberKey);
-            localStorage.removeItem(AUTH_CONFIG.sessionTokenKey);
-            sessionStorage.setItem(AUTH_CONFIG.sessionTokenKey, "true");
-          } catch(err) {}
-        }
-
-        const loginView = document.getElementById("loginView");
-        const appView = document.getElementById("appView");
-        if (loginView) loginView.classList.add("hidden");
-        if (appView) appView.classList.remove("hidden");
-
         const notice = document.getElementById("loginInactivityNotice");
         if (notice) notice.classList.add("hidden");
 
+        checkAuth();
+        attachPrivateDataListener();
         if (typeof restartInactivityTimer === "function") {
           restartInactivityTimer();
         }
-
-        showToast("🎉 歡迎登入「芳喜蓁站手工坊」系統！");
-        return false;
-      } else {
-        if (errBanner) {
-          errBanner.classList.remove("hidden");
+        showToast("🎉 Firebase 安全驗證成功，歡迎登入「芳喜蓁站手工坊」系統！");
+      } catch (err) {
+        console.error("Firebase login error:", err);
+        let msg = "登入失敗，請確認 Email 與密碼是否正確！";
+        if (err && err.code) {
+          if (err.code === "auth/invalid-email") msg = "Email 格式不正確！";
+          else if (err.code === "auth/user-not-found" || err.code === "auth/wrong-password" || err.code === "auth/invalid-login-credentials") msg = "管理者 Email 或密碼錯誤！";
+          else if (err.code === "auth/too-many-requests") msg = "嘗試次數過多，請稍後再試！";
+          else if (err.code === "auth/network-request-failed") msg = "網路連線異常，請檢查網路後重試！";
+          else if (err.code === "auth/operation-not-allowed") msg = "請先至 Firebase Console ➔ Authentication 啟用 Email/密碼登入！";
         }
-        if (errText) {
-          errText.textContent = "帳號或密碼錯誤，請確認後重新輸入！";
-        }
-        showToast("❌ 帳號或密碼錯誤，請重新確認", false);
-        return false;
+        if (errBanner) errBanner.classList.remove("hidden");
+        if (errText) errText.textContent = msg;
+        showToast("❌ " + msg, false);
+      } finally {
+        isLoggingIn = false;
+        if (submitBtn) submitBtn.disabled = false;
+        if (submitLabel) submitLabel.textContent = "登入系統";
       }
+      return false;
     }
 
     function handleLogout() {
       showConfirmDialog(
         "確定要登出系統嗎？",
-        "登出後需重新輸入帳號與密碼方可存取單據與庫存資料。",
-        () => {
-          localStorage.removeItem(AUTH_CONFIG.sessionTokenKey);
-          localStorage.removeItem(AUTH_CONFIG.rememberKey);
-          sessionStorage.removeItem(AUTH_CONFIG.sessionTokenKey);
+        "登出後需重新透過 Firebase 帳號密碼驗證方可存取單據與私有資料。",
+        async () => {
+          clearLegacyAuthStorage();
+          sessionStorage.removeItem("fxg_last_activity_time");
+          detachPrivateDataListener();
+          currentFirebaseUser = null;
+          if (firebaseAuthInstance) {
+            try { await firebaseAuthInstance.signOut(); } catch (e) {}
+          }
 
           const pInput = document.getElementById("loginPassword");
           if (pInput) pInput.value = "";
@@ -6145,7 +6198,6 @@ const firebaseConfig = {
           const loginView = document.getElementById("loginView");
           if (appView) appView.classList.add("hidden");
           if (loginView) loginView.classList.remove("hidden");
-          sessionStorage.removeItem("fxg_last_activity_time");
           if (inactivityTimeoutId) clearTimeout(inactivityTimeoutId);
           const notice = document.getElementById("loginInactivityNotice");
           if (notice) notice.classList.add("hidden");
@@ -6156,36 +6208,16 @@ const firebaseConfig = {
     }
 
     function initAuthModule() {
-      const creds = getStoredCredentials();
-      const setU = document.getElementById("setAuthUsername");
-      const setP = document.getElementById("setAuthPassword");
-      if (setU) setU.value = creds.username;
-      if (setP) setP.value = creds.password;
+      clearLegacyAuthStorage();
 
-      // Login form submit & button click
       const loginForm = document.getElementById("loginForm");
       if (loginForm) {
         loginForm.onsubmit = handleLogin;
-        loginForm.addEventListener("submit", handleLogin);
-      }
-      const btnLoginSubmit = document.getElementById("btnLoginSubmit");
-      if (btnLoginSubmit) {
-        btnLoginSubmit.addEventListener("click", handleLogin);
       }
 
-      // Enter key on inputs
-      const pInput = document.getElementById("loginPassword");
-      if (pInput) {
-        pInput.addEventListener("keydown", (e) => {
-          if (e.key === "Enter") handleLogin(e);
-        });
-      }
-
-      // Logout button in header
       const btnLogout = document.getElementById("btnLogoutNav");
       if (btnLogout) btnLogout.addEventListener("click", handleLogout);
 
-      // Password toggle buttons
       const toggleText = document.getElementById("btnToggleLoginPwdText");
       const toggleIcon = document.getElementById("btnToggleLoginPwdIcon");
       function togglePwdVisibility() {
@@ -6202,55 +6234,127 @@ const firebaseConfig = {
       if (toggleText) toggleText.addEventListener("click", togglePwdVisibility);
       if (toggleIcon) toggleIcon.addEventListener("click", togglePwdVisibility);
 
-      // Settings password form submit
-      const authSettingsForm = document.getElementById("authSettingsForm");
-      if (authSettingsForm) {
-        authSettingsForm.addEventListener("submit", (e) => {
-          e.preventDefault();
-          const newU = (document.getElementById("setAuthUsername").value || AUTH_CONFIG.defaultUser).trim();
-          const newP = (document.getElementById("setAuthPassword").value || AUTH_CONFIG.defaultPass).trim();
-
-          localStorage.setItem(AUTH_CONFIG.storageKeyUser, newU);
-          localStorage.setItem(AUTH_CONFIG.storageKeyPass, newP);
-
-          // Sync updated credentials to cloud across devices
-          if (typeof pushLocalDataToCloud === "function") {
-            pushLocalDataToCloud(false);
+      // Copy UID button
+      const btnCopyUid = document.getElementById("btnCopyAdminUid");
+      if (btnCopyUid) {
+        btnCopyUid.addEventListener("click", () => {
+          const uid = (document.getElementById("authCurrentUserUid") ? document.getElementById("authCurrentUserUid").textContent : "").trim();
+          if (!uid || uid === "--") {
+            showToast("尚未登入，無法取得 UID", false);
+            return;
           }
-
-          showToast("✅ 帳號與密碼修改已成功保存！");
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(uid).then(() => showToast("✅ 已複製管理者 UID！"));
+          }
         });
       }
 
-      // Check current auth status immediately
+      // Copy Firebase Security Rules button
+      const btnCopyRules = document.getElementById("btnCopyFirebaseRules");
+      if (btnCopyRules) {
+        btnCopyRules.addEventListener("click", () => {
+          const rulesEl = document.getElementById("firebaseSecurityRulesCode");
+          if (rulesEl && navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(rulesEl.textContent).then(() => {
+              showToast("✅ 已複製 Firebase 安全規則 JSON！");
+            });
+          }
+        });
+      }
+
+      // Update Firebase Password form
+      const authSettingsForm = document.getElementById("authSettingsForm");
+      if (authSettingsForm) {
+        authSettingsForm.addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const newPwd = (document.getElementById("setAuthNewPassword") ? document.getElementById("setAuthNewPassword").value : "").trim();
+          if (!newPwd || newPwd.length < 6) {
+            showToast("新密碼長度至少需 6 個字元！", false);
+            return;
+          }
+          if (!firebaseAuthInstance || !firebaseAuthInstance.currentUser) {
+            showToast("請先登入管理者帳號再變更密碼！", false);
+            return;
+          }
+          try {
+            await firebaseAuthInstance.currentUser.updatePassword(newPwd);
+            document.getElementById("setAuthNewPassword").value = "";
+            showToast("✅ Firebase 登入密碼已成功更新！");
+          } catch (err) {
+            console.error("Update password failed:", err);
+            if (err && err.code === "auth/requires-recent-login") {
+              showToast("⚠️ 安全限制：請先登出並重新登入後，再立即修改密碼！", false);
+            } else {
+              showToast("❌ 密碼更新失敗：" + (err.message || "請重試"), false);
+            }
+          }
+        });
+      }
+
       checkAuth();
       initInactivityWatcher();
     }
 
+    // --- In-Page Confirmation Modal Logic ---
+    let pendingConfirmCallback = null;
 
+    function showConfirmDialog(title, description, onConfirm, confirmBtnText = "確認執行") {
+      const modal = document.getElementById("confirmModal");
+      const titleEl = document.getElementById("confirmModalTitle");
+      const descEl = document.getElementById("confirmModalDesc");
+      const execBtn = document.getElementById("btnConfirmExecute");
+      
+      if (titleEl) titleEl.textContent = title;
+      if (descEl) descEl.textContent = description;
+      if (execBtn) execBtn.textContent = confirmBtnText;
+      
+      pendingConfirmCallback = onConfirm;
+      if (modal) modal.classList.remove("hidden");
+    }
+    const showConfirmModal = showConfirmDialog;
+
+    
     // ==========================================
     // --- 免登入即時庫存看板 (Public Read-Only Stock View) ---
     // ==========================================
     let pubCurrentStatusFilter = "all";
 
+    function getPublicStockSourceList() {
+      // Strictly read ONLY from /public_stock node (or its safe local cache) when unauthenticated
+      if (publicStockItems && publicStockItems.length > 0) {
+        return publicStockItems;
+      }
+      if (currentFirebaseUser) {
+        return buildPublicStockPayloadList();
+      }
+      try {
+        const cached = localStorage.getItem("fxg_public_stock");
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        }
+      } catch (e) {}
+      return [];
+    }
+
     function renderPublicStockDashboard() {
       const tbody = document.getElementById("pubStockTableBody");
       if (!tbody) return;
 
+      const sourceItems = getPublicStockSourceList();
       const searchInput = document.getElementById("pubStockSearchInput");
       const filterText = (searchInput ? searchInput.value : "").toLowerCase().trim();
 
-      // Metrics calculation
       let totalStock = 0;
       let lowStockCount = 0;
       let outStockCount = 0;
 
-      currentPriceList.forEach(item => {
-        const stats = getItemStockStats(item.name);
-        totalStock += stats.stock;
-        if (stats.stock <= 0) {
+      sourceItems.forEach(item => {
+        const stockVal = Number(item.stock) || 0;
+        totalStock += stockVal;
+        if (stockVal <= 0) {
           outStockCount++;
-        } else if (stats.stock <= 5) {
+        } else if (stockVal <= 5) {
           lowStockCount++;
         }
       });
@@ -6260,14 +6364,13 @@ const firebaseConfig = {
       const elLowStock = document.getElementById("pubStatLowStock");
       const elOutStock = document.getElementById("pubStatOutStock");
 
-      if (elTotalItems) elTotalItems.textContent = currentPriceList.length.toLocaleString();
+      if (elTotalItems) elTotalItems.textContent = sourceItems.length.toLocaleString();
       if (elTotalStock) elTotalStock.textContent = totalStock.toLocaleString();
       if (elLowStock) elLowStock.textContent = lowStockCount.toLocaleString();
       if (elOutStock) elOutStock.textContent = outStockCount.toLocaleString();
 
-      // Filter items
-      const filtered = currentPriceList.filter(item => {
-        const stats = getItemStockStats(item.name);
+      const filtered = sourceItems.filter(item => {
+        const stockVal = Number(item.stock) || 0;
         const matchSearch = !filterText ||
           (item.name && item.name.toLowerCase().includes(filterText)) ||
           (item.code && item.code.toLowerCase().includes(filterText)) ||
@@ -6275,35 +6378,39 @@ const firebaseConfig = {
 
         if (!matchSearch) return false;
 
-        if (pubCurrentStatusFilter === "low") return stats.stock > 0 && stats.stock <= 5;
-        if (pubCurrentStatusFilter === "out") return stats.stock <= 0;
-        if (pubCurrentStatusFilter === "normal") return stats.stock > 5;
+        if (pubCurrentStatusFilter === "low") return stockVal > 0 && stockVal <= 5;
+        if (pubCurrentStatusFilter === "out") return stockVal <= 0;
+        if (pubCurrentStatusFilter === "normal") return stockVal > 5;
         return true;
       });
 
       const countBadge = document.getElementById("pubStockCountBadge");
       if (countBadge) {
-        countBadge.textContent = "顯示 " + filtered.length + " / 共 " + currentPriceList.length + " 項商品";
+        countBadge.textContent = "顯示 " + filtered.length + " / 共 " + sourceItems.length + " 項商品";
       }
 
       tbody.innerHTML = "";
+      if (sourceItems.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="py-12 text-center text-slate-400 font-medium">正在載入即時庫存或尚無公開庫存資料（請管理者登入後同步一次）</td></tr>';
+        return;
+      }
       if (filtered.length === 0) {
         tbody.innerHTML = '<tr><td colspan="5" class="py-12 text-center text-slate-400 font-medium">查無符合條件的庫存商品</td></tr>';
         return;
       }
 
       filtered.forEach((item, idx) => {
-        const stats = getItemStockStats(item.name);
+        const stockVal = Number(item.stock) || 0;
         const tr = document.createElement("tr");
         tr.className = "hover:bg-amber-50/40 transition";
 
         let statusBadge = "";
         let stockColorClass = "text-emerald-700 font-black";
 
-        if (stats.stock <= 0) {
+        if (stockVal <= 0) {
           statusBadge = '<span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-rose-100 text-rose-700 border border-rose-200">❌ 缺貨中</span>';
           stockColorClass = "text-rose-600 font-black";
-        } else if (stats.stock <= 5) {
+        } else if (stockVal <= 5) {
           statusBadge = '<span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-100 text-amber-800 border border-amber-200">⚠️ 低庫存</span>';
           stockColorClass = "text-amber-600 font-black";
         } else {
@@ -6317,7 +6424,7 @@ const firebaseConfig = {
           </td>
           <td class="py-3.5 px-4 text-xs font-medium text-slate-600">${item.spec || '-'}</td>
           <td class="py-3.5 px-4 text-right">
-            <span class="text-xl sm:text-2xl ${stockColorClass}">${stats.stock.toLocaleString()}</span>
+            <span class="text-xl sm:text-2xl ${stockColorClass}">${stockVal.toLocaleString()}</span>
           </td>
           <td class="py-3.5 px-4 text-center">${statusBadge}</td>
         `;
@@ -6461,9 +6568,11 @@ const firebaseConfig = {
     document.addEventListener("DOMContentLoaded", () => {
       // Priority 1: Initialize authentication & event listeners first
       initAuthModule();
-      initData();
-      buildQuoteTable();
-      initShipmentStats();
+      if (!isPublicStockViewMode()) {
+        initData();
+        buildQuoteTable();
+        initShipmentStats();
+      }
       
       // Navigation
       document.getElementById("navStatsBtn").addEventListener("click", () => switchTab('stats'));
@@ -7795,14 +7904,7 @@ const firebaseConfig = {
       const btnPubAdmin = document.getElementById("btnPublicSwitchToAdminLogin");
       if (btnPubAdmin) {
         btnPubAdmin.addEventListener("click", () => {
-          const pubView = document.getElementById("publicStockView");
-          const loginView = document.getElementById("loginView");
-          if (pubView) pubView.classList.add("hidden");
-          if (loginView) {
-            loginView.classList.remove("hidden");
-            const pInput = document.getElementById("loginPassword");
-            if (pInput) setTimeout(() => pInput.focus(), 100);
-          }
+          window.location.href = window.location.pathname;
         });
       }
 
