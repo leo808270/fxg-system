@@ -5690,10 +5690,10 @@ const firebaseConfig = {
 
         // Re-render UI
         applyStoreConfigToUI();
-        renderQuickTags();
         renderCustomerDropdown();
         renderCustomerTable(document.getElementById("customerSearchInput") ? document.getElementById("customerSearchInput").value : "");
         renderPriceDatalist();
+        renderAllQuoteRowOptions();
         renderPriceTable(document.getElementById("priceSearchInput") ? document.getElementById("priceSearchInput").value : "");
         renderQuickTags();
         renderHistoryTable();
@@ -5728,8 +5728,10 @@ const firebaseConfig = {
               pushLocalDataToCloud(false);
               showToast("🎉 連線成功！已將本機商品與庫存安全備份至雲端");
             }
-          }).catch(() => {
-            pushLocalDataToCloud(false);
+          }).catch((err) => {
+            console.warn("Legacy node check skipped/denied:", err);
+            updateCloudUI("error", "讀取舊節點受阻，已暫停自動上傳以保護雲端資料");
+            showToast("⚠️ 偵測到資料庫規則限制，已暫停自動覆蓋，請確認雲端資料狀態或手動上傳", false);
           });
           updateCloudUI("connected", "已連線即時資料庫 (同步中)");
           return;
@@ -5815,6 +5817,7 @@ const firebaseConfig = {
           checkAuth();
 
           if (user) {
+            ensureAuthenticatedAppInitialized();
             attachPrivateDataListener();
             recordUserActivity();
           } else {
@@ -5986,6 +5989,25 @@ const firebaseConfig = {
       } catch (e) {}
     }
 
+    function clearSensitiveBusinessCache() {
+      try {
+        [
+          "fxg_price_list",
+          "fxg_store_config",
+          "fxg_documents",
+          "fxg_customer_list",
+          "fxg_favorite_products",
+          "fxg_inventory_tx"
+        ].forEach(k => localStorage.removeItem(k));
+      } catch (e) {}
+      savedDocuments = [];
+      currentCustomerList = [];
+      inventoryTransactions = [];
+      currentPriceList = [];
+      quickTagNames = [];
+      isAppDataInitialized = false;
+    }
+
     function performAutoLogout() {
       if (inactivityTimeoutId) {
         clearTimeout(inactivityTimeoutId);
@@ -5993,6 +6015,7 @@ const firebaseConfig = {
       }
 
       clearLegacyAuthStorage();
+      clearSensitiveBusinessCache();
       sessionStorage.removeItem("fxg_last_activity_time");
       detachPrivateDataListener();
       currentFirebaseUser = null;
@@ -6185,6 +6208,7 @@ const finalEmail = emailInput.includes('@') ? emailInput : emailInput + '@fxg.co
         "登出後需重新透過 Firebase 帳號密碼驗證方可存取單據與私有資料。",
         async () => {
           clearLegacyAuthStorage();
+          clearSensitiveBusinessCache();
           sessionStorage.removeItem("fxg_last_activity_time");
           detachPrivateDataListener();
           currentFirebaseUser = null;
@@ -6564,14 +6588,22 @@ const finalEmail = emailInput.includes('@') ? emailInput : emailInput + '@fxg.co
       printWin.document.close();
     }
 
+    let isAppDataInitialized = false;
+    function ensureAuthenticatedAppInitialized() {
+      if (isAppDataInitialized || isPublicStockViewMode()) return;
+      isAppDataInitialized = true;
+      initData();
+      buildQuoteTable();
+      initShipmentStats();
+      clearQuote(false);
+    }
+
     // --- Setup Listeners ---
     document.addEventListener("DOMContentLoaded", () => {
       // Priority 1: Initialize authentication & event listeners first
       initAuthModule();
-      if (!isPublicStockViewMode()) {
-        initData();
-        buildQuoteTable();
-        initShipmentStats();
+      if (!isPublicStockViewMode() && isUserAuthenticated()) {
+        ensureAuthenticatedAppInitialized();
       }
       
       // Navigation
@@ -7800,11 +7832,7 @@ const finalEmail = emailInput.includes('@') ? emailInput : emailInput + '@fxg.co
       const btnShareMobileLink = document.getElementById("btnShareMobileLink");
       if (btnShareMobileLink) {
         btnShareMobileLink.addEventListener("click", () => {
-          const savedConfig = localStorage.getItem("fxg_firebase_config");
-          if (!savedConfig) {
-            showToast("請先在此儲存並連線 Firebase 後，再複製手機同步連結！", false);
-            return;
-          }
+          const savedConfig = localStorage.getItem("fxg_firebase_config") || JSON.stringify(BUILTIN_FIREBASE_CONFIG);
           const syncUrl = window.location.origin + window.location.pathname + "#sync=" + encodeURIComponent(savedConfig);
           const shareBox = document.getElementById("mobileShareUrlDisplay");
           const shareWrapper = document.getElementById("mobileShareUrlWrapper");
@@ -7997,9 +8025,6 @@ const finalEmail = emailInput.includes('@') ? emailInput : emailInput + '@fxg.co
       if (typeof isPublicStockViewMode === "function" && isPublicStockViewMode()) {
         checkAuth();
       }
-
-      // 預設以乾淨空白的估價單開始，隨時可按「填入範例資料」示範
-      clearQuote(false);
     });
   </script>
 </body>
