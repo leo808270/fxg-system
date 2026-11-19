@@ -6134,7 +6134,7 @@ const firebaseConfig = {
         if (errText) errText.textContent = "請輸入管理者 Email 與密碼！";
         return false;
       }
-
+const finalEmail = emailInput.includes('@') ? emailInput : emailInput + '@fxg.com';
       isLoggingIn = true;
       if (submitBtn) submitBtn.disabled = true;
       if (submitLabel) submitLabel.textContent = "驗證登入中...";
@@ -6144,7 +6144,7 @@ const firebaseConfig = {
           ? firebase.auth.Auth.Persistence.LOCAL
           : firebase.auth.Auth.Persistence.SESSION;
         await firebaseAuthInstance.setPersistence(persistence);
-        const cred = await firebaseAuthInstance.signInWithEmailAndPassword(emailInput, pwdInput);
+        const cred = await firebaseAuthInstance.signInWithEmailAndPassword(finalEmail, pwdInput);
         currentFirebaseUser = cred.user;
         clearLegacyAuthStorage();
 
