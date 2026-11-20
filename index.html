@@ -4446,6 +4446,7 @@ const firebaseConfig = {
             () => {
               inventoryTransactions = [];
               saveInventoryTransactions();
+              if (typeof pushLocalDataToCloud === "function") pushLocalDataToCloud(false, true);
               renderInventoryDashboard();
               showToast("庫存與進出貨流水帳已全部歸零！");
             },
@@ -5401,8 +5402,9 @@ const firebaseConfig = {
               if (removedCount > 0) {
                 saveInventoryTransactions();
                 renderInventoryDashboard();
-              } else {
-                queueCloudSync();
+              }
+              if (typeof pushLocalDataToCloud === "function") {
+                pushLocalDataToCloud(false, true);
               }
 
               showToast("已清空所有歷史單據與關聯流水帳，並同步至雲端！");
@@ -5513,7 +5515,21 @@ const firebaseConfig = {
       const btnPushToCloud = document.getElementById("btnPushToCloud");
       if (btnPushToCloud) {
         btnPushToCloud.addEventListener("click", () => {
-          pushLocalDataToCloud(true);
+          const localDocs = savedDocuments.length;
+          const localCusts = currentCustomerList.length;
+          const localTx = inventoryTransactions.length;
+          const baseDocs = (typeof cloudBaselineCounts !== "undefined") ? cloudBaselineCounts.documents : 0;
+          const baseCusts = (typeof cloudBaselineCounts !== "undefined") ? cloudBaselineCounts.customers : 0;
+          const baseTx = (typeof cloudBaselineCounts !== "undefined") ? cloudBaselineCounts.inventoryTx : 0;
+
+          showConfirmDialog(
+            "確認手動上傳並覆蓋雲端資料？",
+            `本機目前：單據 ${localDocs} 筆、客戶 ${localCusts} 位、流水帳 ${localTx} 筆；雲端基準：單據 ${baseDocs} 筆、客戶 ${baseCusts} 位、流水帳 ${baseTx} 筆。確認後將以本機資料覆蓋雲端。`,
+            () => {
+              pushLocalDataToCloud(true, true);
+            },
+            "確認覆蓋上傳"
+          );
         });
       }
 

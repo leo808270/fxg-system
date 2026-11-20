@@ -149,6 +149,13 @@ let currentFirebaseUser = null;
 let privateDataRef = null;
 let publicStockRef = null;
 let publicStockItems = [];
+let isCloudHydrated = false;
+let cloudBaselineCounts = {
+  documents: 0,
+  customers: 0,
+  inventoryTx: 0,
+  prices: 0
+};
 
 function buildPublicStockPayloadList() {
   return toSafeArray(currentPriceList).map((item, idx) => {
@@ -163,6 +170,7 @@ function buildPublicStockPayloadList() {
 }
 
 function detachPrivateDataListener() {
+  isCloudHydrated = false;
   if (privateDataRef) {
     try { privateDataRef.off(); } catch (e) {}
     privateDataRef = null;
@@ -246,6 +254,15 @@ function applyCloudPrivateDataToLocal(cloudData) {
     renderHistoryTable();
     renderInventoryDashboard();
 
+    // 更新雲端基準筆數與初始化完成旗標
+    cloudBaselineCounts = {
+      documents: savedDocuments.length,
+      customers: currentCustomerList.length,
+      inventoryTx: inventoryTransactions.length,
+      prices: currentPriceList.length
+    };
+    isCloudHydrated = true;
+
     const timeStr = cloudData.updatedAtStr || new Date().toLocaleTimeString("zh-TW");
     const lastTimeEl = document.getElementById("syncLastTime");
     if (lastTimeEl) lastTimeEl.textContent = "資料最後異動：" + timeStr;
@@ -272,8 +289,10 @@ function attachPrivateDataListener() {
           pushLocalDataToCloud(false);
           showToast("🛡️ 已自動將舊版資料安全遷移至加密隔離節點 (/private_data & /public_stock)");
         } else {
-          pushLocalDataToCloud(false);
-          showToast("🎉 連線成功！已將本機商品與庫存安全備份至雲端");
+          isCloudHydrated = true;
+          cloudBaselineCounts = { documents: 0, customers: 0, inventoryTx: 0, prices: 0 };
+          updateCloudUI("connected", "已連線雲端（/private_data 目前為空，等待首次操作或手動上傳）");
+          showToast("ℹ️ 雲端 /private_data 目前為空；若要上傳本機資料請至「店家設定」點擊「手動上傳本機資料至雲端」");
         }
       }).catch((err) => {
         console.warn("Legacy node check skipped/denied:", err);
@@ -381,16 +400,102 @@ function initFirebaseSync() {
 
 function queueCloudSync() {
   if (isRemoteSyncUpdate || !firebaseDbInstance || !currentFirebaseUser) return;
+  // 防呆 1：「未完整初始化」禁止自動上傳，避免剛登入或尚未完成首次雲端同步時將空白狀態寫回雲端
+  if (typeof isAppDataInitialized !== "undefined" && !isAppDataInitialized) {
+    console.warn("[防呆攔截] 應用程式尚未完成初始化，已阻擋自動上傳。");
+    return;
+  }
+  if (!isCloudHydrated) {
+    console.warn("[防呆攔截] 尚未完成首次雲端資料同步，已阻擋自動上傳以保護雲端資料。");
+    return;
+  }
   clearTimeout(syncDebounceTimer);
   syncDebounceTimer = setTimeout(() => {
     pushLocalDataToCloud(false);
   }, 500);
 }
 
-function pushLocalDataToCloud(showNotification = true) {
+function checkCloudOverwriteSafety(isExplicitClearAction = false) {
+  const curDocs = toSafeArray(savedDocuments).length;
+  const curCusts = toSafeArray(currentCustomerList).length;
+  const curTx = toSafeArray(inventoryTransactions).length;
+  const curPrices = toSafeArray(currentPriceList).length;
+
+  // 若為明確重設動作（例如在進階資料管理區按下「清空所有歷史紀錄」或「庫存全部歸零」），允許執行並更新基準值
+  if (isExplicitClearAction) {
+    return { safe: true };
+  }
+
+  // 防呆 2A：空資料覆蓋攔截（雲端原本有資料，本機卻變成 0 筆）
+  if (cloudBaselineCounts.documents > 0 && curDocs === 0) {
+    return {
+      safe: false,
+      reason: `雲端原有 ${cloudBaselineCounts.documents} 筆歷史單據，但本機目前為 0 筆，已自動攔截上傳以防誤清空！`
+    };
+  }
+  if (cloudBaselineCounts.customers > 0 && curCusts === 0) {
+    return {
+      safe: false,
+      reason: `雲端原有 ${cloudBaselineCounts.customers} 位客戶資料，但本機目前為 0 筆，已自動攔截上傳以防誤清空！`
+    };
+  }
+  if (cloudBaselineCounts.inventoryTx > 0 && curTx === 0) {
+    return {
+      safe: false,
+      reason: `雲端原有 ${cloudBaselineCounts.inventoryTx} 筆庫存流水帳，但本機目前為 0 筆，已自動攔截上傳以防誤清空！`
+    };
+  }
+  if (cloudBaselineCounts.prices > 0 && curPrices === 0) {
+    return {
+      safe: false,
+      reason: `雲端原有 ${cloudBaselineCounts.prices} 項商品價目，但本機目前為 0 項，已自動攔截上傳！`
+    };
+  }
+
+  // 防呆 2B：大幅縮水異常攔截（基準 >= 10 筆時，單次自動同步數量驟減超過 50%）
+  if (cloudBaselineCounts.documents >= 10 && curDocs < Math.floor(cloudBaselineCounts.documents * 0.5)) {
+    return {
+      safe: false,
+      reason: `歷史單據由 ${cloudBaselineCounts.documents} 筆驟減為 ${curDocs} 筆（縮水超過 50%），已暫停自動覆蓋！`
+    };
+  }
+  if (cloudBaselineCounts.customers >= 10 && curCusts < Math.floor(cloudBaselineCounts.customers * 0.5)) {
+    return {
+      safe: false,
+      reason: `客戶名單由 ${cloudBaselineCounts.customers} 筆驟減為 ${curCusts} 筆（縮水超過 50%），已暫停自動覆蓋！`
+    };
+  }
+  if (cloudBaselineCounts.inventoryTx >= 10 && curTx < Math.floor(cloudBaselineCounts.inventoryTx * 0.5)) {
+    return {
+      safe: false,
+      reason: `庫存流水帳由 ${cloudBaselineCounts.inventoryTx} 筆驟減為 ${curTx} 筆（縮水超過 50%），已暫停自動覆蓋！`
+    };
+  }
+
+  return { safe: true };
+}
+
+function pushLocalDataToCloud(showNotification = true, forceOverwrite = false) {
   if (!firebaseDbInstance || !currentFirebaseUser) {
     if (showNotification) showToast("尚未登入 Firebase 管理者帳號，資料僅暫存本機");
     return;
+  }
+
+  // 自動同步（非強制手動覆蓋）時，嚴格執行未初始化與空資料／大幅縮水雙重防呆檢查
+  if (!forceOverwrite) {
+    if ((typeof isAppDataInitialized !== "undefined" && !isAppDataInitialized) || !isCloudHydrated) {
+      updateCloudUI("error", "防呆攔截：尚未完成初始同步，已暫停自動上傳");
+      if (showNotification) showToast("🛡️ 防呆攔截：系統尚未完成雲端初始同步，請先點「從雲端同步至本機」", false);
+      return;
+    }
+
+    const safetyCheck = checkCloudOverwriteSafety(false);
+    if (!safetyCheck.safe) {
+      console.warn("[防呆攔截]", safetyCheck.reason);
+      updateCloudUI("error", "防呆攔截：" + safetyCheck.reason);
+      showToast("🛡️ " + safetyCheck.reason + "（請至店家設定確認）", false);
+      return;
+    }
   }
 
   const now = Date.now();
@@ -426,6 +531,13 @@ function pushLocalDataToCloud(showNotification = true) {
     firebaseDbInstance.ref("public_stock").set(publicPayload)
   ])
     .then(() => {
+      cloudBaselineCounts = {
+        documents: toSafeArray(savedDocuments).length,
+        customers: toSafeArray(currentCustomerList).length,
+        inventoryTx: toSafeArray(inventoryTransactions).length,
+        prices: toSafeArray(currentPriceList).length
+      };
+      isCloudHydrated = true;
       const timeStr = new Date().toLocaleTimeString("zh-TW");
       const lastTimeEl = document.getElementById("syncLastTime");
       if (lastTimeEl) lastTimeEl.textContent = "資料最後異動：" + timeStr;
