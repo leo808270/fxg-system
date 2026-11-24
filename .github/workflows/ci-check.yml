@@ -1,0 +1,31 @@
+name: 程式碼語法與資安防呆檢查
+
+on:
+  push:
+    branches: [ main, dev ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  syntax-and-security-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 檢出程式碼
+        uses: actions/checkout@v4
+
+      - name: 檢查 JavaScript 語法正確性
+        run: |
+          node --check js/config/defaults.js
+          node --check js/core/firebaseSync.js
+          node --check js/tabs/stats.js
+
+      - name: 檢查是否誤含私密金鑰或備份資料檔
+        run: |
+          if ls fxg_private_data_*.json 1> /dev/null 2>&1; then
+            echo "❌ 錯誤：偵測到資料庫備份 JSON 檔，禁止上傳至 GitHub！"
+            exit 1
+          fi
+          if grep -rnE "BEGIN PRIVATE KEY|service_account|firebase-admin" index.html js/ css/; then
+            echo "❌ 錯誤：偵測到高風險私密憑證字串！"
+            exit 1
+          fi
