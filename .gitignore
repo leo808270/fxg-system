@@ -1,0 +1,18 @@
+# 排除資料庫備份與匯出檔
+fxg_private_data_*.json
+*備份*.json
+*.csv
+*.xlsx
+
+# 排除環境變數與金鑰憑證
+.env
+.env.*
+*.pem
+*.key
+serviceAccount*.json
+firebase-adminsdk*.json
+
+# 排除系統與編輯器暫存檔
+.DS_Store
+Thumbs.db
+.vscode/
